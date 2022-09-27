@@ -33,7 +33,7 @@ F_OnKeyDown(ih, VK, SC)
 F_OnKeyUp(ih, VK, SC)
 {
 	global	;assume-global mode of operation
-	local	WhatWasUp := GetKeyName(Format("vk{:x}sc{:x}", VK, SC)), LastChar := ""
+	local	WhatWasUp := GetKeyName(Format("vk{:x}sc{:x}", VK, SC))
 
 	; OutputDebug, % A_ThisFunc . A_Space . "WhatWasUp:" . WhatWasUp . A_Space . "LastChar:" . v_Char . A_Space . "f_ShiftPressed:" . f_ShiftPressed . "`n"
 
@@ -72,14 +72,13 @@ DiacriticOutput(Diacritic)
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 F_OneCharPressed(ih, Char)
-{	
+{
 	global	;assume-global mode of operation
 
-	; Critical, On
+	; OutputDebug, % A_ThisFunc . A_Space . "v_Char:" . v_Char . A_Space . "f_ShiftPressed:" . f_ShiftPressed . "`n"
 	if (f_ShiftPressed)
 		f_ShiftPressed := false
 
 	v_Char := Char
-	; OutputDebug, % A_ThisFunc . A_Space . "v_Char:" . v_Char . A_Space . "f_ShiftPressed:" . f_ShiftPressed . "`n"
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
