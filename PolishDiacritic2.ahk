@@ -16,7 +16,7 @@ F_InitiateInputHook()
 F_InitiateInputHook()	;why InputHook: to process triggerstring tips.
 {
 	global	;assume-global mode of operation
-	v_InputH 			:= InputHook("V I3 L0")	;I3 to not feed back this script; V to show pressed keys; L0 as only last char is analysed
+	v_InputH 			:= InputHook("V I2 L0")	;I3 to not feed back this script; V to show pressed keys; L0 as only last char is analysed
 ,	v_InputH.OnChar 	:= Func("F_OneCharPressed")
 ,	v_InputH.OnKeyDown	:= Func("F_OnKeyDown")
 ,	v_InputH.OnKeyUp 	:= Func("F_OnKeyUp")
@@ -81,6 +81,7 @@ F_OnKeyUp(ih, VK, SC)
 		f_AltPressed		:= false
 		f_WinPressed		:= false
 	}
+	; OutputDebug, % A_ThisFunc . A_Space . "The end" . "`n"
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 DiacriticOutput(Diacritic)
@@ -94,7 +95,7 @@ F_OneCharPressed(ih, Char)
 {
 	global	;assume-global mode of operation
 
-	; OutputDebug, % A_ThisFunc . A_Space . "v_Char:" . v_Char . A_Space . "f_ShiftPressed:" . f_ShiftPressed . "`n"
+	OutputDebug, % A_ThisFunc . A_Space . "v_Char:" . v_Char . A_Space . "f_ShiftPressed:" . f_ShiftPressed . "`n"
 	if (f_ShiftPressed)
 		f_ShiftPressed 	:= false
 	if (f_ControlPressed)
