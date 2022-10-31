@@ -1,56 +1,59 @@
-# What are Polish diacritic (accented) characters?
+# Quick info
 
-These are characters which are present only in Polish language:
+Application name: **Shift Diacritic**.
 
-``
-ą, ć, ę, ł, ó, ś, ź, ż
-``
-and capital letters.
+Operating system: Microsoft Windows Ⓡ.
 
-# How this script works
-Run it. When you want to get Polish diacritic (accented) character e.g. in word "ćma" after pressing "c" press whichever "Shift" key:
+Programming language: AutoHotkey (scripting language for RPA), version 1.1.x.
 
-``
-c
-{Right Shift Down}
-{Right Shift up}
-m
-a
-``
+License: GNU GPL v3.x (GNU's Not Unix! General Public License).
 
-# Rationale
-Usually (under Microsoft Windows) Polish diacritic (accented) characters are entered with use of "Polish programmer" local setting. Then to get such letter before such character press down "Right Alt" or "AltGr" keyboard key and release it afterwards.
+Purpose: entering diacritic characters (e.g. Polish: ą, ć, ę, ł, ó, ń, ś, ź, ż) by combination: basic letter and next Shift modifier.
 
-Referring to the above example, to get word "ćma" one have to press:
+Author: Maciej Słojewski (🐘), http://mslonik.pl.
+<br /><br />
 
-``
-{Right Alt Down}
-c
-{Right Alt Up}
-m
-a
-``
+## Chainge log
 
-# Comparison of traits  between this script and default (old) solution:
-``Down`` = ``D``
+| Release | Date | Release notes |
+| :---         |     :---:      |          :--- |
+| 1.0.0   | 2022-10-31     | The first stable release.    |
+<br /><br />
 
-``Up`` = ``U``
+## Purpose, detailed
 
-``{Left Shift}`` = ``{LShift}``, ``{Left Alt}`` = ``{LAlt}``
+On typical keyboards (layout: ANSI 104-key, form factor: full size = 100%) to enter diacritic characters two keys have to be pressed:
+- preliminary or basic key (e.g. a),
+- secondary or modifier key (e.g. Right Alt = AltGr).
 
-``{Right Shift}`` = ``{RShift}``, ``{Right Alt}`` = ``{RAlt}``
+**Disclaimer**
 
-e.g. ``{Left Shift Down}`` = ``{LShiftD}``
+There are other tactics to enter diacritic characters of course. For example on other than typical keyboards some keys are dedicated to diacritic characters instead of other, less frequently used keys / letters. Or so called "dead key" is used (about [dead key on Wikipedia](https://en.wikipedia.org/wiki/Dead_key)). Please note, the tactics of "dead key" actually is only a variant of secondary or modifier key actually.
+<br /><br />
+Pressing the secondary [AltGr = alternate graphic](https://en.wikipedia.org/wiki/AltGr_key) is probably the most widespread tactics, but quite problematic:
+- There are two **Alt** key modfifiers on each keyboard, but for entering diacritics only the right one is used, what for touch typist is unnatural.
+- At typical keyboard It is not easy to reach any **Alt** key by any finger (nor pinky neither thumb).
+- The dominant tactics says about pressing down the modifier and then, when modifier is pressed, pressing preliminary key and finally releasing modifier. As a consequence at least two fingers are involved. As there is only one **AltGr** on the keyboard, sometimes two fingers of the same palm should be active.
 
+Remark: actually only **Shift** modifiers are ready to be pressed easily, but with the weakiest finger (pinky).
 
-| Trait | Default | PolishDiacritics | Comment |
-| :---: | :--- | :---: | :--- |
-| Entering capital letters | ``{LShiftD}c{LShiftU}`` → ``C``<br /> or <br /> ``{RShiftD}c{RShiftU}``→ ``C`` | The same as default. | No extra benefit. |
-| Entering Polish diacritic characters | ``{RAltD}c{RAltU}`` → ``ć`` | ``c{LShiftD}{LShiftU}`` → ``ć`` <br /> or <br /> ``c{RShiftD}{RShiftU}`` → ``ć``| - One can use the same {Shift} keys to enter diacritic characters and capital characters. <br /> - Whichever {Shift} key be used to enter whichever diacritic character. <br /> - 
+The **Shift Diacritic** slightly modifies the tactics:
+- preliminary keys go first and are pressed as usual,
+- as secondary keys (modifiers) are used both **Shift** keys,
+- secondary keys (modifiers) are just pressed and released as any other key.
 
-Downsides of this approach:
-- Always "Right Alt" have to be pressed, no matter where on keyboard diacritic is located.
+This difference is shown in details on example in the following table:
 
-- "Right Alt" is reserved for the purpose of entering Polish diacritics (cannot be used for any other purpose and no longer works as modifier). "Left Alt" is used as ordinary "Alt" key just as modifier.
+|  | Typical keyboard | Shift Diacritic |
+| :---         |     :---:      |         :---: |
+| **preliminary key**   | a     | a    |
+| **secondary key**     | AltGr       | Shift (left or right)      |
+| **result**            | ą     | ą    |
 
-- "Right Alt" usually is pressed by right thumb what is far from ergonomic.
+Order of typing:
+| Typical keyboard     |  Comment       |  Shift Diacritic | Comment     |
+| :---                 |     :---:      |      :---:       | :---:       |
+| AltGr Down           |  git status    |  a down          |             |
+| AltGr Down + a Down  |  git diff      |  a up            |             |
+| AltGr Down + a Up    |                |  RShift Down     |             |
+| AltGr Up             |                |  RShift Up       |             |

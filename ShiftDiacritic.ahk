@@ -1,9 +1,10 @@
-#SingleInstance force 			; Only one instance of this script may run at a time!
+﻿#SingleInstance force 			; Only one instance ofĄthis script may run at a time!
 #NoEnv  						; Recommended for performance and compatibility with future AutoHotkey releases.
 #Warn  	     				; Enable warnings to assist with detecting common errors.
 #Requires AutoHotkey v1.1.33+ 	; Displays an error and quits if a version requirement is not met.
+#KeyHistory, 100
 
- AppVersion				:= "1.0.0"
+ AppVersion				:= "1.0.1"
 ;@Ahk2Exe-Let vAppVersion=%A_PriorLine~U)^(.+"){1}(.+)".*$~$2% ; Keep these lines together
 ;Overrides the custom EXE icon used for compilation
 ;@Ahk2Exe-SetCopyright GNU GPL 3.x
@@ -12,7 +13,7 @@
 ;@Ahk2Exe-Set OriginalScriptlocation, https://github.com/mslonik/PolishDiacritic
 ;@Ahk2Exe-SetCompanyName  http://mslonik.pl
 ;@Ahk2Exe-SetFileVersion %U_vAppVersion%
-,	ApplicationName     := "PolishDiacritic"	;global variable
+,	ApplicationName     := "ShiftDiacritic"	;global variable
 ,	v_Char 			:= ""	;global variable
 ,	f_ShiftPressed 	:= false	;global variable
 ,	f_ControlPressed	:= false	;global variable
@@ -28,7 +29,29 @@ Menu, Tray, Icon, imageres.dll, 123     ; this line will turn the H icon into a 
 F_InitiateInputHook()
 ;end initialization section
 
-; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+; - - - - - - - - - - - - - - GLOBAL HOTSTRINGS: BEGINNING- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+:*:sdhelp/::
+	MsgBox, 64, % SubStr(A_ScriptName, 1, -4) . ":" . A_Space . "information", % "Application hotstrings" . "." . A_Space . "All of them are ""immediate execute"" (*)" . "`n"
+		. "and active anywhere in operating system (any window)"											. "`n"
+		. "`n`n"
+		. "sdhelp/" . A_Tab . A_Tab . 	"shows this message"					 	. "`n"
+		. "sdrestart/" . A_Tab . 		"reload" . A_Space . "application"				 	. "`n"
+		. "sdreload/" . A_Tab . 		 	"reload" . A_Space . "application"				 	. "`n"
+		. "sdexit/" . A_Tab . A_Tab .		"exit" . A_Space . "application"
+return
+
+:*:sdexit/::
+	ExitApp, 0
+return
+
+:*:sdreload/::		
+:*:sdrestart/::     ;global hotstring
+	MsgBox, 64, % A_ScriptName, % A_ScriptName . A_Space . "will be restarted!"
+	reload
+return
+; - - - - - - - - - - - - - - GLOBAL HOTSTRINGS: END- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+; - - - - - - - - - - - - - - DEFINITIONS OF FUNCTIONS: BEGINNING- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 F_InitiateInputHook()	;why InputHook: to process triggerstring tips.
 {
 	global	;assume-global mode of operation
