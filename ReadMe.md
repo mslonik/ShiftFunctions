@@ -46,7 +46,7 @@ e.g. ``{Left Shift Down}`` = ``{LShiftD}``
 | Trait | Default | PolishDiacritics | Comment |
 | :---: | :--- | :---: | :--- |
 | Entering capital letters | ``{LShiftD}c{LShiftU}`` → ``C``<br /> or <br /> ``{RShiftD}c{RShiftU}``→ ``C`` | The same as default. | No extra benefit. |
-| Enteric Polish diacritic characters | ``{RAltD}c{RAltU}`` → ``ć`` | ``c{LShiftD}{LShiftU}`` → ``ć`` <br /> or <br /> ``c{RShiftD}{RShiftU}`` → ``ć``| - One can use the same {Shift} keys to enter diacritic characters and capital characters. <br /> - Whichever {Shift} key be used to enter whichever diacritic character. <br /> - 
+| Entering Polish diacritic characters | ``{RAltD}c{RAltU}`` → ``ć`` | ``c{LShiftD}{LShiftU}`` → ``ć`` <br /> or <br /> ``c{RShiftD}{RShiftU}`` → ``ć``| - One can use the same {Shift} keys to enter diacritic characters and capital characters. <br /> - Whichever {Shift} key be used to enter whichever diacritic character. <br /> - 
 
 Downsides of this approach:
 - Always "Right Alt" have to be pressed, no matter where on keyboard diacritic is located.
