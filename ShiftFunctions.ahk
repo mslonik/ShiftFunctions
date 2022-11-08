@@ -22,6 +22,7 @@
 ,	f_Capital			:= true	;global variable
 ,	f_Diacritics		:= true	;global variable
 ,	f_CapsLock		:= true	;global variable
+,	f_Char			:= false
 
 SetBatchLines, 	-1				; Never sleep (i.e. have the script run at maximum speed).
 SendMode,			Input			; Recommended for new scripts due to its superior speed and reliability.
@@ -119,7 +120,7 @@ return
 F_InitiateInputHook()	;why InputHook: to process triggerstring tips.
 {
 	global	;assume-global mode of operation
-	v_InputH 			:= InputHook("V I2 L0")	;I3 to not feed back this script; V to show pressed keys; L0 as only last char is analysed
+	v_InputH 			:= InputHook("V I3 L0")	;I3 to not feed back this script; V to show pressed keys; L0 as only last char is analysed
 ,	v_InputH.OnChar 	:= Func("F_OneCharPressed")
 ,	v_InputH.OnKeyDown	:= Func("F_OnKeyDown")
 ,	v_InputH.OnKeyUp 	:= Func("F_OnKeyUp")
@@ -130,9 +131,9 @@ F_InitiateInputHook()	;why InputHook: to process triggerstring tips.
 F_OnKeyDown(ih, VK, SC)
 {
 	global	;assume-global mode of operation
+	; OutputDebug, % A_ThisFunc . A_Space . "B" . "`n"
 	local	WhatWasDown := GetKeyName(Format("vk{:x}sc{:x}", VK, SC))
 
-	; OutputDebug, % A_ThisFunc . A_Space . "B" . "`n"
 	Switch WhatWasDown
 	{
 		Case "LShift", "RShift":
@@ -157,20 +158,62 @@ F_OnKeyUp(ih, VK, SC)
 	
 	; OutputDebug, % A_ThisFunc . A_Space . "B" . "`n"
 	; OutputDebug, % "WWUb:" . WhatWasUp . A_Space "v_Char:" . v_Char . "S:" . f_ShiftPressed . A_Space . "C:" . f_ControlPressed . A_Space . "A:" . f_AltPressed . A_Space . "W:" . f_WinPressed . A_Space . "O:" . f_AnyOtherKey . "`n"
-	if	(f_Diacritics)
-		and ((WhatWasUp = "LShift") or (WhatWasUp = "RShift"))
-		and (f_ShiftPressed) and !(f_ControlPressed) and !(f_AltPressed) and !(f_WinPressed) and !(f_AnyOtherKey)
+	; if (WhatWasUp = "LShift") or (WhatWasUp = "RShift")
+		; return
+
+	; OutputDebug, % "Tu jestem" . "`n"
+	if (f_Capital) ;and (f_Char)
+		and (v_Char)
+		and (f_ShiftPressed)
+		and (WhatWasUp != "LShift") and (WhatWasUp != "RShift")
+		and !(f_ControlPressed) and !(f_AltPressed) and !(f_WinPressed) 
+		; and !(f_AnyOtherKey)
+		{
+			SendLevel, 2
+			Switch WhatWasUp
+			{
+				Case "``": 	SendInput, {BS}~
+				Case "1":		SendInput, {BS}{!}
+				Case "2":		SendInput, {BS}@
+				Case "3":		SendInput, {BS}{#}
+				Case "4":		SendInput, {BS}$
+				Case "5":		SendInput, {BS}`%
+				Case "6":		SendInput, {BS}{^}
+				Case "7":		SendInput, {BS}&
+				Case "8":		SendInput, {BS}*
+				Case "9":		SendInput, {BS}(
+				Case "0":		SendInput, {BS})
+				Case "-":		SendInput, {BS}_
+				Case "=":		SendInput, {BS}{+}
+				Case "[":		SendInput, {BS}{{}
+				Case "]":		SendInput, {BS}{}}
+				Case "\":		SendInput, {BS}|
+				Case ";":		SendInput, {BS}:
+				Case "'":		SendInput, {BS}"
+				Case ",":		SendInput, {BS}<
+				Case ".":		SendInput, {BS}>
+				Case "/":		SendInput, {BS}?
+				Default:
+					SendInput, % "{BS}" . Format("{:U}", WhatWasUp)
+			}
+			SendLevel, 0
+			f_ShiftPressed 	:= false
+			v_Char			:= ""
+; ,			f_Char			:= false
+; ,			v_Char 			:= WhatWasUp
+		}
+
+	if	(f_Diacritics) ;and (f_Char)
+		and (v_Char) and (f_ShiftPressed)
+		; and ((WhatWasUp = "LShift") or (WhatWasUp = "RShift"))
+		; and (f_ShiftPressed) and !(f_ControlPressed) and !(f_AltPressed) and !(f_WinPressed) and !(f_AnyOtherKey)
 			Diacritics()
-	else
-	{
-		f_ControlPressed 	:= false
-,		f_AltPressed		:= false
-,		f_WinPressed		:= false
-,		f_AnyOtherKey		:= false
-	}
 
 	if (f_CapsLock)
 		F_DoubleShift(WhatWasUp, f_ShiftPressed)
+
+	; if (f_Char)
+		; f_Char := false
 	; OutputDebug, % "WWUe:" . WhatWasUp . A_Space . "S:" . f_ShiftPressed . A_Space . "C:" . f_ControlPressed . A_Space . "A:" . f_AltPressed . A_Space . "W:" . f_WinPressed . A_Space . "O:" . f_AnyOtherKey . "`n"
 	; OutputDebug, % A_ThisFunc . A_Space . "E" . "`n"
 }
@@ -217,6 +260,8 @@ Diacritics()
 		Case "z": 	DiacriticOutput("ż")
 		Case "Z": 	DiacriticOutput("Ż")
 	}
+	; f_Char 		:= false
+; ,	f_ShiftPressed := false
 	; OutputDebug, % A_ThisFunc . A_Space . "E" . "`n"
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -229,6 +274,8 @@ DiacriticOutput(Diacritic)
 	SendLevel, 	2
 	Send,		% "{BS}" . Diacritic
 	SendLevel, 	0
+	f_Char 		:= false
+,	f_ShiftPressed := false
 	; OutputDebug, % A_ThisFunc . A_Space . "E" . "`n"
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -236,48 +283,16 @@ F_OneCharPressed(ih, Char)
 {
 	global	;assume-global mode of operation
 
+	f_Char := true
+,	v_Char := Char
 	; OutputDebug, % A_ThisFunc . A_Space . "B" . "`n"
-	f_ControlPressed 	:= false
-,	f_AltPressed		:= false
-,	f_WinPressed		:= false
-,	f_AnyOtherKey		:= false
+; 	f_ControlPressed 	:= false
+; ,	f_AltPressed		:= false
+; ,	f_WinPressed		:= false
+; ,	f_AnyOtherKey		:= false
 	; OutputDebug, % A_ThisFunc . A_Space . "Char:" . Char . A_Space . "f_ShiftPressed:" . f_ShiftPressed . "`n"
 	; OutputDebug, % "Char:" . Char . "`n"
-	if (f_Capital)
-		and (f_ShiftPressed) and (Char) 
-		and !(f_ControlPressed) and !(f_AltPressed) and !(f_WinPressed) and !(f_AnyOtherKey)
-	{
-		SendInput, {BS}
-		Switch Char
-		{
-			Case "``": 	SendRaw, ~
-			Case "1":		SendRaw, !
-			Case "2":		SendRaw, @
-			Case "3":		SendRaw, #
-			Case "4":		SendRaw, $
-			Case "5":		SendRaw, `%
-			Case "6":		SendRaw, ^
-			Case "7":		SendRaw, &
-			Case "8":		SendRaw, *
-			Case "9":		SendRaw, (
-			Case "0":		SendRaw, )
-			Case "-":		SendRaw, _
-			Case "=":		SendRaw, +
-			Case "[":		SendRaw, {
-			Case "]":		SendRaw, }
-			Case "\":		SendRaw, |
-			Case ";":		SendRaw, :
-			Case "'":		SendRaw, "
-			Case ",":		SendRaw, <
-			Case ".":		SendRaw, >
-			Case "/":		SendRaw, ?
-			Default:
-				Char := Format("{:U}", Char)
-				SendRaw, % Char
-		}
-	}
-	f_ShiftPressed 	:= false
-,	v_Char 			:= Char
+
 	; OutputDebug, % "v_Char:" . v_Char . "`n"
 	; OutputDebug, % A_ThisFunc . A_Space . "E" . "`n"
 }
