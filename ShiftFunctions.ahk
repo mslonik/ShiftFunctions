@@ -13,8 +13,7 @@
 ;@Ahk2Exe-Set OriginalScriptlocation, https://github.com/mslonik/ShiftDiacritic
 ;@Ahk2Exe-SetCompanyName  http://mslonik.pl
 ;@Ahk2Exe-SetFileVersion %U_vAppVersion%
-,	ApplicationName     := "ShiftDiacritic"	;global variable
-,	v_Char 			:= ""	;global variable
+	v_Char 			:= ""	;global variable
 ,	f_ShiftPressed 	:= false	;global variable
 ,	f_ControlPressed	:= false	;global variable
 ,	f_AltPressed		:= false	;global variable
@@ -22,6 +21,7 @@
 ,	f_AnyOtherKey		:= false	;global variable
 ,	f_Capital			:= true	;global variable
 ,	f_Diacritics		:= true	;global variable
+,	f_CapsLock		:= true	;global variable
 
 SetBatchLines, 	-1				; Never sleep (i.e. have the script run at maximum speed).
 SendMode,			Input			; Recommended for new scripts due to its superior speed and reliability.
@@ -33,40 +33,40 @@ F_InitiateInputHook()
 ;end initialization section
 
 ; - - - - - - - - - - - - - - GLOBAL HOTSTRINGS: BEGINNING- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-:*:sdhelp/::
+:*:sfhelp/::
 	MsgBox, 64, % SubStr(A_ScriptName, 1, -4) . ":" . A_Space . "information", % "Application hotstrings" . "." . A_Space . "All of them are ""immediate execute"" (*)" . "`n"
 		. "and active anywhere in operating system (any window)"						. "`n"
 		. "`n`n"
-		. "sdhelp/" . A_Tab . A_Tab . 	"shows this message"					 	. "`n"
-		. "sdrestart/" . A_Tab . 		"reload" 	. A_Space . "application"		 	. "`n"
-		. "sdreload/" . A_Tab . 		 	"reload" 	. A_Space . "application"		 	. "`n"
-		. "sdquit/" . A_Tab . A_Tab .		"exit" 	. A_Space . "application"			. "`n"
-		. "sdexit/" . A_Tab . A_Tab .		"exit" 	. A_Space . "application"			. "`n"
-		. "sdswitch/" . A_Tab . A_Tab .	"toggle"	. A_Space . "shift standalone"		. "`n"
-		. "sdtoggle/" . A_Tab . 			"toggle"	. A_Space . "shift standalone"		. "`n"
-		. "sdstatus/" . A_Tab . A_Tab .	"status"	. A_Space . "application"			. "`n"
-		. "sdstate/" . A_Tab . A_Tab .	"status"	. A_Space . "application"			. "`n"
-		. "sdenable/" . A_Tab . 			"enable"	. A_Space . "shift standalone"		. "`n"
-		. "sddisable/" . A_Tab . 		"disable"	. A_Space . "shift standalone"		. "`n"
+		. "sfhelp/" . A_Tab . A_Tab . 	"shows this message"					 	. "`n"
+		. "sfrestart/" . A_Tab . A_Tab	"reload" 	. A_Space . "application"		 	. "`n"
+		. "sfreload/" . A_Tab . A_Tab	 	"reload" 	. A_Space . "application"		 	. "`n"
+		. "sfquit/" . A_Tab . A_Tab .		"exit" 	. A_Space . "application"			. "`n"
+		. "sfexit/" . A_Tab . A_Tab .		"exit" 	. A_Space . "application"			. "`n"
+		. "sfswitch/" . A_Tab . A_Tab .	"toggle"	. A_Space . "shift standalone"		. "`n"
+		. "sftoggle/" . A_Tab . A_Tab .	"toggle"	. A_Space . "shift standalone"		. "`n"
+		. "sfstatus/" . A_Tab . A_Tab .	"status"	. A_Space . "application"			. "`n"
+		. "sfstate/" . A_Tab . A_Tab .	"status"	. A_Space . "application"			. "`n"
+		. "sfenable/" . A_Tab . A_Tab .	"enable"	. A_Space . "application"			. "`n"
+		. "sfdisable/" . A_Tab . 		"disable"	. A_Space . "application"			. "`n"
 		. "sfddisable/" . A_Tab .		"disable" . A_Space . "shift diacritic"			. "`n"
 		. "sfdenable/" . A_Tab .			"enable"	. A_Space . "shift diacritic"			. "`n"
 		. "sfcdisable/" . A_Tab .		"disable"	. A_Space . "shift capital"			. "`n"
 		. "sfcenable/" . A_Tab .			"enable"	. A_Space . "shift capital"
 return
 
-:*:sdreload/::
-:*:sdrestart/::     ;global hotstring
+:*:sfreload/::
+:*:sfrestart/::     ;global hotstring
 	MsgBox, 64, % A_ScriptName, % A_ScriptName . A_Space . "will be restarted!"
 	reload
 return
 
-:*:sdquit/::
-:*:sdexit/::
+:*:sfquit/::
+:*:sfexit/::
 	ExitApp, 0
 return
 
-:*:sdswitch/::
-:*:sdtoggle/::
+:*:sfswitch/::
+:*:sftoggle/::
 	if (v_InputH.InProgress)
 	{
 		v_InputH.Stop()
@@ -79,17 +79,17 @@ return
 	}
 return
 
-:*:sdstatus/::
-:*:sdstate/::
+:*:sfstatus/::
+:*:sfstate/::
 	MsgBox, 64, % A_ScriptName, % "Current status is" . A_Space . (v_InputH.InProgress ? "ENABLED" : "DISABLED")
 return
 
-:*:sdenable/::
+:*:sfenable/::
 	v_InputH.Start()
 	MsgBox, 64, % A_ScriptName, % A_ScriptName . A_Space . "is ENABLED."
 return
 
-:*:sddisable/::
+:*:sfdisable/::
 	v_InputH.Stop()
 	MsgBox, 64, % A_ScriptName, % A_ScriptName . A_Space . "is DISABLED."
 return
@@ -154,7 +154,7 @@ F_OnKeyUp(ih, VK, SC)
 {
 	global	;assume-global mode of operation
 	local	WhatWasUp := GetKeyName(Format("vk{:x}sc{:x}", VK, SC))
-
+	
 	; OutputDebug, % A_ThisFunc . A_Space . "B" . "`n"
 	; OutputDebug, % "WWUb:" . WhatWasUp . A_Space "v_Char:" . v_Char . "S:" . f_ShiftPressed . A_Space . "C:" . f_ControlPressed . A_Space . "A:" . f_AltPressed . A_Space . "W:" . f_WinPressed . A_Space . "O:" . f_AnyOtherKey . "`n"
 	if	(f_Diacritics)
@@ -168,8 +168,27 @@ F_OnKeyUp(ih, VK, SC)
 ,		f_WinPressed		:= false
 ,		f_AnyOtherKey		:= false
 	}
+
+	if (f_CapsLock)
+		F_DoubleShift(WhatWasUp, f_ShiftPressed)
 	; OutputDebug, % "WWUe:" . WhatWasUp . A_Space . "S:" . f_ShiftPressed . A_Space . "C:" . f_ControlPressed . A_Space . "A:" . f_AltPressed . A_Space . "W:" . f_WinPressed . A_Space . "O:" . f_AnyOtherKey . "`n"
 	; OutputDebug, % A_ThisFunc . A_Space . "E" . "`n"
+}
+; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+F_DoubleShift(WhatWasUp, f_ShiftPressed)
+{
+	static	ShiftCounter := 0
+	if ((WhatWasUp = "LShift") or (WhatWasUp = "RShift")) and (f_ShiftPressed)
+		ShiftCounter++
+	else
+		ShiftCounter = 0
+	
+	; OutputDebug, % "ShiftCounter:" . A_Space . ShiftCounter . "`n"
+	if (ShiftCounter = 2)
+	{
+		SetCapsLockState % !GetKeyState("CapsLock", "T") 
+		ShiftCounter = 0
+	}
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Diacritics()
@@ -205,12 +224,12 @@ DiacriticOutput(Diacritic)
 {
 	global	;assume-global mode of operation
 
-	OutputDebug, % A_ThisFunc . A_Space . "B" . "`n"
+	; OutputDebug, % A_ThisFunc . A_Space . "B" . "`n"
 	f_ShiftPressed := false
 	SendLevel, 	2
 	Send,		% "{BS}" . Diacritic
 	SendLevel, 	0
-	OutputDebug, % A_ThisFunc . A_Space . "E" . "`n"
+	; OutputDebug, % A_ThisFunc . A_Space . "E" . "`n"
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 F_OneCharPressed(ih, Char)
