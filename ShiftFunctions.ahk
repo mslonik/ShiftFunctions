@@ -158,10 +158,23 @@ F_OnKeyUp(ih, VK, SC)
 	
 	; OutputDebug, % A_ThisFunc . A_Space . "B" . "`n"
 	; OutputDebug, % "WWUb:" . WhatWasUp . A_Space "v_Char:" . v_Char . "S:" . f_ShiftPressed . A_Space . "C:" . f_ControlPressed . A_Space . "A:" . f_AltPressed . A_Space . "W:" . f_WinPressed . A_Space . "O:" . f_AnyOtherKey . "`n"
-	; if (WhatWasUp = "LShift") or (WhatWasUp = "RShift")
-		; return
+	Switch WhatWasUp
+	{
+		Case "LControl", "RControl":	;modifiers
+			f_ControlPressed := false
+			return
+		Case "LAlt", "RAlt":		;modifiers
+			f_AltPressed := false
+			return
+		Case "Lwin", "RWin":		;modifiers
+			f_WinPressed := false
+			return 
+		Case "Backspace", "Space", "Escape", "Enter", "Tab", "Insert", "Home", "PageUp", "Delete", "End", "PageDown", "AppsKey"	;the rest of not alphanumeric keys
+			, "F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10", "F11", "F12"
+			, "Up", "Down", "Left", "Right":
+			return
+	}
 
-	; OutputDebug, % "Tu jestem" . "`n"
 	if (f_Capital) ;and (f_Char)
 		and (v_Char)
 		and (f_ShiftPressed)
@@ -170,7 +183,7 @@ F_OnKeyUp(ih, VK, SC)
 		; and !(f_AnyOtherKey)
 		{
 			SendLevel, 2
-			Switch WhatWasUp
+			Switch v_Char
 			{
 				Case "``": 	SendInput, {BS}~
 				Case "1":		SendInput, {BS}{!}
@@ -194,26 +207,26 @@ F_OnKeyUp(ih, VK, SC)
 				Case ".":		SendInput, {BS}>
 				Case "/":		SendInput, {BS}?
 				Default:
-					SendInput, % "{BS}" . Format("{:U}", WhatWasUp)
+					v_Char := Format("{:U}", v_Char)
+					SendInput, % "{BS}" . v_Char
 			}
 			SendLevel, 0
 			f_ShiftPressed 	:= false
-			v_Char			:= ""
+			; v_Char			:= ""
 ; ,			f_Char			:= false
 ; ,			v_Char 			:= WhatWasUp
 		}
 
-	if	(f_Diacritics) ;and (f_Char)
+	if (f_Diacritics) ;and (f_Char)
 		and (v_Char) and (f_ShiftPressed)
-		; and ((WhatWasUp = "LShift") or (WhatWasUp = "RShift"))
-		; and (f_ShiftPressed) and !(f_ControlPressed) and !(f_AltPressed) and !(f_WinPressed) and !(f_AnyOtherKey)
+		and ((WhatWasUp = "LShift") or (WhatWasUp = "RShift"))
+		and (f_ShiftPressed) and !(f_ControlPressed) and !(f_AltPressed) and !(f_WinPressed) 
+		; and !(f_AnyOtherKey)
 			Diacritics()
 
 	if (f_CapsLock)
 		F_DoubleShift(WhatWasUp, f_ShiftPressed)
 
-	; if (f_Char)
-		; f_Char := false
 	; OutputDebug, % "WWUe:" . WhatWasUp . A_Space . "S:" . f_ShiftPressed . A_Space . "C:" . f_ControlPressed . A_Space . "A:" . f_AltPressed . A_Space . "W:" . f_WinPressed . A_Space . "O:" . f_AnyOtherKey . "`n"
 	; OutputDebug, % A_ThisFunc . A_Space . "E" . "`n"
 }
@@ -270,12 +283,12 @@ DiacriticOutput(Diacritic)
 	global	;assume-global mode of operation
 
 	; OutputDebug, % A_ThisFunc . A_Space . "B" . "`n"
-	f_ShiftPressed := false
+	; f_ShiftPressed := false
 	SendLevel, 	2
 	Send,		% "{BS}" . Diacritic
 	SendLevel, 	0
-	f_Char 		:= false
-,	f_ShiftPressed := false
+	; f_Char 		:= false
+	f_ShiftPressed := false
 	; OutputDebug, % A_ThisFunc . A_Space . "E" . "`n"
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
