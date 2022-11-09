@@ -14,15 +14,15 @@
 ;@Ahk2Exe-SetCompanyName  http://mslonik.pl
 ;@Ahk2Exe-SetFileVersion %U_vAppVersion%
 	v_Char 			:= ""	;global variable
-,	f_ShiftPressed 	:= false	;global variable
-,	f_ControlPressed	:= false	;global variable
-,	f_AltPressed		:= false	;global variable
-,	f_WinPressed		:= false	;global variable
-,	f_AnyOtherKey		:= false	;global variable
-,	f_Capital			:= true	;global variable
-,	f_Diacritics		:= true	;global variable
-,	f_CapsLock		:= true	;global variable
-,	f_Char			:= false
+,	f_ShiftPressed 	:= false	;global flag
+,	f_ControlPressed	:= false	;global flag
+,	f_AltPressed		:= false	;global flag
+,	f_WinPressed		:= false	;global flag 
+,	f_AnyOtherKey		:= false	;global flag
+,	f_Capital			:= true	;global flag
+,	f_Diacritics		:= true	;global flag
+,	f_CapsLock		:= true	;global flag
+,	f_Char			:= false	;global flag
 
 SetBatchLines, 	-1				; Never sleep (i.e. have the script run at maximum speed).
 SendMode,			Input			; Recommended for new scripts due to its superior speed and reliability.
@@ -157,7 +157,7 @@ F_OnKeyUp(ih, VK, SC)
 	local	WhatWasUp := GetKeyName(Format("vk{:x}sc{:x}", VK, SC))
 	
 	; OutputDebug, % A_ThisFunc . A_Space . "B" . "`n"
-	; OutputDebug, % "WWUb:" . WhatWasUp . A_Space "v_Char:" . v_Char . "S:" . f_ShiftPressed . A_Space . "C:" . f_ControlPressed . A_Space . "A:" . f_AltPressed . A_Space . "W:" . f_WinPressed . A_Space . "O:" . f_AnyOtherKey . "`n"
+	OutputDebug, % "WWUb:" . WhatWasUp . A_Space "v_Char:" . v_Char . "S:" . f_ShiftPressed . A_Space . "C:" . f_ControlPressed . A_Space . "A:" . f_AltPressed . A_Space . "W:" . f_WinPressed . A_Space . "O:" . f_AnyOtherKey . "`n"
 	Switch WhatWasUp
 	{
 		Case "LControl", "RControl":	;modifiers
@@ -172,17 +172,27 @@ F_OnKeyUp(ih, VK, SC)
 		Case "Backspace", "Space", "Escape", "Enter", "Tab", "Insert", "Home", "PageUp", "Delete", "End", "PageDown", "AppsKey"	;the rest of not alphanumeric keys
 			, "F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10", "F11", "F12"
 			, "Up", "Down", "Left", "Right":
+			v_Char := ""
+			return
+		Case "Escape":
+			v_Char 			:= ""
+		,	f_ShiftPressed		:= false
+		,	f_WinPressed 		:= false
+		,	f_AltPressed 		:= false
+		,	f_ControlPressed 	:= false
 			return
 	}
 
 	if (f_Capital) ;and (f_Char)
-		and (v_Char)
+		and (v_Char != "")	;without it "0" is not detected
 		and (f_ShiftPressed)
 		and (WhatWasUp != "LShift") and (WhatWasUp != "RShift")
 		and !(f_ControlPressed) and !(f_AltPressed) and !(f_WinPressed) 
 		; and !(f_AnyOtherKey)
 		{
+			OutputDebug, % "Przed SendLevel" . "`n"
 			SendLevel, 2
+			OutputDebug, % "Po SendLevel" . "`n"
 			Switch v_Char
 			{
 				Case "``": 	SendInput, {BS}~
