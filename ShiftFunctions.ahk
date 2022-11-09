@@ -14,15 +14,15 @@
 ;@Ahk2Exe-SetCompanyName  http://mslonik.pl
 ;@Ahk2Exe-SetFileVersion %U_vAppVersion%
 	v_Char 			:= ""	;global variable
-,	f_ShiftPressed 	:= false	;global flag
-,	f_ControlPressed	:= false	;global flag
-,	f_AltPressed		:= false	;global flag
-,	f_WinPressed		:= false	;global flag 
+,	f_ShiftPressed 	:= false	;global flag, set when any Shift key (left or right) was pressed.
+,	f_ControlPressed	:= false	;global flag, set when any Control key (left or right) was pressed.
+,	f_AltPressed		:= false	;global flag, set when any Alt key (left or right) was pressed.
+,	f_WinPressed		:= false	;global flag, set when any Windows key (left or right) was pressed.
 ,	f_AnyOtherKey		:= false	;global flag
-,	f_Capital			:= true	;global flag
-,	f_Diacritics		:= true	;global flag
-,	f_CapsLock		:= true	;global flag
-,	f_Char			:= false	;global flag
+,	f_Char			:= false	;global flag, set when printable character was pressed down (and not yet released).
+,	f_Capital			:= true	;global flag: enable / disable function Shift Capital
+,	f_Diacritics		:= true	;global flag: enable / disable function Shift Diacritics
+,	f_CapsLock		:= true	;global flag: enable / disable function Shift CapsLock
 
 SetBatchLines, 	-1				; Never sleep (i.e. have the script run at maximum speed).
 SendMode,			Input			; Recommended for new scripts due to its superior speed and reliability.
@@ -30,7 +30,9 @@ SetWorkingDir, 	%A_ScriptDir%		; Ensures a consistent starting directory.
 StringCaseSense, 	On				;for Switch in F_OnKeyUp()
 
 Menu, Tray, Icon, imageres.dll, 123     ; this line will turn the H icon into a small red a letter-looking thing.
+F_InputArguments()
 F_InitiateInputHook()
+
 ;end initialization section
 
 ; - - - - - - - - - - - - - - GLOBAL HOTSTRINGS: BEGINNING- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -83,6 +85,10 @@ return
 :*:sfstatus/::
 :*:sfstate/::
 	MsgBox, 64, % A_ScriptName, % "Current status is" . A_Space . (v_InputH.InProgress ? "ENABLED" : "DISABLED")
+		. "`n`n"
+		. "function Shift Capital:" . A_Tab . 		(f_Capital ? "ENABLED" : "DISABLED") 		. "`n"
+		. "function Shift Diacritics:" . A_Tab . 	(f_Diacritics ? "ENABLED" : "DISABLED") 	. "`n"
+		. "function Shift CapsLock:" . A_Tab . 		(f_CapsLock ? "ENABLED" : "DISABLED")
 return
 
 :*:sfenable/::
@@ -157,11 +163,15 @@ F_OnKeyUp(ih, VK, SC)
 	local	WhatWasUp := GetKeyName(Format("vk{:x}sc{:x}", VK, SC))
 	
 	; OutputDebug, % A_ThisFunc . A_Space . "B" . "`n"
-	OutputDebug, % "WWUb:" . WhatWasUp . A_Space "v_Char:" . v_Char . "S:" . f_ShiftPressed . A_Space . "C:" . f_ControlPressed . A_Space . "A:" . f_AltPressed . A_Space . "W:" . f_WinPressed . A_Space . "O:" . f_AnyOtherKey . "`n"
+	; OutputDebug, % "WWUb:" . WhatWasUp . A_Space "v_Char:" . v_Char . "S:" . f_ShiftPressed . A_Space . "C:" . f_ControlPressed . A_Space . "A:" . f_AltPressed . A_Space . "W:" . f_WinPressed . A_Space . "O:" . f_AnyOtherKey . "`n"
 	Switch WhatWasUp
 	{
 		Case "LControl", "RControl":	;modifiers
-			f_ControlPressed := false
+				v_Char 			:= ""
+		,		f_ShiftPressed		:= false
+		,		f_WinPressed 		:= false
+		,		f_AltPressed 		:= false
+		,		f_ControlPressed 	:= false
 			return
 		Case "LAlt", "RAlt":		;modifiers
 			f_AltPressed := false
@@ -230,7 +240,7 @@ F_OnKeyUp(ih, VK, SC)
 	if (f_Diacritics) ;and (f_Char)
 		and (v_Char) and (f_ShiftPressed)
 		and ((WhatWasUp = "LShift") or (WhatWasUp = "RShift"))
-		and (f_ShiftPressed) and !(f_ControlPressed) and !(f_AltPressed) and !(f_WinPressed) 
+		and (f_ShiftPressed) and !(f_ControlPressed) and !(f_AltPressed) and !(f_WinPressed)
 		; and !(f_AnyOtherKey)
 			Diacritics()
 
@@ -320,3 +330,41 @@ F_OneCharPressed(ih, Char)
 	; OutputDebug, % A_ThisFunc . A_Space . "E" . "`n"
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+F_InputArguments()
+{
+	global	;assume-global mode of operation
+
+	for n, param in A_Args
+	{
+		if (InStr(param, "-h", false)) or (InStr(param, "/h", false))
+			FileAppend, 
+(
+Shift functions, one parameter per function:
+
+Shift Capital:     press <Shift> and release it, next press and release any letter to get capital version of it.
+Shift Diacritics:  press and release any diacritic letter, next press and release <Shift> to get diacritic character.
+Shift CapsLock:    press and release <Shift> twice to toggle <CapsLock>.
+
+The following list of runtime / startup parameters is available:
+
+-scdisable  disable "ShiftCapital"
+-sddisable  disable "Shift Diacritics"
+-scdisable  disable "Shift CapsLock"
+-h, /h      this help
+-v          show application version
+
+Remark: you can always run application hotstrings. For more info just enter "sfhelp/""
+), *	;* = stdout, ** = stderr
+	if (InStr(param, "-v", false))
+		FileAppend, % AppVersion, *
+
+	if (InStr(param, "-scdisable", false))
+		f_Capital := false
+	
+	if (InStr(param, "-sddisable", false))
+		f_Diacritics := false
+
+	if (InStr(param, "-scdisable", false))
+		f_CapsLock := false
+	}
+}
