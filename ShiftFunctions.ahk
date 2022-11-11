@@ -32,9 +32,9 @@ SendMode,			Input			; Recommended for new scripts due to its superior speed and 
 SetWorkingDir, 	%A_ScriptDir%		; Ensures a consistent starting directory.
 StringCaseSense, 	On				;for Switch in F_OnKeyUp()
 
-MenuTray()
 F_InputArguments()
 F_InitiateInputHook()
+MenuTray()
 ;end initialization section
 
 ; - - - - - - - - - - - - - - GLOBAL HOTSTRINGS: BEGINNING- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -211,8 +211,27 @@ F_Capital()
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 MenuTray()
 {
+	global	;assume-global mode of operation
+	
 	Menu, Tray, Icon, imageres.dll, 123     ; this line will turn the H icon into a small red a letter-looking thing.
+    	Menu, Tray, Add, % A_ScriptName . A_Space . "status:" . A_Space . (v_InputH.InProgress ? "ENABLED" : "DISABLED"),	F_Empty
+    	Menu, Tray, Add ; To add a menu separator line, omit all three parameters. To put your menu items on top of the standard menu items (after adding your own menu items) run Menu, Tray, NoStandard followed by Menu, Tray, Standard.
+	Menu, Tray, Add, % "function Shift Capital:" . A_Tab . 	(f_Capital ? "ENABLED" : "DISABLED"),				F_Empty
+	Menu, Tray, Add, % "function Shift Diacritics:" . A_Tab . 	(f_Diacritics ? "ENABLED" : "DISABLED"),			F_Empty
+	Menu, Tray, Add, % "function Shift CapsLock:" . A_Tab . 	(f_CapsLock ? "ENABLED" : "DISABLED"),				F_Empty
+	Menu, Tray, Add, About…,																			F_About
+    	Menu, Tray, Add ; To add a menu separator line, omit all three parameters. To put your menu items on top of the standard menu items (after adding your own menu items) run Menu, Tray, NoStandard followed by Menu, Tray, Standard.
+    	Menu, Tray, Default, % A_ScriptName . A_Space . "status:" . A_Space . (v_InputH.InProgress ? "ENABLED" : "DISABLED") ; Default: Changes the menu's default item to be the specified menu item and makes its font bold.
+    	Menu, Tray, NoStandard
+    	Menu, Tray, Standard
+    	Menu, Tray, Tip, % SubStr(A_ScriptName, 1, -4) ; Changes the tray icon's tooltip.
 }
+; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+F_About()
+{}
+; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+F_Empty()
+{}
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 F_InitiateInputHook()	;why InputHook: to process triggerstring tips.
 {
@@ -348,7 +367,7 @@ F_OnKeyUp(ih, VK, SC)
 	if (f_CapsLock)
 		F_DoubleShift(WhatWasUp, f_ShiftPressed)
 
-	f_Char := false
+	; f_Char := false
 	; OutputDebug, % "WWUe:" . WhatWasUp . A_Space . "S:" . f_ShiftPressed . A_Space . "C:" . f_ControlPressed . A_Space . "A:" . f_AltPressed . A_Space . "W:" . f_WinPressed . A_Space . "O:" . f_AnyOtherKey . "`n"
 	; OutputDebug, % A_ThisFunc . A_Space . "E" . "`n"
 }
@@ -369,9 +388,9 @@ F_DoubleShift(WhatWasUp, ByRef f_ShiftPressed)
 	if (ShiftCounter = 2)
 	{
 		SetCapsLockState % !GetKeyState("CapsLock", "T") 
-		ShiftCounter 		:= 0
-	,	f_ShiftPressed 	:= false
-	,	v_InputH.VisibleText := true
+		ShiftCounter 			:= 0
+	,	f_ShiftPressed 		:= false
+	,	v_InputH.VisibleText 	:= true
 	}
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -412,9 +431,9 @@ DiacriticOutput(Diacritic)
 	SendLevel, 	2
 	Send,		% "{BS}" . Diacritic
 	SendLevel, 	0
-	f_ShiftPressed := false
-,	v_InputH.VisibleText := true
-,	f_Char 		:= false
+	f_ShiftPressed 		:= false
+,	v_InputH.VisibleText 	:= true
+,	f_Char 				:= false
 	; OutputDebug, % A_ThisFunc . A_Space . "E" . "`n"
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
