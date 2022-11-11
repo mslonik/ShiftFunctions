@@ -23,6 +23,7 @@
 ,	f_WinPressed		:= false	;global flag, set when any Windows key (left or right) was pressed.
 ,	f_AnyOtherKey		:= false	;global flag
 ,	f_Char			:= false	;global flag, set when printable character was pressed down (and not yet released).
+,	f_ShiftFunctions	:= true	;global flag, state of InputHook
 ,	f_Capital			:= true	;global flag: enable / disable function Shift Capital
 ,	f_Diacritics		:= true	;global flag: enable / disable function Shift Diacritics
 ,	f_CapsLock		:= true	;global flag: enable / disable function Shift CapsLock
@@ -57,7 +58,9 @@ MenuTray()
 		. "sfddisable/" . A_Tab .		"disable" . A_Space . "shift diacritic"			. "`n"
 		. "sfdenable/" . A_Tab .			"enable"	. A_Space . "shift diacritic"			. "`n"
 		. "sfcdisable/" . A_Tab .		"disable"	. A_Space . "shift capital"			. "`n"
-		. "sfcenable/" . A_Tab .			"enable"	. A_Space . "shift capital"
+		. "sfcenable/" . A_Tab .			"enable"	. A_Space . "shift capital"			. "`n"
+		. "sfldisable/" . A_Tab .		"disable" . A_Space . "shift CapsLock"			. "`n"
+		. "sflenable/" . A_Tab .			"enable"	. A_Space . "shift CapsLock"
 return
 
 :*:sfreload/::
@@ -73,26 +76,13 @@ return
 return
 
 :*:sfswitch/::
-:*:sftoggle/::
-	if (v_InputH.InProgress)
-	{
-		v_InputH.Stop()
-		MsgBox, 64, % A_ScriptName, % A_ScriptName . A_Space . "is DISABLED."
-	}
-	else
-	{
-		v_InputH.Start()
-		MsgBox, 64, % A_ScriptName, % A_ScriptName . A_Space . "is ENABLED."
-	}
+:*:sftoggle/:: 
+	F_Toggle()
 return
 
 :*:sfstatus/::
 :*:sfstate/::
-	MsgBox, 64, % A_ScriptName, % "Current status is" . A_Space . (v_InputH.InProgress ? "ENABLED" : "DISABLED")
-		. "`n`n"
-		. "function Shift Capital:" . A_Tab . 		(f_Capital ? "ENABLED" : "DISABLED") 		. "`n"
-		. "function Shift Diacritics:" . A_Tab . 	(f_Diacritics ? "ENABLED" : "DISABLED") 	. "`n"
-		. "function Shift CapsLock:" . A_Tab . 		(f_CapsLock ? "ENABLED" : "DISABLED")
+	F_Status()
 return
 
 :*:sfenable/::
@@ -106,27 +96,87 @@ return
 return
 
 :*:sfddisable/::
-	f_Diacritics := false
-	MsgBox, 64, % A_ScriptName, % "Shift diacritics is DISABLED."
+	F_sfparamendis(WhatNext := false, WhichVariable := f_Diacritics, FunctionName := "Shift Diacritics")
 return
 
 :*:sfdenable/::
-	f_Diacritics := true
-	MsgBox, 64, % A_ScriptName, % "Shift diacritics is ENABLED."
+	F_sfparamendis(WhatNext := true, WhichVariable := f_Diacritics, FunctionName := "Shift Diacritics")
 return
 
 :*:sfcdisable/::
-	f_Capital := false
-	MsgBox, 64, % A_ScriptName, % "Shift capital is DISABLED."
+	F_sfparamendis(WhatNext := false, WhichVariable := f_Capital, FunctionName := "Shift Capital")
 return
 
 :*:sfcenable/::
-	f_Capital := true
-	MsgBox, 64, % A_ScriptName, % "Shift capital is ENABLED."
+	F_sfparamendis(WhatNext := true, WhichVariable := f_Capital, FunctionName := "Shift Capital")
+return
+
+:*:sfldisable/::
+	F_sfparamendis(WhatNext := false, WhichVariable := f_CapsLock, FunctionName := "Shift CapsLock")
+return
+
+:*:sflenable/::
+	F_sfparamendis(WhatNext := true, WhichVariable := f_CapsLock, FunctionName := "Shift CapsLock")
 return
 ; - - - - - - - - - - - - - - GLOBAL HOTSTRINGS: END- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 ; - - - - - - - - - - - - - - DEFINITIONS OF FUNCTIONS: BEGINNING- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+F_sfparamendis(WhatNext, ByRef WhichVariable, FunctionName)
+{
+	global	;assume-globa mode of operation
+	local 	OldValue := WhichVariable
+
+	WhichVariable := WhatNext
+	Menu, Tray, Rename, % "function" . A_Space . FunctionName . ":" . A_Tab . (OldValue ? "ENABLED" : "DISABLED"), % "function" . A_Space . FunctionName . ":"  . A_Tab . (WhichVariable ? "ENABLED" : "DISABLED")
+	MsgBox, 64, % A_ScriptName, % FunctionName . A_Space . "is" . A_Space . (WhichVariable ? "ENABLED" : "DISABLED")
+}
+; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+F_Status()
+{
+	global	;assume-globa mode of operation
+	local 	OldStatus := f_ShiftFunctions
+	Menu, Tray, Rename, % A_ScriptName . A_Space . "status:" . A_Space . (OldStatus ? "ENABLED" : "DISABLED"), % A_ScriptName . A_Space . "status:" . A_Space . (f_ShiftFunctions ? "ENABLED" : "DISABLED")
+	MsgBox, 64, % A_ScriptName, % "Current status is" . A_Space . (v_InputH.InProgress ? "ENABLED" : "DISABLED")
+		. "`n`n"
+		. "function Shift Capital:" . A_Tab . 		(f_Capital ? "ENABLED" : "DISABLED") 		. "`n"
+		. "function Shift Diacritics:" . A_Tab . 	(f_Diacritics ? "ENABLED" : "DISABLED") 	. "`n"
+		. "function Shift CapsLock:" . A_Tab . 		(f_CapsLock ? "ENABLED" : "DISABLED")
+}
+; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+F_Toggle()
+{
+	global	;assume-globa mode of operation
+	local 	OldStatus 	:= f_ShiftFunctions
+	, 		OldCapital 	:= f_Capital
+	, 		OldDiacritics 	:= f_Diacritics
+	, 		OldCapslock 	:= f_CapsLock
+	
+	f_ShiftFunctions := !f_ShiftFunctions
+	Menu, Tray, Rename, % A_ScriptName . A_Space . "status:" . A_Space . (OldStatus ? "ENABLED" : "DISABLED"), % A_ScriptName . A_Space . "status:" . A_Space . (f_ShiftFunctions ? "ENABLED" : "DISABLED")
+	if (f_ShiftFunctions)
+	{
+		v_InputH.Start()
+		f_Capital			:= true
+	,	f_Diacritics		:= true
+	,	f_CapsLock		:= true
+		Menu, Tray, Rename, % "function Shift Capital:" . A_Tab . 		(OldCapital ? "ENABLED" : "DISABLED"),		% "function Shift Capital:" . A_Tab . 		(f_Capital ? "ENABLED" : "DISABLED")
+		Menu, Tray, Rename, % "function Shift Diacritics:" . A_Tab . 	(OldDiacritics ? "ENABLED" : "DISABLED"),	% "function Shift Diacritics:" . A_Tab . 	(f_Diacritics ? "ENABLED" : "DISABLED")
+		Menu, Tray, Rename, % "function Shift CapsLock:" . A_Tab . 		(OldCapslock ? "ENABLED" : "DISABLED"),		% "function Shift CapsLock:" . A_Tab . 		(f_CapsLock ? "ENABLED" : "DISABLED")
+		MsgBox, 64, % A_ScriptName, % A_ScriptName . A_Space . "is ENABLED."
+	}
+	else
+	{
+		v_InputH.Stop()
+		f_Capital			:= false
+	,	f_Diacritics		:= false
+	,	f_CapsLock		:= false
+		Menu, Tray, Rename, % "function Shift Capital:" . A_Tab . 		(OldCapital ? "ENABLED" : "DISABLED"),		% "function Shift Capital:" . A_Tab . 		(f_Capital ? "ENABLED" : "DISABLED")
+		Menu, Tray, Rename, % "function Shift Diacritics:" . A_Tab . 	(OldDiacritics ? "ENABLED" : "DISABLED"),	% "function Shift Diacritics:" . A_Tab . 	(f_Diacritics ? "ENABLED" : "DISABLED")
+		Menu, Tray, Rename, % "function Shift CapsLock:" . A_Tab . 		(OldCapslock ? "ENABLED" : "DISABLED"),		% "function Shift CapsLock:" . A_Tab . 		(f_CapsLock ? "ENABLED" : "DISABLED")
+		MsgBox, 64, % A_ScriptName, % A_ScriptName . A_Space . "is DISABLED."
+	}
+}
+; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 F_Capital()
 {
 	global	;assume-global mode of operation
@@ -214,7 +264,7 @@ MenuTray()
 	global	;assume-global mode of operation
 	
 	Menu, Tray, Icon, imageres.dll, 123     ; this line will turn the H icon into a small red a letter-looking thing.
-    	Menu, Tray, Add, % A_ScriptName . A_Space . "status:" . A_Space . (v_InputH.InProgress ? "ENABLED" : "DISABLED"),	F_Empty
+    	Menu, Tray, Add, % A_ScriptName . A_Space . "status:" . A_Space . (f_ShiftFunctions ? "ENABLED" : "DISABLED"),	F_Empty
     	Menu, Tray, Add ; To add a menu separator line, omit all three parameters. To put your menu items on top of the standard menu items (after adding your own menu items) run Menu, Tray, NoStandard followed by Menu, Tray, Standard.
 	Menu, Tray, Add, % "function Shift Capital:" . A_Tab . 	(f_Capital ? "ENABLED" : "DISABLED"),				F_Empty
 	Menu, Tray, Add, % "function Shift Diacritics:" . A_Tab . 	(f_Diacritics ? "ENABLED" : "DISABLED"),			F_Empty
@@ -241,7 +291,10 @@ F_InitiateInputHook()	;why InputHook: to process triggerstring tips.
 ,	v_InputH.OnKeyDown	:= Func("F_OnKeyDown")
 ,	v_InputH.OnKeyUp 	:= Func("F_OnKeyUp")
 	v_InputH.KeyOpt("{All}", "N")
-	v_InputH.Start()
+	if (f_ShiftFunctions)
+		v_InputH.Start()
+	else
+		v_InputH.Stop()
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 F_OnKeyDown(ih, VK, SC)
@@ -295,7 +348,7 @@ F_OnKeyUp(ih, VK, SC)
 			,	f_ShiftPressed		:= false
 			,	v_InputH.VisibleText := true
 				return
-			Case "Lwin", "RWin":		;modifiers
+			Case "LWin", "RWin":		;modifiers
 				f_WinPressed 		:= false
 			,	f_ShiftPressed		:= false
 			,	v_InputH.VisibleText := true
@@ -314,11 +367,17 @@ F_OnKeyUp(ih, VK, SC)
 			,	v_InputH.VisibleText := true
 				return
 			Case "Backspace":
-				v_Char := ""
-			,	f_Char := ""	
+				v_Char 			:= ""
+			,	f_Char 			:= ""
+			,	f_ShiftPressed		:= false
+			,	v_InputH.VisibleText := true
+			,	f_WinPressed 		:= false
+			,	f_AltPressed 		:= false
+			,	f_ControlPressed 	:= false
 				return
 		}
 	}
+	; OutputDebug, % "WWU:" . WhatWasUp . A_Space "v_Char:" . v_Char . "C:" . f_Char . A_Space . "S:" . f_ShiftPressed . A_Space . "C:" . f_ControlPressed . A_Space . "A:" . f_AltPressed . A_Space . "W:" . f_WinPressed . "`n"
 
 	Switch WhatWasUp	;These are chars, so have to be filtered out separately
 		{
@@ -363,7 +422,6 @@ F_OnKeyUp(ih, VK, SC)
 		and ((WhatWasUp = "LShift") or (WhatWasUp = "RShift"))
 			Diacritics()
 
-	; OutputDebug, % "WWU:" . WhatWasUp . A_Space "v_Char:" . v_Char . "C:" . f_Char . A_Space . "S:" . f_ShiftPressed . A_Space . "C:" . f_ControlPressed . A_Space . "A:" . f_AltPressed . A_Space . "W:" . f_WinPressed . "`n"
 	if (f_CapsLock)
 		F_DoubleShift(WhatWasUp, f_ShiftPressed)
 
