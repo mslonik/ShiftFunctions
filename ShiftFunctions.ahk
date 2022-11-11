@@ -32,7 +32,7 @@ SendMode,			Input			; Recommended for new scripts due to its superior speed and 
 SetWorkingDir, 	%A_ScriptDir%		; Ensures a consistent starting directory.
 StringCaseSense, 	On				;for Switch in F_OnKeyUp()
 
-Menu, Tray, Icon, imageres.dll, 123     ; this line will turn the H icon into a small red a letter-looking thing.
+MenuTray()
 F_InputArguments()
 F_InitiateInputHook()
 
@@ -128,6 +128,11 @@ return
 ; - - - - - - - - - - - - - - GLOBAL HOTSTRINGS: END- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 ; - - - - - - - - - - - - - - DEFINITIONS OF FUNCTIONS: BEGINNING- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+MenuTray()
+{
+	Menu, Tray, Icon, imageres.dll, 123     ; this line will turn the H icon into a small red a letter-looking thing.
+}
+; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 F_InitiateInputHook()	;why InputHook: to process triggerstring tips.
 {
 	global	;assume-global mode of operation
@@ -178,26 +183,27 @@ F_OnKeyUp(ih, VK, SC)
 			Case "LControl", "RControl":	;modifiers
 				f_ControlPressed 	:= false
 			,	v_Char 			:= ""
-			,	f_Char			:= false		
+			,	f_Char			:= false
 			,	f_ShiftPressed		:= false
 			,	f_WinPressed 		:= false
 			,	f_AltPressed 		:= false
 				return
 			Case "LAlt", "RAlt":		;modifiers
-				f_AltPressed := false
+				f_AltPressed 		:= false
+			,	f_ShiftPressed		:= false
 				return
 			Case "Lwin", "RWin":		;modifiers
-				f_WinPressed := false
+				f_WinPressed 		:= false
+			,	f_ShiftPressed		:= false
 				return 
-			Case "Insert", "Home", "PageUp", "Delete", "End", "PageDown", "AppsKey"	;the rest of not alphanumeric keys
-			,	"Up", "Down", "Left", "Right":
-				f_ShiftPressed		:= false
-				; OutputDebug, % "Niedrukowane" . "`n"
-				return
-			Case "F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10", "F11", "F12", "F13", "F14", "F15", "F16", "F17", "F18", "F19", "F20":
+			Case "Insert", "Home", "PageUp", "Delete", "End", "PageDown", "AppsKey"	;NavPad
+			,	"Up", "Down", "Left", "Right":	;11
 				f_ShiftPressed		:= false
 				return
-			Case "F21", "F22", "F23", "F24":
+			Case "F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10", "F11", "F12", "F13", "F14", "F15", "F16", "F17", "F18", "F19", "F20":	;20
+				f_ShiftPressed		:= false
+				return
+			Case "F21", "F22", "F23", "F24":	;4
 				f_ShiftPressed		:= false
 				return
 			Case "Backspace":
@@ -207,7 +213,7 @@ F_OnKeyUp(ih, VK, SC)
 		}
 	}
 
-	Switch WhatWasUp
+	Switch WhatWasUp	;These are chars, so have to be filtered out separately
 		{
 			Case "Space", "Enter", "Tab": 	;the rest of not alphanumeric keys
 				f_Char := false
@@ -227,7 +233,14 @@ F_OnKeyUp(ih, VK, SC)
 	if ((f_ShiftPressed) and (f_WinPressed))
 		or ((f_ShiftPressed) and (f_AltPressed))
 		or ((f_ShiftPressed) and (f_ControlPressed))
-		OutputDebug, % "Two modifiers at the same time" . "`n"
+		{
+			OutputDebug, % "Two modifiers at the same time" . "`n"
+			f_ShiftPressed		:= false
+		,	f_WinPressed 		:= false
+		,	f_AltPressed 		:= false
+		,	f_ControlPressed 	:= false
+			return
+		}
 	;From this moment I know we have character and only Shift
 
 	if (f_Capital) ;and (f_Char)
@@ -295,7 +308,7 @@ F_DoubleShift(WhatWasUp, ByRef f_ShiftPressed)
 		return
 	}
 	
-	OutputDebug, % "ShiftCounter:" . A_Space . ShiftCounter . "`n"
+	; OutputDebug, % "ShiftCounter:" . A_Space . ShiftCounter . "`n"
 	if (ShiftCounter = 2)
 	{
 		SetCapsLockState % !GetKeyState("CapsLock", "T") 
