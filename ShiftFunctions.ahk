@@ -35,7 +35,6 @@ StringCaseSense, 	On				;for Switch in F_OnKeyUp()
 MenuTray()
 F_InputArguments()
 F_InitiateInputHook()
-
 ;end initialization section
 
 ; - - - - - - - - - - - - - - GLOBAL HOTSTRINGS: BEGINNING- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -128,6 +127,88 @@ return
 ; - - - - - - - - - - - - - - GLOBAL HOTSTRINGS: END- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 ; - - - - - - - - - - - - - - DEFINITIONS OF FUNCTIONS: BEGINNING- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+F_Capital()
+{
+	global	;assume-global mode of operation
+
+	SendLevel, 2
+	Switch v_Char
+	{
+		Case "``":
+			v_InputH.VisibleText := true
+			SendInput, ~
+		Case "1":
+			v_InputH.VisibleText := true
+			SendInput, {!}
+		Case "2":
+			v_InputH.VisibleText := true
+			SendInput, @
+		Case "3":
+			v_InputH.VisibleText := true
+			SendInput, {#}
+		Case "4":
+			v_InputH.VisibleText := true
+			SendInput, $
+		Case "5":
+			v_InputH.VisibleText := true
+			SendInput, `%
+		Case "6":
+			v_InputH.VisibleText := true
+			SendInput, {^}
+		Case "7":
+			v_InputH.VisibleText := true
+			SendInput, &
+		Case "8":
+			v_InputH.VisibleText := true
+			SendInput, *
+		Case "9":
+			v_InputH.VisibleText := true
+			SendInput, (
+		Case "0":
+			v_InputH.VisibleText := true
+			SendInput, )
+		Case "-":
+			v_InputH.VisibleText := true
+			SendInput, _
+		Case "=":
+			v_InputH.VisibleText := true
+			SendInput, {+}
+		Case "[":
+			v_InputH.VisibleText := true
+			SendInput, {{}
+		Case "]":
+			v_InputH.VisibleText := true
+			SendInput, {}}
+		Case "\":
+			v_InputH.VisibleText := true
+			SendInput, |
+		Case ";":
+			v_InputH.VisibleText := true
+			SendInput, :
+		Case "'":
+			v_InputH.VisibleText := true
+			SendInput, "
+		Case ",":
+			v_InputH.VisibleText := true
+			SendInput, <
+		Case ".":
+			v_InputH.VisibleText := true
+			SendInput, >
+		Case "/":
+			v_InputH.VisibleText := true
+			SendInput, ?
+		Default:
+			v_Char := Format("{:U}", v_Char)
+			v_InputH.VisibleText := true
+			SendInput, % v_Char
+	}
+	SendLevel, 0
+	f_ShiftPressed 	:= false
+,	v_InputH.VisibleText := true
+,	f_Char			:= false
+
+}
+; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 MenuTray()
 {
 	Menu, Tray, Icon, imageres.dll, 123     ; this line will turn the H icon into a small red a letter-looking thing.
@@ -136,7 +217,7 @@ MenuTray()
 F_InitiateInputHook()	;why InputHook: to process triggerstring tips.
 {
 	global	;assume-global mode of operation
-	v_InputH 			:= InputHook("V I3 L0")	;I3 to not feed back this script; V to show pressed keys; L0 as only last char is analysed
+	v_InputH 			:= InputHook("I3 V L0")	;I3 to not feed back this script; V to show pressed keys; L0 as only last char is analysed
 ,	v_InputH.OnChar 	:= Func("F_OneCharPressed")
 ,	v_InputH.OnKeyDown	:= Func("F_OnKeyDown")
 ,	v_InputH.OnKeyUp 	:= Func("F_OnKeyUp")
@@ -154,6 +235,7 @@ F_OnKeyDown(ih, VK, SC)
 	{
 		Case "LShift", "RShift":
 			f_ShiftPressed 	:= true
+,			v_InputH.VisibleText := false
 		Case "LControl", "RControl":
 			f_ControlPressed 	:= true
 		Case "LAlt", "RAlt":
@@ -173,7 +255,7 @@ F_OnKeyUp(ih, VK, SC)
 	local	WhatWasUp := GetKeyName(Format("vk{:x}sc{:x}", VK, SC))
 	
 	; OutputDebug, % A_ThisFunc . A_Space . "B" . "`n"
-	OutputDebug, % "WWUb:" . WhatWasUp . A_Space "v_Char:" . v_Char . "C:" . f_Char . A_Space . "S:" . f_ShiftPressed . A_Space . "C:" . f_ControlPressed . A_Space . "A:" . f_AltPressed . A_Space . "W:" . f_WinPressed . "`n"
+	; OutputDebug, % "WWUb:" . WhatWasUp . A_Space "v_Char:" . v_Char . "C:" . f_Char . A_Space . "S:" . f_ShiftPressed . A_Space . "C:" . f_ControlPressed . A_Space . "A:" . f_AltPressed . A_Space . "W:" . f_WinPressed . "`n"
 
 	; Filtering section
 	if (!f_Char)
@@ -185,26 +267,32 @@ F_OnKeyUp(ih, VK, SC)
 			,	v_Char 			:= ""
 			,	f_Char			:= false
 			,	f_ShiftPressed		:= false
+			,	v_InputH.VisibleText := true
 			,	f_WinPressed 		:= false
 			,	f_AltPressed 		:= false
 				return
 			Case "LAlt", "RAlt":		;modifiers
 				f_AltPressed 		:= false
 			,	f_ShiftPressed		:= false
+			,	v_InputH.VisibleText := true
 				return
 			Case "Lwin", "RWin":		;modifiers
 				f_WinPressed 		:= false
 			,	f_ShiftPressed		:= false
+			,	v_InputH.VisibleText := true
 				return 
 			Case "Insert", "Home", "PageUp", "Delete", "End", "PageDown", "AppsKey"	;NavPad
 			,	"Up", "Down", "Left", "Right":	;11
 				f_ShiftPressed		:= false
+			,	v_InputH.VisibleText := true
 				return
 			Case "F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10", "F11", "F12", "F13", "F14", "F15", "F16", "F17", "F18", "F19", "F20":	;20
 				f_ShiftPressed		:= false
+			,	v_InputH.VisibleText := true
 				return
 			Case "F21", "F22", "F23", "F24":	;4
 				f_ShiftPressed		:= false
+			,	v_InputH.VisibleText := true
 				return
 			Case "Backspace":
 				v_Char := ""
@@ -219,11 +307,13 @@ F_OnKeyUp(ih, VK, SC)
 				f_Char := false
 			,	v_Char := ""
 			,	f_ShiftPressed		:= false
+			,	v_InputH.VisibleText := true
 				return
 			Case "Escape":
 				v_Char 			:= ""
 			,	f_Char			:= false
 			,	f_ShiftPressed		:= false
+			,	v_InputH.VisibleText := true
 			,	f_WinPressed 		:= false
 			,	f_AltPressed 		:= false
 			,	f_ControlPressed 	:= false
@@ -234,8 +324,9 @@ F_OnKeyUp(ih, VK, SC)
 		or ((f_ShiftPressed) and (f_AltPressed))
 		or ((f_ShiftPressed) and (f_ControlPressed))
 		{
-			OutputDebug, % "Two modifiers at the same time" . "`n"
+			; OutputDebug, % "Two modifiers at the same time" . "`n"
 			f_ShiftPressed		:= false
+		,	v_InputH.VisibleText := true	
 		,	f_WinPressed 		:= false
 		,	f_AltPressed 		:= false
 		,	f_ControlPressed 	:= false
@@ -246,41 +337,7 @@ F_OnKeyUp(ih, VK, SC)
 	if (f_Capital) ;and (f_Char)
 		and (f_ShiftPressed)
 		and (WhatWasUp != "LShift") and (WhatWasUp != "RShift")
-		{
-			; OutputDebug, % "Przed SendLevel" . "`n"
-			SendLevel, 2
-			; OutputDebug, % "Po SendLevel" . "`n"
-			Switch v_Char
-			{
-				Case "``": 	SendInput, {BS}~
-				Case "1":		SendInput, {BS}{!}
-				Case "2":		SendInput, {BS}@
-				Case "3":		SendInput, {BS}{#}
-				Case "4":		SendInput, {BS}$
-				Case "5":		SendInput, {BS}`%
-				Case "6":		SendInput, {BS}{^}
-				Case "7":		SendInput, {BS}&
-				Case "8":		SendInput, {BS}*
-				Case "9":		SendInput, {BS}(
-				Case "0":		SendInput, {BS})
-				Case "-":		SendInput, {BS}_
-				Case "=":		SendInput, {BS}{+}
-				Case "[":		SendInput, {BS}{{}
-				Case "]":		SendInput, {BS}{}}
-				Case "\":		SendInput, {BS}|
-				Case ";":		SendInput, {BS}:
-				Case "'":		SendInput, {BS}"
-				Case ",":		SendInput, {BS}<
-				Case ".":		SendInput, {BS}>
-				Case "/":		SendInput, {BS}?
-				Default:
-					v_Char := Format("{:U}", v_Char)
-					SendInput, % "{BS}" . v_Char
-			}
-			SendLevel, 0
-			f_ShiftPressed 	:= false
-,			f_Char			:= false
-		}
+			F_Capital()
 
 	if (f_Diacritics)
 		and (f_ShiftPressed)
@@ -313,7 +370,8 @@ F_DoubleShift(WhatWasUp, ByRef f_ShiftPressed)
 	{
 		SetCapsLockState % !GetKeyState("CapsLock", "T") 
 		ShiftCounter 		:= 0
-,		f_ShiftPressed 	:= false
+	,	f_ShiftPressed 	:= false
+	,	v_InputH.VisibleText := true
 	}
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -355,6 +413,7 @@ DiacriticOutput(Diacritic)
 	Send,		% "{BS}" . Diacritic
 	SendLevel, 	0
 	f_ShiftPressed := false
+,	v_InputH.VisibleText := true
 ,	f_Char 		:= false
 	; OutputDebug, % A_ThisFunc . A_Space . "E" . "`n"
 }
