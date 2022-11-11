@@ -191,7 +191,6 @@ F_OnKeyUp(ih, VK, SC)
 				return 
 			Case "Insert", "Home", "PageUp", "Delete", "End", "PageDown", "AppsKey"	;the rest of not alphanumeric keys
 			,	"Up", "Down", "Left", "Right":
-				; OutputDebug, % "WWU:" . WhatWasUp . A_Space "v_Char:" . v_Char . "C:" . f_Char . A_Space . "S:" . f_ShiftPressed . A_Space . "C:" . f_ControlPressed . A_Space . "A:" . f_AltPressed . A_Space . "W:" . f_WinPressed . A_Space . "O:" . f_AnyOtherKey . "`n"
 				f_ShiftPressed		:= false
 				; OutputDebug, % "Niedrukowane" . "`n"
 				return
@@ -275,6 +274,7 @@ F_OnKeyUp(ih, VK, SC)
 		and ((WhatWasUp = "LShift") or (WhatWasUp = "RShift"))
 			Diacritics()
 
+	; OutputDebug, % "WWU:" . WhatWasUp . A_Space "v_Char:" . v_Char . "C:" . f_Char . A_Space . "S:" . f_ShiftPressed . A_Space . "C:" . f_ControlPressed . A_Space . "A:" . f_AltPressed . A_Space . "W:" . f_WinPressed . "`n"
 	if (f_CapsLock)
 		F_DoubleShift(WhatWasUp, f_ShiftPressed)
 
@@ -283,14 +283,17 @@ F_OnKeyUp(ih, VK, SC)
 	; OutputDebug, % A_ThisFunc . A_Space . "E" . "`n"
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-F_DoubleShift(WhatWasUp, f_ShiftPressed)
+F_DoubleShift(WhatWasUp, ByRef f_ShiftPressed)
 {
 	global	;assume-global mode of operation
 	static	ShiftCounter := 0
 	if ((WhatWasUp = "LShift") or (WhatWasUp = "RShift")) and (f_ShiftPressed)
 		ShiftCounter++
 	else
+	{
 		ShiftCounter := 0
+		return
+	}
 	
 	OutputDebug, % "ShiftCounter:" . A_Space . ShiftCounter . "`n"
 	if (ShiftCounter = 2)
