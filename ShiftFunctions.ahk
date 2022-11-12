@@ -1,4 +1,15 @@
-﻿ #SingleInstance force 			; Only one instance of this script may run at a time!
+﻿/* 
+ 	Author:      	Maciej Słojewski (🐘, mslonik, http://mslonik.pl)
+ 	Purpose:     	Use Shift key(s) for various purposes.
+ 	Description: 	3 functions:
+				Shift: Diacritics, when Shift key is pressed and released after character which has diacritic representation, that letter is replaced with diacritic character.
+				Shift: Capital, when Shift is pressed and released before character, that character is replaced with capital character.
+				Shift: CapsLock, when Shift is pressed and release twice, CapsLock is toggled.
+ 	License:     	GNU GPL v.3
+	Notes:		Run this script as the first one, before any Hotstring definition (static or dynamic).
+				Save this file as UTF-8 with BOM.
+*/
+#SingleInstance force 			; Only one instance of this script may run at a time!
 #NoEnv  						; Recommended for performance and compatibility with future AutoHotkey releases.
 #Warn  	     				; Enable warnings to assist with detecting common errors.
 #Requires AutoHotkey v1.1.33+ 	; Displays an error and quits if a version requirement is not met.
@@ -27,7 +38,7 @@
 ,	f_Capital			:= true	;global flag: enable / disable function Shift Capital
 ,	f_Diacritics		:= true	;global flag: enable / disable function Shift Diacritics
 ,	f_CapsLock		:= true	;global flag: enable / disable function Shift CapsLock
-
+,	c_IconAsteriskInfo	:= 64	;global constant
 SetBatchLines, 	-1				; Never sleep (i.e. have the script run at maximum speed).
 SendMode,			Input			; Recommended for new scripts due to its superior speed and reliability.
 SetWorkingDir, 	%A_ScriptDir%		; Ensures a consistent starting directory.
@@ -40,7 +51,7 @@ MenuTray()
 
 ; - - - - - - - - - - - - - - GLOBAL HOTSTRINGS: BEGINNING- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 :*:sfhelp/::
-	MsgBox, 64, % SubStr(A_ScriptName, 1, -4) . ":" . A_Space . "information", % "Application hotstrings" . "." . A_Space . "All of them are ""immediate execute"" (*)" . "`n"
+	MsgBox, % c_IconAsteriskInfo, % SubStr(A_ScriptName, 1, -4) . ":" . A_Space . "information", % "Application hotstrings" . "." . A_Space . "All of them are ""immediate execute"" (*)" . "`n"
 		. "and active anywhere in operating system (any window)"						. "`n"
 		. "`n`n"
 		. "sfhelp/" . A_Tab . A_Tab . 	"shows this message"					 	. "`n"
@@ -57,15 +68,18 @@ MenuTray()
 		. "sfdisable/" . A_Tab . 		"disable"	. A_Space . "application"			. "`n"
 		. "sfddisable/" . A_Tab .		"disable" . A_Space . "shift diacritic"			. "`n"
 		. "sfdenable/" . A_Tab .			"enable"	. A_Space . "shift diacritic"			. "`n"
+		. "sfdtoggle/" . A_Tab .			"toggle"	. A_Space . "shift diacritic"			. "`n"
 		. "sfcdisable/" . A_Tab .		"disable"	. A_Space . "shift capital"			. "`n"
 		. "sfcenable/" . A_Tab .			"enable"	. A_Space . "shift capital"			. "`n"
+		. "sfctoggle/" . A_Tab .			"toggle" 	. A_Space . "shift capital"			. "`n"
 		. "sfldisable/" . A_Tab .		"disable" . A_Space . "shift CapsLock"			. "`n"
-		. "sflenable/" . A_Tab .			"enable"	. A_Space . "shift CapsLock"
+		. "sflenable/" . A_Tab .			"enable"	. A_Space . "shift CapsLock"			. "`n"
+		. "sfltoggle/" . A_Tab .			"toggle"	. A_Space . "shift CapsLock"
 return
 
 :*:sfreload/::
 :*:sfrestart/::     ;global hotstring
-	MsgBox, 64, % A_ScriptName, % A_ScriptName . A_Space . "will be restarted!"
+	MsgBox, % c_IconAsteriskInfo, % A_ScriptName, % A_ScriptName . A_Space . "will be restarted!"
 	reload
 return
 
@@ -86,57 +100,110 @@ return
 return
 
 :*:sfenable/::
-	v_InputH.Start()
-	MsgBox, 64, % A_ScriptName, % A_ScriptName . A_Space . "is ENABLED."
+	F_sfendis(WhatToDo := true)
 return
 
 :*:sfdisable/::
-	v_InputH.Stop()
-	MsgBox, 64, % A_ScriptName, % A_ScriptName . A_Space . "is DISABLED."
+	F_sfendis(WhatToDo := false)
+return
+
+:*:sfdtoggle/::
+	F_sfparamToggleH(WhichVariable := "f_Diacritics", FunctionName := "Diacritics")
 return
 
 :*:sfddisable/::
-	F_sfparamendis(WhatNext := false, WhichVariable := f_Diacritics, FunctionName := "Shift Diacritics")
+	F_sfparamendis(WhatNext := false, WhichVariable := "f_Diacritics", FunctionName := "Diacritics")
 return
 
 :*:sfdenable/::
-	F_sfparamendis(WhatNext := true, WhichVariable := f_Diacritics, FunctionName := "Shift Diacritics")
+	F_sfparamendis(WhatNext := true, WhichVariable := "f_Diacritics", FunctionName := "Diacritics")
+return
+
+:*:sfctoggle/::
+	F_sfparamToggleH(WhichVariable := "f_Capital", FunctionName := "Capital")
 return
 
 :*:sfcdisable/::
-	F_sfparamendis(WhatNext := false, WhichVariable := f_Capital, FunctionName := "Shift Capital")
+	F_sfparamendis(WhatNext := false, WhichVariable := "f_Capital", FunctionName := "Capital")
 return
 
 :*:sfcenable/::
-	F_sfparamendis(WhatNext := true, WhichVariable := f_Capital, FunctionName := "Shift Capital")
+	F_sfparamendis(WhatNext := true, WhichVariable := "f_Capital", FunctionName := "Capital")
+return
+
+:*:sfltoggle/::
+	F_sfparamToggleH(WhichVariable := "f_CapsLock", FunctionName := "CapsLock")
 return
 
 :*:sfldisable/::
-	F_sfparamendis(WhatNext := false, WhichVariable := f_CapsLock, FunctionName := "Shift CapsLock")
+	F_sfparamendis(WhatNext := false, WhichVariable := "f_CapsLock", FunctionName := "CapsLock")
 return
 
 :*:sflenable/::
-	F_sfparamendis(WhatNext := true, WhichVariable := f_CapsLock, FunctionName := "Shift CapsLock")
+	F_sfparamendis(WhatNext := true, WhichVariable := "f_CapsLock", FunctionName := "CapsLock")
 return
 ; - - - - - - - - - - - - - - GLOBAL HOTSTRINGS: END- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 ; - - - - - - - - - - - - - - DEFINITIONS OF FUNCTIONS: BEGINNING- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-F_sfparamendis(WhatNext, ByRef WhichVariable, FunctionName)
+F_sfendis(WhatToDo)
 {
 	global	;assume-globa mode of operation
-	local 	OldValue := WhichVariable
 
-	WhichVariable := WhatNext
-	Menu, Tray, Rename, % "function" . A_Space . FunctionName . ":" . A_Tab . (OldValue ? "ENABLED" : "DISABLED"), % "function" . A_Space . FunctionName . ":"  . A_Tab . (WhichVariable ? "ENABLED" : "DISABLED")
-	MsgBox, 64, % A_ScriptName, % FunctionName . A_Space . "is" . A_Space . (WhichVariable ? "ENABLED" : "DISABLED")
+	if (WhatToDo)
+		v_InputH.Start()
+	else
+		v_InputH.Stop()
+
+	MsgBox, % c_IconAsteriskInfo, % A_ScriptName, % A_ScriptName . A_Space . "is" . A_Space . (WhatToDo ? "ENABLED" : "DISABLED") . "."
+}
+; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+F_sfparamToggle(ItemName, ItemPos, MenuName)
+{
+	global	;assume-globa mode of operation
+
+	Switch ItemPos
+	{
+		Case 3:
+			f_Capital := !f_Capital
+			Menu, Tray, Rename, % A_ThisMenuItem, % "function Shift" . A_Space . "Capital" . ":"  . A_Tab . (f_Capital ? "ENABLED" : "DISABLED")
+			MsgBox, % c_IconAsteriskInfo, % A_ScriptName, % "function Shift" . A_Space . "Capital" . ":"  . A_Tab . (f_Capital ? "ENABLED" : "DISABLED")
+		Case 4:
+			f_Diacritics := !f_Diacritics
+			Menu, Tray, Rename, % A_ThisMenuItem, % "function Shift" . A_Space . "Diacritics" . ":"  . A_Tab . (f_Diacritics ? "ENABLED" : "DISABLED")
+			MsgBox, % c_IconAsteriskInfo, % A_ScriptName, % "function Shift" . A_Space . "Diacritics" . ":"  . A_Tab . (f_Diacritics ? "ENABLED" : "DISABLED")
+		Case 5:
+			f_CapsLock := !f_CapsLock
+			Menu, Tray, Rename, % A_ThisMenuItem, % "function Shift" . A_Space . "CapsLock" . ":"  . A_Tab . (f_CapsLock ? "ENABLED" : "DISABLED")
+			MsgBox, % c_IconAsteriskInfo, % A_ScriptName, % "function Shift" . A_Space . "CapsLock" . ":"  . A_Tab . (f_CapsLock ? "ENABLED" : "DISABLED")
+	}
+}
+; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+F_sfparamToggleH(WhichVariable, FunctionName)
+{
+	global	;assume-globa mode of operation
+	local 	OldValue := %WhichVariable%
+
+	%WhichVariable% := !OldValue
+	Menu, Tray, Rename, % "function Shift" . A_Space . FunctionName . ":" . A_Tab . (OldValue ? "ENABLED" : "DISABLED"), % "function Shift" . A_Space . FunctionName . ":"  . A_Tab . (%WhichVariable% ? "ENABLED" : "DISABLED")
+	MsgBox, % c_IconAsteriskInfo, % A_ScriptName, % FunctionName . A_Space . "is" . A_Space . (%WhichVariable% ? "ENABLED" : "DISABLED")
+}
+; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+F_sfparamendis(WhatNext, WhichVariable, FunctionName)
+{
+	global	;assume-globa mode of operation
+	local 	OldValue := %WhichVariable%
+
+	%WhichVariable% := WhatNext
+	Menu, Tray, Rename, % "function Shift" . A_Space . FunctionName . ":" . A_Tab . (OldValue ? "ENABLED" : "DISABLED"), % "function Shift" . A_Space . FunctionName . ":"  . A_Tab . (WhichVariable ? "ENABLED" : "DISABLED")
+	MsgBox, % c_IconAsteriskInfo, % A_ScriptName, % FunctionName . A_Space . "is" . A_Space . (%WhichVariable% ? "ENABLED" : "DISABLED")
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 F_Status()
 {
 	global	;assume-globa mode of operation
 	local 	OldStatus := f_ShiftFunctions
-	Menu, Tray, Rename, % A_ScriptName . A_Space . "status:" . A_Space . (OldStatus ? "ENABLED" : "DISABLED"), % A_ScriptName . A_Space . "status:" . A_Space . (f_ShiftFunctions ? "ENABLED" : "DISABLED")
-	MsgBox, 64, % A_ScriptName, % "Current status is" . A_Space . (v_InputH.InProgress ? "ENABLED" : "DISABLED")
+	Menu, Tray, Rename, % A_ScriptName . A_Space . "status:" . A_Tab . (OldStatus ? "ENABLED" : "DISABLED"), % A_ScriptName . A_Space . "status:" . A_Tab . (f_ShiftFunctions ? "ENABLED" : "DISABLED")
+	MsgBox, % c_IconAsteriskInfo, % A_ScriptName, % "Current status is" . A_Space . (v_InputH.InProgress ? "ENABLED" : "DISABLED")
 		. "`n`n"
 		. "function Shift Capital:" . A_Tab . 		(f_Capital ? "ENABLED" : "DISABLED") 		. "`n"
 		. "function Shift Diacritics:" . A_Tab . 	(f_Diacritics ? "ENABLED" : "DISABLED") 	. "`n"
@@ -152,7 +219,7 @@ F_Toggle()
 	, 		OldCapslock 	:= f_CapsLock
 	
 	f_ShiftFunctions := !f_ShiftFunctions
-	Menu, Tray, Rename, % A_ScriptName . A_Space . "status:" . A_Space . (OldStatus ? "ENABLED" : "DISABLED"), % A_ScriptName . A_Space . "status:" . A_Space . (f_ShiftFunctions ? "ENABLED" : "DISABLED")
+	Menu, Tray, Rename, % A_ScriptName . A_Space . "status:" . A_Tab . (OldStatus ? "ENABLED" : "DISABLED"), % A_ScriptName . A_Space . "status:" . A_Tab . (f_ShiftFunctions ? "ENABLED" : "DISABLED")
 	if (f_ShiftFunctions)
 	{
 		v_InputH.Start()
@@ -162,7 +229,7 @@ F_Toggle()
 		Menu, Tray, Rename, % "function Shift Capital:" . A_Tab . 		(OldCapital ? "ENABLED" : "DISABLED"),		% "function Shift Capital:" . A_Tab . 		(f_Capital ? "ENABLED" : "DISABLED")
 		Menu, Tray, Rename, % "function Shift Diacritics:" . A_Tab . 	(OldDiacritics ? "ENABLED" : "DISABLED"),	% "function Shift Diacritics:" . A_Tab . 	(f_Diacritics ? "ENABLED" : "DISABLED")
 		Menu, Tray, Rename, % "function Shift CapsLock:" . A_Tab . 		(OldCapslock ? "ENABLED" : "DISABLED"),		% "function Shift CapsLock:" . A_Tab . 		(f_CapsLock ? "ENABLED" : "DISABLED")
-		MsgBox, 64, % A_ScriptName, % A_ScriptName . A_Space . "is ENABLED."
+		MsgBox, % c_IconAsteriskInfo, % A_ScriptName, % A_ScriptName . A_Space . "is ENABLED."
 	}
 	else
 	{
@@ -173,7 +240,7 @@ F_Toggle()
 		Menu, Tray, Rename, % "function Shift Capital:" . A_Tab . 		(OldCapital ? "ENABLED" : "DISABLED"),		% "function Shift Capital:" . A_Tab . 		(f_Capital ? "ENABLED" : "DISABLED")
 		Menu, Tray, Rename, % "function Shift Diacritics:" . A_Tab . 	(OldDiacritics ? "ENABLED" : "DISABLED"),	% "function Shift Diacritics:" . A_Tab . 	(f_Diacritics ? "ENABLED" : "DISABLED")
 		Menu, Tray, Rename, % "function Shift CapsLock:" . A_Tab . 		(OldCapslock ? "ENABLED" : "DISABLED"),		% "function Shift CapsLock:" . A_Tab . 		(f_CapsLock ? "ENABLED" : "DISABLED")
-		MsgBox, 64, % A_ScriptName, % A_ScriptName . A_Space . "is DISABLED."
+		MsgBox, % c_IconAsteriskInfo, % A_ScriptName, % A_ScriptName . A_Space . "is DISABLED."
 	}
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -264,14 +331,15 @@ MenuTray()
 	global	;assume-global mode of operation
 	
 	Menu, Tray, Icon, imageres.dll, 123     ; this line will turn the H icon into a small red a letter-looking thing.
-    	Menu, Tray, Add, % A_ScriptName . A_Space . "status:" . A_Space . (f_ShiftFunctions ? "ENABLED" : "DISABLED"),	F_Empty
+    	Menu, Tray, Add, 		% A_ScriptName . A_Space . "status:" . A_Tab . 	(f_ShiftFunctions ? "ENABLED" : "DISABLED"), F_Toggle
+    	Menu, Tray, Default, 	% A_ScriptName . A_Space . "status:" . A_Tab . 	(f_ShiftFunctions ? "ENABLED" : "DISABLED")
     	Menu, Tray, Add ; To add a menu separator line, omit all three parameters. To put your menu items on top of the standard menu items (after adding your own menu items) run Menu, Tray, NoStandard followed by Menu, Tray, Standard.
-	Menu, Tray, Add, % "function Shift Capital:" . A_Tab . 	(f_Capital ? "ENABLED" : "DISABLED"),				F_Empty
-	Menu, Tray, Add, % "function Shift Diacritics:" . A_Tab . 	(f_Diacritics ? "ENABLED" : "DISABLED"),			F_Empty
-	Menu, Tray, Add, % "function Shift CapsLock:" . A_Tab . 	(f_CapsLock ? "ENABLED" : "DISABLED"),				F_Empty
-	Menu, Tray, Add, About…,																			F_About
+	Menu, Tray, Add, 		% "function Shift Capital:" . A_Tab . 			(f_Capital ? "ENABLED" : "DISABLED"),		F_sfparamToggle
+	Menu, Tray, Add, 		% "function Shift Diacritics:" . A_Tab . 		(f_Diacritics ? "ENABLED" : "DISABLED"),	F_sfparamToggle
+	Menu, Tray, Add, 		% "function Shift CapsLock:" . A_Tab . 			(f_CapsLock ? "ENABLED" : "DISABLED"),		F_sfparamToggle
+	Menu, Tray, Add, About…,																				F_About
     	Menu, Tray, Add ; To add a menu separator line, omit all three parameters. To put your menu items on top of the standard menu items (after adding your own menu items) run Menu, Tray, NoStandard followed by Menu, Tray, Standard.
-    	Menu, Tray, Default, % A_ScriptName . A_Space . "status:" . A_Space . (v_InputH.InProgress ? "ENABLED" : "DISABLED") ; Default: Changes the menu's default item to be the specified menu item and makes its font bold.
+    	; Menu, Tray, Default, % A_ScriptName . A_Space . "status:" . A_Space . (v_InputH.InProgress ? "ENABLED" : "DISABLED") ; Default: Changes the menu's default item to be the specified menu item and makes its font bold.
     	Menu, Tray, NoStandard
     	Menu, Tray, Standard
     	Menu, Tray, Tip, % SubStr(A_ScriptName, 1, -4) ; Changes the tray icon's tooltip.
@@ -368,7 +436,7 @@ F_OnKeyUp(ih, VK, SC)
 				return
 			Case "Backspace":
 				v_Char 			:= ""
-			,	f_Char 			:= ""
+			,	f_Char 			:= false
 			,	f_ShiftPressed		:= false
 			,	v_InputH.VisibleText := true
 			,	f_WinPressed 		:= false
@@ -377,8 +445,8 @@ F_OnKeyUp(ih, VK, SC)
 				return
 		}
 	}
-	; OutputDebug, % "WWU:" . WhatWasUp . A_Space "v_Char:" . v_Char . "C:" . f_Char . A_Space . "S:" . f_ShiftPressed . A_Space . "C:" . f_ControlPressed . A_Space . "A:" . f_AltPressed . A_Space . "W:" . f_WinPressed . "`n"
 
+	; OutputDebug, % "WWU:" . WhatWasUp . A_Space "v_Char:" . v_Char . "C:" . f_Char . A_Space . "S:" . f_ShiftPressed . A_Space . "C:" . f_ControlPressed . A_Space . "A:" . f_AltPressed . A_Space . "W:" . f_WinPressed . "`n"
 	Switch WhatWasUp	;These are chars, so have to be filtered out separately
 		{
 			Case "Space", "Enter", "Tab": 	;the rest of not alphanumeric keys
@@ -425,7 +493,7 @@ F_OnKeyUp(ih, VK, SC)
 	if (f_CapsLock)
 		F_DoubleShift(WhatWasUp, f_ShiftPressed)
 
-	; f_Char := false
+	f_Char := false
 	; OutputDebug, % "WWUe:" . WhatWasUp . A_Space . "S:" . f_ShiftPressed . A_Space . "C:" . f_ControlPressed . A_Space . "A:" . f_AltPressed . A_Space . "W:" . f_WinPressed . A_Space . "O:" . f_AnyOtherKey . "`n"
 	; OutputDebug, % A_ThisFunc . A_Space . "E" . "`n"
 }
