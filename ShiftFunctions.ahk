@@ -9,10 +9,10 @@
 	Notes:		Run this script as the first one, before any Hotstring definition (static or dynamic).
 				Save this file as UTF-8 with BOM.
 */
-#SingleInstance force 			; Only one instance of this script may run at a time!
+#SingleInstance, force 			; Only one instance of this script may run at a time!
 #NoEnv  						; Recommended for performance and compatibility with future AutoHotkey releases.
 #Warn  	     				; Enable warnings to assist with detecting common errors.
-#Requires AutoHotkey v1.1.33+ 	; Displays an error and quits if a version requirement is not met.
+#Requires, AutoHotkey v1.1.33+ 	; Displays an error and quits if a version requirement is not met.
 #KeyHistory, 100
 
 ;Testing: Alt+Tab, Asi, asdf Shift+Home
@@ -46,7 +46,7 @@ StringCaseSense, 	On				;for Switch in F_OnKeyUp()
 
 F_InputArguments()
 F_InitiateInputHook()
-MenuTray()
+F_MenuTray()
 ;end initialization section
 
 ; - - - - - - - - - - - - - - GLOBAL HOTSTRINGS: BEGINNING- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -326,7 +326,7 @@ F_Capital()
 
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-MenuTray()
+F_MenuTray()
 {
 	global	;assume-global mode of operation
 	
@@ -488,7 +488,7 @@ F_OnKeyUp(ih, VK, SC)
 	if (f_Diacritics)
 		and (f_ShiftPressed)
 		and ((WhatWasUp = "LShift") or (WhatWasUp = "RShift"))
-			Diacritics()
+			F_Diacritics()
 
 	if (f_CapsLock)
 		F_DoubleShift(WhatWasUp, f_ShiftPressed)
@@ -520,36 +520,36 @@ F_DoubleShift(WhatWasUp, ByRef f_ShiftPressed)
 	}
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Diacritics()
+F_Diacritics()
 {
 	global	;assume-global mode of operation
 
 	; OutputDebug, % A_ThisFunc . A_Space . "B" . "`n"
 	Switch v_Char
 	{
-		Case "a":		DiacriticOutput("ą")
-		Case "A":		DiacriticOutput("Ą")
-		Case "c": 	DiacriticOutput("ć")
-		Case "C": 	DiacriticOutput("Ć")
-		Case "e": 	DiacriticOutput("ę")
-		Case "E": 	DiacriticOutput("Ę")
-		Case "l": 	DiacriticOutput("ł")
-		Case "L": 	DiacriticOutput("Ł")
-		Case "n": 	DiacriticOutput("ń")
-		Case "N": 	DiacriticOutput("Ń")
-		Case "o": 	DiacriticOutput("ó")
-		Case "O": 	DiacriticOutput("Ó")
-		Case "s": 	DiacriticOutput("ś")
-		Case "S": 	DiacriticOutput("Ś")
-		Case "x": 	DiacriticOutput("ź")
-		Case "X": 	DiacriticOutput("Ź")
-		Case "z": 	DiacriticOutput("ż")
-		Case "Z": 	DiacriticOutput("Ż")
+		Case "a":		F_DiacriticOutput("ą")
+		Case "A":		F_DiacriticOutput("Ą")
+		Case "c": 	F_DiacriticOutput("ć")
+		Case "C": 	F_DiacriticOutput("Ć")
+		Case "e": 	F_DiacriticOutput("ę")
+		Case "E": 	F_DiacriticOutput("Ę")
+		Case "l": 	F_DiacriticOutput("ł")
+		Case "L": 	F_DiacriticOutput("Ł")
+		Case "n": 	F_DiacriticOutput("ń")
+		Case "N": 	F_DiacriticOutput("Ń")
+		Case "o": 	F_DiacriticOutput("ó")
+		Case "O": 	F_DiacriticOutput("Ó")
+		Case "s": 	F_DiacriticOutput("ś")
+		Case "S": 	F_DiacriticOutput("Ś")
+		Case "x": 	F_DiacriticOutput("ź")
+		Case "X": 	F_DiacriticOutput("Ź")
+		Case "z": 	F_DiacriticOutput("ż")
+		Case "Z": 	F_DiacriticOutput("Ż")
 	}
 	; OutputDebug, % A_ThisFunc . A_Space . "E" . "`n"
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-DiacriticOutput(Diacritic)
+F_DiacriticOutput(Diacritic)
 {
 	global	;assume-global mode of operation
 
@@ -577,6 +577,7 @@ F_OneCharPressed(ih, Char)
 F_InputArguments()
 {
 	global	;assume-global mode of operation
+	local	n := 0, param := ""
 
 	for n, param in A_Args
 	{
@@ -611,4 +612,13 @@ Remark: you can always run application hotstrings. For more info just enter "sfh
 	if (InStr(param, "-scdisable", false))
 		f_CapsLock := false
 	}
+	if (!InStr(param, ".ini", false))
+		{
+			MsgBox, % c_IconAsteriskInfo, % A_ScriptName, % "No .ini file is specified. Exiting with error code 1 (no .ini file specified)."
+			ExitApp, 1
+		}
+	else
+		{
+
+		}
 }
