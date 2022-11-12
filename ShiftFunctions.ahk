@@ -8,6 +8,7 @@
  	License:     	GNU GPL v.3
 	Notes:		Run this script as the first one, before any Hotstring definition (static or dynamic).
 				Save this file as UTF-8 with BOM.
+				To cancel Shift behaviour press either Control, Esc or even Backspace.
 */
 #SingleInstance, force 			; Only one instance of this script may run at a time!
 #NoEnv  						; Recommended for performance and compatibility with future AutoHotkey releases.
@@ -347,19 +348,26 @@ F_MenuTray()
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 F_About()
 {
+	global	;assume-global mode of operation
 	MsgBox, % c_IconAsteriskInfo, % A_ScriptName
 		, % "`n`n"
-		. 
- 	Author:      	Maciej Słojewski (🐘, mslonik, http://mslonik.pl)
- 	Purpose:     	Use Shift key(s) for various purposes.
- 	Description: 	3 functions:
-				Shift: Diacritics, when Shift key is pressed and released after character which has diacritic representation, that letter is replaced with diacritic character.
-				Shift: Capital, when Shift is pressed and released before character, that character is replaced with capital character.
-				Shift: CapsLock, when Shift is pressed and release twice, CapsLock is toggled.
- 	License:     	GNU GPL v.3
-	Notes:		Run this script as the first one, before any Hotstring definition (static or dynamic).
-				Save this file as UTF-8 with BOM.
+		. "
+(		 
+Author:      	Maciej Słojewski (🐘, mslonik, http://mslonik.pl)
+Purpose:     	Use Shift key(s) for various purposes.
+Description: 	3 functions:
 
+Shift: Diacritics, when Shift key is pressed and released after character which has diacritic representation, that letter is replaced with diacritic character.
+
+Shift: Capital, when Shift is pressed and released before character, that character is replaced with capital character.
+
+Shift: CapsLock, when Shift is pressed and release twice, CapsLock is toggled.
+
+License:     	GNU GPL v.3
+Notes:		Run this script as the first one, before any Hotstring definition (static or dynamic).
+Save this file as UTF-8 with BOM.
+To cancel Shift behaviour press either Control, Esc or even Backspace.
+)"
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 F_Empty()
@@ -626,13 +634,13 @@ Remark: you can always run application hotstrings. For more info just enter "sfh
 	if (InStr(param, "-scdisable", false))
 		f_CapsLock := false
 	}
-	if (!InStr(param, ".ini", false))
-		{
-			MsgBox, % c_IconAsteriskInfo, % A_ScriptName, % "No .ini file is specified. Exiting with error code 1 (no .ini file specified)."
-			ExitApp, 1
-		}
-	else
-		{
+	; if (!InStr(param, ".ini", false))
+	; 	{
+	; 		MsgBox, % c_IconAsteriskInfo, % A_ScriptName, % "No .ini file is specified. Exiting with error code 1 (no .ini file specified)."
+	; 		ExitApp, 1
+	; 	}
+	; else
+	; 	{
 
-		}
+	; 	}
 }
