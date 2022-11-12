@@ -346,7 +346,21 @@ F_MenuTray()
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 F_About()
-{}
+{
+	MsgBox, % c_IconAsteriskInfo, % A_ScriptName
+		, % "`n`n"
+		. 
+ 	Author:      	Maciej Słojewski (🐘, mslonik, http://mslonik.pl)
+ 	Purpose:     	Use Shift key(s) for various purposes.
+ 	Description: 	3 functions:
+				Shift: Diacritics, when Shift key is pressed and released after character which has diacritic representation, that letter is replaced with diacritic character.
+				Shift: Capital, when Shift is pressed and released before character, that character is replaced with capital character.
+				Shift: CapsLock, when Shift is pressed and release twice, CapsLock is toggled.
+ 	License:     	GNU GPL v.3
+	Notes:		Run this script as the first one, before any Hotstring definition (static or dynamic).
+				Save this file as UTF-8 with BOM.
+
+}
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 F_Empty()
 {}
