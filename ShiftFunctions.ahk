@@ -40,6 +40,11 @@
 ,	f_Diacritics		:= true	;global flag: enable / disable function Shift Diacritics
 ,	f_CapsLock		:= true	;global flag: enable / disable function Shift CapsLock
 ,	c_IconAsteriskInfo	:= 64	;global constant
+	,	a_BaseKey 		:= []
+	,	a_Diacritic		:= []
+	, 	a_ShiftBaseKey 	:= []
+	,	a_ShiftDiacritic 	:= []
+
 SetBatchLines, 	-1				; Never sleep (i.e. have the script run at maximum speed).
 SendMode,			Input			; Recommended for new scripts due to its superior speed and reliability.
 SetWorkingDir, 	%A_ScriptDir%		; Ensures a consistent starting directory.
@@ -245,7 +250,7 @@ F_Toggle()
 	}
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-F_Capital()
+F_Capital(ByRef v_Char)
 {
 	global	;assume-global mode of operation
 
@@ -324,7 +329,6 @@ F_Capital()
 	f_ShiftPressed 	:= false
 ,	v_InputH.VisibleText := true
 ,	f_Char			:= false
-
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 F_MenuTray()
@@ -468,7 +472,6 @@ F_OnKeyUp(ih, VK, SC)
 		}
 	}
 
-	; OutputDebug, % "WWU:" . WhatWasUp . A_Space "v_Char:" . v_Char . "C:" . f_Char . A_Space . "S:" . f_ShiftPressed . A_Space . "C:" . f_ControlPressed . A_Space . "A:" . f_AltPressed . A_Space . "W:" . f_WinPressed . "`n"
 	Switch WhatWasUp	;These are chars, so have to be filtered out separately
 		{
 			Case "Space", "Enter", "Tab": 	;the rest of not alphanumeric keys
@@ -501,22 +504,24 @@ F_OnKeyUp(ih, VK, SC)
 			return
 		}
 	;From this moment I know we have character and only Shift
+	; OutputDebug, % "WWU :" . WhatWasUp . A_Space "v_Char:" . v_Char . "C:" . f_Char . A_Space . "S:" . f_ShiftPressed . A_Space . "C:" . f_ControlPressed . A_Space . "A:" . f_AltPressed . A_Space . "W:" . f_WinPressed . "`n"
 
-	if (f_Capital) ;and (f_Char)
+	if (f_Capital) 
+		and (f_Char)
 		and (f_ShiftPressed)
 		and (WhatWasUp != "LShift") and (WhatWasUp != "RShift")
-			F_Capital()
+			F_Capital(v_Char)
 
 	if (f_Diacritics)
 		and (f_ShiftPressed)
 		and ((WhatWasUp = "LShift") or (WhatWasUp = "RShift"))
-			F_Diacritics()
+			F_Diacritics(v_Char)
 
 	if (f_CapsLock)
 		F_DoubleShift(WhatWasUp, f_ShiftPressed)
 
 	f_Char := false
-	; OutputDebug, % "WWUe:" . WhatWasUp . A_Space . "S:" . f_ShiftPressed . A_Space . "C:" . f_ControlPressed . A_Space . "A:" . f_AltPressed . A_Space . "W:" . f_WinPressed . A_Space . "O:" . f_AnyOtherKey . "`n"
+	; OutputDebug, % "WWUe:" . WhatWasUp . A_Space "v_Char:" . v_Char . "C:" . f_Char . A_Space . "S:" . f_ShiftPressed . A_Space . "C:" . f_ControlPressed . A_Space . "A:" . f_AltPressed . A_Space . "W:" . f_WinPressed . "`n"
 	; OutputDebug, % A_ThisFunc . A_Space . "E" . "`n"
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -542,33 +547,18 @@ F_DoubleShift(WhatWasUp, ByRef f_ShiftPressed)
 	}
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-F_Diacritics()
+F_Diacritics(v_Char)
 {
 	global	;assume-global mode of operation
-
+; 		,	a_BaseKey 		:= []
+; 		,	a_Diacritic		:= []
 	; OutputDebug, % A_ThisFunc . A_Space . "B" . "`n"
-	Switch v_Char
-	{
-		Case "a":		F_DiacriticOutput("ą")
-		Case "A":		F_DiacriticOutput("Ą")
-		Case "c": 	F_DiacriticOutput("ć")
-		Case "C": 	F_DiacriticOutput("Ć")
-		Case "e": 	F_DiacriticOutput("ę")
-		Case "E": 	F_DiacriticOutput("Ę")
-		Case "l": 	F_DiacriticOutput("ł")
-		Case "L": 	F_DiacriticOutput("Ł")
-		Case "n": 	F_DiacriticOutput("ń")
-		Case "N": 	F_DiacriticOutput("Ń")
-		Case "o": 	F_DiacriticOutput("ó")
-		Case "O": 	F_DiacriticOutput("Ó")
-		Case "s": 	F_DiacriticOutput("ś")
-		Case "S": 	F_DiacriticOutput("Ś")
-		Case "x": 	F_DiacriticOutput("ź")
-		Case "X": 	F_DiacriticOutput("Ź")
-		Case "z": 	F_DiacriticOutput("ż")
-		Case "Z": 	F_DiacriticOutput("Ż")
-	}
-	; OutputDebug, % A_ThisFunc . A_Space . "E" . "`n"
+	local	index := 0
+		,	value := ""
+
+	for index, value in a_BaseKey
+		if (value == v_Char)	;Case sensitive comparison
+			F_DiacriticOutput(a_Diacritic[index])
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 F_DiacriticOutput(Diacritic)
@@ -582,6 +572,7 @@ F_DiacriticOutput(Diacritic)
 	f_ShiftPressed 		:= false
 ,	v_InputH.VisibleText 	:= true
 ,	f_Char 				:= false
+,	v_Char				:= ""
 	; OutputDebug, % A_ThisFunc . A_Space . "E" . "`n"
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -634,13 +625,81 @@ Remark: you can always run application hotstrings. For more info just enter "sfh
 	if (InStr(param, "-scdisable", false))
 		f_CapsLock := false
 	}
-	; if (!InStr(param, ".ini", false))
-	; 	{
-	; 		MsgBox, % c_IconAsteriskInfo, % A_ScriptName, % "No .ini file is specified. Exiting with error code 1 (no .ini file specified)."
-	; 		ExitApp, 1
-	; 	}
-	; else
-	; 	{
+	if (!InStr(param, ".ini", false))
+		{
+			MsgBox, % c_IconAsteriskInfo, % A_ScriptName, % "No .ini file is specified. Exiting with error code 1 (no .ini file specified)."
+			ExitApp, 1
+		}
+	else
+		{
+			F_ReadIni(param)
+		}
+}
+; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+F_ReadIni(param)
+{
+	global	;assume-global mode of operation
+	local 	DiacriticSectionCounter 	:= 0
+		,	Temp 				:= ""
 
-	; 	}
+	Loop, Read, % param
+	    if (InStr(A_LoopReadLine, "[Diacritic"))
+	        DiacriticSectionCounter++
+	
+	if (DiacriticSectionCounter = 0)
+	{
+		MsgBox, % c_IconAsteriskInfo, % A_ScriptName, % "The" . A_Space . param . A_Space . "do not contain any valid section. Exiting with error code 2 (no recognized .ini file section)."
+		ExitApp, 2
+	}
+	
+	Loop, %DiacriticSectionCounter%
+    	{
+		IniRead,  Temp,          	% param, % "Diacritic"	. A_Index, BaseKey,			Error
+		if (Temp !== "Error")
+			a_BaseKey.Push(Temp)
+		else
+		{
+			MsgBox, % c_IconAsteriskInfo, % A_ScriptName, % "The" . A_Space . param . A_Space . "section:" . A_Space . "`n`n"
+			. "[Diacritic" . A_Index . "]" . A_Space . "do not contain valid parameter" . "`n"
+			. "BaseKey" . "`n`n"
+			. "Exiting with error code 3 (no recognized parameter)."
+			ExitApp, 3
+		}
+ 
+    		IniRead,  Temp,     		% param, % "Diacritic"	. A_Index, Diacritic,		Error
+		if (Temp !== "Error")
+			a_Diacritic.Push(Temp)
+		else
+		{
+			MsgBox, % c_IconAsteriskInfo, % A_ScriptName, % "The" . A_Space . param . A_Space . "section:" . A_Space . "`n`n"
+			. "[Diacritic" . A_Index . "]" . A_Space . "do not contain valid parameter" . "`n"
+			. "Diacritic" . "`n`n"
+			. "Exiting with error code 3 (no recognized parameter)."
+			ExitApp, 3
+		}
+
+		IniRead, Temp, 			% param, % "Diacritic"	. A_Index, ShiftBaseKey, 	Error
+		if (Temp !== "Error")
+			a_BaseKey.Push(Temp)
+		else
+		{
+			MsgBox, % c_IconAsteriskInfo, % A_ScriptName, % "The" . A_Space . param . A_Space . "section:" . A_Space . "`n`n"
+			. "[Diacritic" . A_Index . "]" . A_Space . "do not contain valid parameter" . "`n"
+			. "ShiftBaseKey" . "`n`n"
+			. "Exiting with error code 3 (no recognized parameter)."
+			ExitApp, 3
+		}
+
+		IniRead, Temp, 			% param, % "Diacritic"	. A_Index, ShiftDiacritic, 	Error
+		if (Temp !== "Error")
+			a_Diacritic.Push(Temp)
+		else
+		{
+			MsgBox, % c_IconAsteriskInfo, % A_ScriptName, % "The" . A_Space . param . A_Space . "section:" . A_Space . "`n`n"
+			. "[Diacritic" . A_Index . "]" . A_Space . "do not contain valid parameter" . "`n"
+			. "ShiftDiacritic" . "`n`n"
+			. "Exiting with error code 3 (no recognized parameter)."
+			ExitApp, 3
+		}
+	}
 }
