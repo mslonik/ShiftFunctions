@@ -18,6 +18,7 @@
 
 ;Testing: Alt+Tab, Asi, asdf Shift+Home
 
+; - - - - - - - - - - - - - - - - Executable section, beginning - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
  AppVersion			:= "1.0.2"
 ;@Ahk2Exe-Let vAppVersion=%A_PriorLine~U)^(.+"){1}(.+)".*$~$2% ; Keep these lines together
 ;Overrides the custom EXE icon used for compilation
@@ -39,6 +40,7 @@ FileInstall, Polish.ini, 		Polish.ini, 		0
 FileInstall, Slovakian1.ini,		Slovakian1.ini,	0
 FileInstall, Slovakian2.ini,		Slovakian2.ini,	0
 FileInstall, README.md, 			README.md,		0
+; - - - - - - - - - - - - - - - - Executable section, end - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 	v_Char 			:= ""	;global variable
 ,	f_ShiftPressed 	:= false	;global flag, set when any Shift key (left or right) was pressed.
@@ -473,6 +475,18 @@ F_OnKeyDown(ih, VK, SC)
 	; OutputDebug, % A_ThisFunc . A_Space . "E" . "`n"
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+F_FlagReset()
+{
+	global	;assume-global mode of operation
+	f_ControlPressed 	:= false
+,	v_Char 			:= ""
+,	f_Char			:= false
+,	f_ShiftPressed		:= false
+,	v_InputH.VisibleText := true
+,	f_WinPressed 		:= false
+,	f_AltPressed 		:= false
+	}
+; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 F_OnKeyUp(ih, VK, SC)
 {
 	global	;assume-global mode of operation
@@ -487,24 +501,13 @@ F_OnKeyUp(ih, VK, SC)
 		Switch WhatWasUp	;only Shifts are not included ;According to AutoHotkey documentation each case may list up to 20 values
 		{
 			Case "LControl", "RControl":	;modifiers
-				f_ControlPressed 	:= false
-			,	v_Char 			:= ""
-			,	f_Char			:= false
-			,	f_ShiftPressed		:= false
-			,	v_InputH.VisibleText := true
-			,	f_WinPressed 		:= false
-			,	f_AltPressed 		:= false
+				F_FlagReset()
 				return
-			Case "LAlt", "RAlt":		;modifiers
+			Case "LAlt", "RAlt", "LWin", "RWin":		;modifiers
 				f_AltPressed 		:= false
 			,	f_ShiftPressed		:= false
 			,	v_InputH.VisibleText := true
 				return
-			Case "LWin", "RWin":		;modifiers
-				f_WinPressed 		:= false
-			,	f_ShiftPressed		:= false
-			,	v_InputH.VisibleText := true
-				return 
 			Case "Insert", "Home", "PageUp", "Delete", "End", "PageDown", "AppsKey"	;NavPad
 			,	"Up", "Down", "Left", "Right":	;11
 				f_ShiftPressed		:= false
@@ -519,13 +522,7 @@ F_OnKeyUp(ih, VK, SC)
 			,	v_InputH.VisibleText := true
 				return
 			Case "Backspace":
-				v_Char 			:= ""
-			,	f_Char 			:= false
-			,	f_ShiftPressed		:= false
-			,	v_InputH.VisibleText := true
-			,	f_WinPressed 		:= false
-			,	f_AltPressed 		:= false
-			,	f_ControlPressed 	:= false
+				F_FlagReset()
 				return
 		}
 	}
@@ -539,13 +536,7 @@ F_OnKeyUp(ih, VK, SC)
 			,	v_InputH.VisibleText := true
 				return
 			Case "Escape":
-				v_Char 			:= ""
-			,	f_Char			:= false
-			,	f_ShiftPressed		:= false
-			,	v_InputH.VisibleText := true
-			,	f_WinPressed 		:= false
-			,	f_AltPressed 		:= false
-			,	f_ControlPressed 	:= false
+				F_FlagReset()
 				return
 		}
 
@@ -554,11 +545,7 @@ F_OnKeyUp(ih, VK, SC)
 		or ((f_ShiftPressed) and (f_ControlPressed))
 		{
 			; OutputDebug, % "Two modifiers at the same time" . "`n"
-			f_ShiftPressed		:= false
-		,	v_InputH.VisibleText := true	
-		,	f_WinPressed 		:= false
-		,	f_AltPressed 		:= false
-		,	f_ControlPressed 	:= false
+			F_FlagReset()
 			return
 		}
 	;From this moment I know we have character and only Shift
@@ -813,6 +800,7 @@ F_ReadIni(param)
 			ExitApp, 3
 		}
 	}
+	F_FlagReset()	
 	SplitPath, v_ConfigIni, Temp
 	TrayTip, % A_ScriptName, % "is starting with" . A_Space . Temp, 5, 1
 }
