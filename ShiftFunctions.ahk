@@ -16,7 +16,12 @@
 #Requires, AutoHotkey v1.1.33+ 	; Displays an error and quits if a version requirement is not met.
 #KeyHistory, 100
 
-;Testing: Alt+Tab, Asi, asdf Shift+Home
+SetBatchLines, 	-1				; Never sleep (i.e. have the script run at maximum speed).
+SendMode,			Input			; Recommended for new scripts due to its superior speed and reliability.
+SetWorkingDir, 	%A_ScriptDir%		; Ensures a consistent starting directory.
+StringCaseSense, 	On				;for Switch in F_OnKeyUp()
+
+;Testing: Alt+Tab, , asdf Shift+Home
 
 ; - - - - - - - - - - - - - - - - Executable section, beginning - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
  AppVersion			:= "1.0.2"
@@ -58,13 +63,8 @@ FileInstall, README.md, 			README.md,		0
 ,	a_Diacritic		:= []	;global array: diacritic letters and capital diacritic letters
 ,	v_ConfigIni		:= ""	;global variable, stores filename of current Config.ini.
 
-SetBatchLines, 	-1				; Never sleep (i.e. have the script run at maximum speed).
-SendMode,			Input			; Recommended for new scripts due to its superior speed and reliability.
-SetWorkingDir, 	%A_ScriptDir%		; Ensures a consistent starting directory.
-StringCaseSense, 	On				;for Switch in F_OnKeyUp()
-
-F_InputArguments()
 F_InitiateInputHook()
+F_InputArguments()
 F_MenuTray()
 ;end initialization section
 
@@ -144,6 +144,14 @@ return
 	F_sfparamendis(WhatNext := true, WhichVariable := "f_CapsLock", FunctionName := "CapsLock")
 return
 ; - - - - - - - - - - - - - - GLOBAL HOTSTRINGS: END- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+; - - - - - - - - - - - - - - GLOBAL HOTKEYS: BEGINNING- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+LButton::	;not sure if this is necessary, but is should also spoil anything
+RButton::
+MButton::
+	F_FlagReset()
+return
+; - - - - - - - - - - - - - - GLOBAL HOTKEYS: END- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 ; - - - - - - - - - - - - - - DEFINITIONS OF FUNCTIONS: BEGINNING- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 F_Save()
@@ -800,7 +808,7 @@ F_ReadIni(param)
 			ExitApp, 3
 		}
 	}
-	F_FlagReset()	
+	F_FlagReset()
 	SplitPath, v_ConfigIni, Temp
 	TrayTip, % A_ScriptName, % "is starting with" . A_Space . Temp, 5, 1
 }
