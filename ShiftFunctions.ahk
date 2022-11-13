@@ -28,6 +28,18 @@
 ;@Ahk2Exe-SetCompanyName  http://mslonik.pl
 ;@Ahk2Exe-SetFileVersion %U_vAppVersion%
 ;@Ahk2Exe-ConsoleApp
+
+FileInstall, LICENSE, 			LICENSE, 			0
+FileInstall, ShiftFunctions.ahk, 	ShiftFunctions.ahk, 0
+FileInstall, Czech.ini, 			Czech.ini,		0
+FileInstall, German1.ini, 		German1.ini,		0
+FileInstall, German2.ini, 		German2.ini,		0
+FileInstall, Norwegian.ini,		Norwegian.ini,		0
+FileInstall, Polish.ini, 		Polish.ini, 		0
+FileInstall, Slovakian1.ini,		Slovakian1.ini,	0
+FileInstall, Slovakian2.ini,		Slovakian2.ini,	0
+FileInstall, README.md, 			README.md,		0
+
 	v_Char 			:= ""	;global variable
 ,	f_ShiftPressed 	:= false	;global flag, set when any Shift key (left or right) was pressed.
 ,	f_ControlPressed	:= false	;global flag, set when any Control key (left or right) was pressed.
@@ -641,6 +653,8 @@ F_InputArguments()
 	for n, param in A_Args
 	{
 		if (InStr(param, "-h", false)) or (InStr(param, "/h", false))
+		{
+
 			FileAppend, 
 (
 Shift functions, one parameter per function:
@@ -659,6 +673,8 @@ The following list of runtime / startup parameters is available:
 
 Remark: you can always run application hotstrings. For more info just enter "sfhelp/""
 ), *	;* = stdout, ** = stderr
+			return
+		}
 	if (InStr(param, "-v", false))
 		FileAppend, % AppVersion, *
 
