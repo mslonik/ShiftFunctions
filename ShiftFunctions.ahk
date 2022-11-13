@@ -10,12 +10,14 @@
 				Save this file as UTF-8 with BOM.
 				To cancel Shift behaviour press either Control, Esc or even Backspace.
 */
-#SingleInstance, force 			; Only one instance of this script may run at a time!
+#SingleInstance, 	force		; Only one instance of this script may run at a time!
 #NoEnv  						; Recommended for performance and compatibility with future AutoHotkey releases.
 #Warn  	     				; Enable warnings to assist with detecting common errors.
 #Requires, AutoHotkey v1.1.33+ 	; Displays an error and quits if a version requirement is not met.
-#KeyHistory, 100
+#KeyHistory, 		100			; For debugging purposes.
+#LTrim						; Omits spaces and tabs at the beginning of each line. This is primarily used to allow the continuation section to be indented. Also, this option may be turned on for multiple continuation sections by specifying #LTrim on a line by itself. #LTrim is positional: it affects all continuation sections physically beneath it.
 
+FileEncoding, 		UTF-8			; Sets the default encoding for FileRead, FileReadLine, Loop Read, FileAppend, and FileOpen(). Unicode UTF-16, little endian byte order (BMP of ISO 10646). Useful for .ini files which by default are coded as UTF-16. https://docs.microsoft.com/pl-pl/windows/win32/intl/code-page-identifiers?redirectedfrom=MSDN
 SetBatchLines, 	-1				; Never sleep (i.e. have the script run at maximum speed).
 SendMode,			Input			; Recommended for new scripts due to its superior speed and reliability.
 SetWorkingDir, 	%A_ScriptDir%		; Ensures a consistent starting directory.
@@ -424,22 +426,22 @@ F_About()
 	MsgBox, % c_IconAsteriskInfo, % A_ScriptName
 		, % "`n`n"
 		. "
-(		 
-Author:      	Maciej Słojewski (🐘, mslonik, http://mslonik.pl)
-Purpose:     	Use Shift key(s) for various purposes.
-Description: 	3 functions:
+	(		 
+	Author:      	Maciej Słojewski (🐘, mslonik, http://mslonik.pl)
+	Purpose:     	Use Shift key(s) for various purposes.
+	Description: 	3 functions:
 
-Shift: Diacritics, when Shift key is pressed and released after character which has diacritic representation, that letter is replaced with diacritic character.
+	Shift: Diacritics, when Shift key is pressed and released after character which has diacritic representation, that letter is replaced with diacritic character.
 
-Shift: Capital, when Shift is pressed and released before character, that character is replaced with capital character.
+	Shift: Capital, when Shift is pressed and released before character, that character is replaced with capital character.
 
-Shift: CapsLock, when Shift is pressed and release twice, CapsLock is toggled.
+	Shift: CapsLock, when Shift is pressed and release twice, CapsLock is toggled.
 
-License:     	GNU GPL v.3
-Notes:		Run this script as the first one, before any Hotstring definition (static or dynamic).
-Save this file as UTF-8 with BOM.
-To cancel Shift behaviour press either Control, Esc or even Backspace.
-)"
+	License:     	GNU GPL v.3
+	Notes:		Run this script as the first one, before any Hotstring definition (static or dynamic).
+	Save this file as UTF-8 with BOM.
+	To cancel Shift behaviour press either Control, Esc or even Backspace.
+	)"
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 F_Empty()	;dummy function useful for test purposes
@@ -651,23 +653,23 @@ F_InputArguments()
 		{
 
 			FileAppend, 
-(
-Shift functions, one parameter per function:
-
-Shift Capital:     press <Shift> and release it, next press and release any letter to get capital version of it.
-Shift Diacritics:  press and release any diacritic letter, next press and release <Shift> to get diacritic character.
-Shift CapsLock:    press and release <Shift> twice to toggle <CapsLock>.
-
-The following list of runtime / startup parameters is available:
-
--scdisable  disable "ShiftCapital"
--sddisable  disable "Shift Diacritics"
--scdisable  disable "Shift CapsLock"
--h, /h      this help
--v          show application version
-
-Remark: you can always run application hotstrings. For more info just enter "sfhelp/""
-), *	;* = stdout, ** = stderr
+			(
+			Shift functions, one parameter per function:
+			
+			Shift Capital:     press <Shift> and release it, next press and release any letter to get capital version of it.
+			Shift Diacritics:  press and release any diacritic letter, next press and release <Shift> to get diacritic character.
+			Shift CapsLock:    press and release <Shift> twice to toggle <CapsLock>.
+			
+			The following list of runtime / startup parameters is available:
+			
+			-scdisable  disable "ShiftCapital"
+			-sddisable  disable "Shift Diacritics"
+			-scdisable  disable "Shift CapsLock"
+			-h, /h      this help
+			-v          show application version
+			
+			Remark: you can always run application hotstrings. For more info just enter "sfhelp/""
+			), *	;* = stdout, ** = stderr
 			return
 		}
 	if (InStr(param, "-v", false))
