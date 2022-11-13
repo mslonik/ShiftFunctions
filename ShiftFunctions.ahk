@@ -72,6 +72,7 @@ return
 :*:sfstop/::
 :*:sfquit/::
 :*:sfexit/::
+	TrayTip, % A_ScriptName, % "exits with code" . A_Space . "0", 5, 1
 	ExitApp, 0
 return
 
@@ -371,6 +372,7 @@ F_MenuTray()
 	Menu, Tray, Add, 		% "function Shift Capital:" . A_Tab . 			(f_Capital ? "ENABLED" : "DISABLED"),		F_sfparamToggle
 	Menu, Tray, Add, 		% "function Shift Diacritics:" . A_Tab . 		(f_Diacritics ? "ENABLED" : "DISABLED"),	F_sfparamToggle
 	Menu, Tray, Add, 		% "function Shift CapsLock:" . A_Tab . 			(f_CapsLock ? "ENABLED" : "DISABLED"),		F_sfparamToggle
+	Menu, Tray, Add,		% "loaded .ini file" . A_Tab .				v_ConfigIni,							F_SelectConfig
 	Menu, Tray, Add,		Hotstrings,																	F_Help
 	Menu, Tray, Add,		Save configuration to current .ini file,											F_Save
 	Menu, Tray, Add, 		About…,																		F_About
@@ -378,6 +380,20 @@ F_MenuTray()
     	Menu, Tray, NoStandard
     	Menu, Tray, Standard
     	Menu, Tray, Tip, % SubStr(A_ScriptName, 1, -4) ; Changes the tray icon's tooltip.
+}
+; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+F_SelectConfig()
+{
+	global	;assume-global mode of operation
+
+	FileSelectFile, v_ConfigIni, , % A_ScriptDir, % A_ScriptName . A_Space . "Select one *.ini file:", *.ini
+	if (v_ConfigIni = "")
+		{
+			MsgBox, % c_IconAsteriskInfo, % A_ScriptName, % "Exiting with error code 1 (no .ini file specified or found)."
+			TrayTip, % A_ScriptName, % "exits with code" . A_Space . "1", 5, 1
+			ExitApp, 1
+		}
+	F_ReadIni(v_ConfigIni)
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 F_About()
@@ -404,7 +420,7 @@ To cancel Shift behaviour press either Control, Esc or even Backspace.
 )"
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-F_Empty()
+F_Empty()	;dummy function useful for test purposes
 {}
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 F_InitiateInputHook()	;why InputHook: to process triggerstring tips.
@@ -620,7 +636,7 @@ F_OneCharPressed(ih, Char)
 F_InputArguments()
 {
 	global	;assume-global mode of operation
-	local	n := 0, param := ""
+	local	n := 0, param := "", Counter := 0, FileTemp := ""
 
 	for n, param in A_Args
 	{
@@ -657,13 +673,51 @@ Remark: you can always run application hotstrings. For more info just enter "sfh
 	}
 	if (!InStr(param, ".ini", false))
 		{
-			MsgBox, % c_IconAsteriskInfo, % A_ScriptName, % "No .ini file is specified. Exiting with error code 1 (no .ini file specified)."
-			ExitApp, 1
-		}
+			if (FileExist("*.ini"))
+				Loop, Files, *.ini
+				{
+					Counter++
+					if (Counter = 1)
+						FileTemp := A_LoopFileName
+				}
+			if (Counter = 0)
+			{
+				MsgBox, % c_IconAsteriskInfo, % A_ScriptName, % "No .ini file is specified and no .ini files are found within application directory."
+					. "`n`n"
+					. "Exiting with error code 1 (no .ini file specified or found)."
+				TrayTip, % A_ScriptName, % "exits with code" . A_Space . "1", 5, 1
+				ExitApp, 1
+			}
+			if (Counter = 1)
+			{
+				v_ConfigIni := FileTemp
+				MsgBox, % c_IconAsteriskInfo, % A_ScriptName, % "Only one .ini file was found and application will read in configuration from that file:"
+				. "`n`n"
+				. v_ConfigIni
+				F_ReadIni(v_ConfigIni)
+				return
+			}
+			if (Counter > 1)
+			{
+				MsgBox, % c_IconAsteriskInfo + 4, % A_ScriptName, % "More than one .ini file was found in the following folder:"
+					. "`n`n"
+					. A_ScriptDir
+					. "`n`n"
+					. "Would you like to choose one of the .ini files manually now?"
+				IfMsgBox, No
+				{
+					MsgBox, % c_IconAsteriskInfo, % A_ScriptName, % "Exiting with error code 1 (no .ini file specified or found)."
+					TrayTip, % A_ScriptName, % "exits with code" . A_Space . "1", 5, 1
+					ExitApp, 1
+				}
+				IfMsgBox, Yes
+					F_SelectConfig()
+			}
+		}	
 	else
 		{
-			F_ReadIni(param)
 			v_ConfigIni := param
+			F_ReadIni(v_ConfigIni)
 		}
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -685,6 +739,7 @@ F_ReadIni(param)
 	if (DiacriticSectionCounter = 0)
 	{
 		MsgBox, % c_IconAsteriskInfo, % A_ScriptName, % "The" . A_Space . param . A_Space . "do not contain any valid section. Exiting with error code 2 (no recognized .ini file section)."
+		TrayTip, % A_ScriptName, % "exits with code" . A_Space . "2", 5, 1
 		ExitApp, 2
 	}
 	
@@ -699,6 +754,7 @@ F_ReadIni(param)
 			. "[Diacritic" . A_Index . "]" . A_Space . "do not contain valid parameter" . "`n"
 			. "BaseKey" . "`n`n"
 			. "Exiting with error code 3 (no recognized parameter)."
+			TrayTip, % A_ScriptName, % "exits with code" . A_Space . "3", 5, 1
 			ExitApp, 3
 		}
  
@@ -711,6 +767,7 @@ F_ReadIni(param)
 			. "[Diacritic" . A_Index . "]" . A_Space . "do not contain valid parameter" . "`n"
 			. "Diacritic" . "`n`n"
 			. "Exiting with error code 3 (no recognized parameter)."
+			TrayTip, % A_ScriptName, % "exits with code" . A_Space . "3", 5, 1
 			ExitApp, 3
 		}
 
@@ -723,6 +780,7 @@ F_ReadIni(param)
 			. "[Diacritic" . A_Index . "]" . A_Space . "do not contain valid parameter" . "`n"
 			. "ShiftBaseKey" . "`n`n"
 			. "Exiting with error code 3 (no recognized parameter)."
+			TrayTip, % A_ScriptName, % "exits with code" . A_Space . "3", 5, 1
 			ExitApp, 3
 		}
 
@@ -735,7 +793,10 @@ F_ReadIni(param)
 			. "[Diacritic" . A_Index . "]" . A_Space . "do not contain valid parameter" . "`n"
 			. "ShiftDiacritic" . "`n`n"
 			. "Exiting with error code 3 (no recognized parameter)."
+			TrayTip, % A_ScriptName, % "exits with code" . A_Space . "3", 5, 1
 			ExitApp, 3
 		}
 	}
+	SplitPath, v_ConfigIni, Temp
+	TrayTip, % A_ScriptName, % "is starting with" . A_Space . Temp, 5, 1
 }
