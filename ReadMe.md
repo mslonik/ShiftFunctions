@@ -18,6 +18,8 @@ Author: Maciej Słojewski (🐘), http://mslonik.pl.
 | Release |    Date    | Release notes             |
 | :------ | :--------: | :------------------------ |
 | 1.0.0   | 2022-10-31 | The first stable release. |
+| 1.0.1   | 2022-11-02 | Concept of few Shift functions combined in one application. |
+| 1.1.0   | 2022-11-12 | Stable release, combination of new functions. |
 
 <br /><br />
 

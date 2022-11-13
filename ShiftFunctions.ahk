@@ -33,17 +33,16 @@
 ,	f_ControlPressed	:= false	;global flag, set when any Control key (left or right) was pressed.
 ,	f_AltPressed		:= false	;global flag, set when any Alt key (left or right) was pressed.
 ,	f_WinPressed		:= false	;global flag, set when any Windows key (left or right) was pressed.
-,	f_AnyOtherKey		:= false	;global flag
+; ,	f_AnyOtherKey		:= false	;global flag
 ,	f_Char			:= false	;global flag, set when printable character was pressed down (and not yet released).
 ,	f_ShiftFunctions	:= true	;global flag, state of InputHook
 ,	f_Capital			:= true	;global flag: enable / disable function Shift Capital
 ,	f_Diacritics		:= true	;global flag: enable / disable function Shift Diacritics
 ,	f_CapsLock		:= true	;global flag: enable / disable function Shift CapsLock
-,	c_IconAsteriskInfo	:= 64	;global constant
-	,	a_BaseKey 		:= []
-	,	a_Diacritic		:= []
-	, 	a_ShiftBaseKey 	:= []
-	,	a_ShiftDiacritic 	:= []
+,	c_IconAsteriskInfo	:= 64	;global constant: used for MessageBox functions to show Info icon with single sound
+,	a_BaseKey 		:= []	;global array: ordinary letters and capital ordinary letters
+,	a_Diacritic		:= []	;global array: diacritic letters and capital diacritic letters
+,	v_ConfigIni		:= ""	;global variable, stores filename of current Config.ini.
 
 SetBatchLines, 	-1				; Never sleep (i.e. have the script run at maximum speed).
 SendMode,			Input			; Recommended for new scripts due to its superior speed and reliability.
@@ -57,30 +56,11 @@ F_MenuTray()
 
 ; - - - - - - - - - - - - - - GLOBAL HOTSTRINGS: BEGINNING- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 :*:sfhelp/::
-	MsgBox, % c_IconAsteriskInfo, % SubStr(A_ScriptName, 1, -4) . ":" . A_Space . "information", % "Application hotstrings" . "." . A_Space . "All of them are ""immediate execute"" (*)" . "`n"
-		. "and active anywhere in operating system (any window)"						. "`n"
-		. "`n`n"
-		. "sfhelp/" . A_Tab . A_Tab . 	"shows this message"					 	. "`n"
-		. "sfrestart/" . A_Tab . A_Tab .	"reload" 	. A_Space . "application"		 	. "`n"
-		. "sfreload/" . A_Tab . A_Tab	. 	"reload" 	. A_Space . "application"		 	. "`n"
-		. "sfstop/" . A_Tab . A_Tab .		"exit"	. A_Space . "application"			. "`n"
-		. "sfquit/" . A_Tab . A_Tab .		"exit" 	. A_Space . "application"			. "`n"
-		. "sfexit/" . A_Tab . A_Tab .		"exit" 	. A_Space . "application"			. "`n"
-		. "sfswitch/" . A_Tab . A_Tab .	"toggle"	. A_Space . "shift standalone"		. "`n"
-		. "sftoggle/" . A_Tab . A_Tab .	"toggle"	. A_Space . "shift standalone"		. "`n"
-		. "sfstatus/" . A_Tab . A_Tab .	"status"	. A_Space . "application"			. "`n"
-		. "sfstate/" . A_Tab . A_Tab .	"status"	. A_Space . "application"			. "`n"
-		. "sfenable/" . A_Tab . A_Tab .	"enable"	. A_Space . "application"			. "`n"
-		. "sfdisable/" . A_Tab . 		"disable"	. A_Space . "application"			. "`n"
-		. "sfddisable/" . A_Tab .		"disable" . A_Space . "shift diacritic"			. "`n"
-		. "sfdenable/" . A_Tab .			"enable"	. A_Space . "shift diacritic"			. "`n"
-		. "sfdtoggle/" . A_Tab .			"toggle"	. A_Space . "shift diacritic"			. "`n"
-		. "sfcdisable/" . A_Tab .		"disable"	. A_Space . "shift capital"			. "`n"
-		. "sfcenable/" . A_Tab .			"enable"	. A_Space . "shift capital"			. "`n"
-		. "sfctoggle/" . A_Tab .			"toggle" 	. A_Space . "shift capital"			. "`n"
-		. "sfldisable/" . A_Tab .		"disable" . A_Space . "shift CapsLock"			. "`n"
-		. "sflenable/" . A_Tab .			"enable"	. A_Space . "shift CapsLock"			. "`n"
-		. "sfltoggle/" . A_Tab .			"toggle"	. A_Space . "shift CapsLock"
+	F_Help()
+return
+
+:*:sfsave/::
+	F_Save()
 return
 
 :*:sfreload/::
@@ -151,6 +131,55 @@ return
 ; - - - - - - - - - - - - - - GLOBAL HOTSTRINGS: END- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 ; - - - - - - - - - - - - - - DEFINITIONS OF FUNCTIONS: BEGINNING- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+F_Save()
+{
+	global	;assume-globa mode of operation
+
+	IniWrite, % f_ShiftFunctions, 	% A_ScriptDir . "\" . v_ConfigIni, Global, OverallStatus
+	IniWrite, % f_Capital, 			% A_ScriptDir . "\" . v_ConfigIni, Global, ShiftCapital
+	IniWrite, % f_Diacritics, 		% A_ScriptDir . "\" . v_ConfigIni, Global, ShiftDiacritics
+	IniWrite, % f_CapsLock, 			% A_ScriptDir . "\" . v_ConfigIni, Global, ShiftCapsLock
+
+	MsgBox, % c_IconAsteriskInfo, % A_ScriptName, % "Your settings is saved to" . "`n`n"
+		. A_ScriptDir . "\" . v_ConfigIni . "`n`n"
+		. "Overall status:"		. A_Tab . (f_ShiftFunctions 	? "enabled" : "disabled") . "`n"
+		. "Shift Capital:"		. A_Tab . (f_Capital		? "enabled" : "disabled") . "`n"
+		. "Shift Diacritics"	. A_Tab . (f_Diacritics		? "enabled" : "disabled") . "`n"
+		. "Shift CapsLock"		. A_Tab . (f_CapsLock		? "enabled" : "disabled") . "`n"
+}
+; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+F_Help()
+{
+	global	;assume-globa mode of operation
+	MsgBox, % c_IconAsteriskInfo, % SubStr(A_ScriptName, 1, -4) . ":" . A_Space . "information", % "Application hotstrings" . "." . A_Space . "All of them are ""immediate execute"" (*)" . "`n"
+		. "and active anywhere in operating system (any window)"						. "`n"
+		. "`n`n"
+		. "sfhelp/" . A_Tab . A_Tab . 	"shows this message"					 	. "`n"
+		. "sfrestart/" . A_Tab . A_Tab .	"reload" 	. A_Space . "application"		 	. "`n"
+		. "sfreload/" . A_Tab . A_Tab	. 	"reload" 	. A_Space . "application"		 	. "`n"
+		. "sfstop/" . A_Tab . A_Tab .		"exit"	. A_Space . "application"			. "`n"
+		. "sfquit/" . A_Tab . A_Tab .		"exit" 	. A_Space . "application"			. "`n"
+		. "sfexit/" . A_Tab . A_Tab .		"exit" 	. A_Space . "application"			. "`n"
+		. "sfswitch/" . A_Tab . A_Tab .	"toggle"	. A_Space . "shift standalone"		. "`n"
+		. "sftoggle/" . A_Tab . A_Tab .	"toggle"	. A_Space . "shift standalone"		. "`n"
+		. "sfstatus/" . A_Tab . A_Tab .	"status"	. A_Space . "application"			. "`n"
+		. "sfstate/" . A_Tab . A_Tab .	"status"	. A_Space . "application"			. "`n"
+		. "sfenable/" . A_Tab . A_Tab .	"enable"	. A_Space . "application"			. "`n"
+		. "sfdisable/" . A_Tab . 		"disable"	. A_Space . "application"			. "`n"
+		. "sfddisable/" . A_Tab .		"disable" . A_Space . "shift diacritic"			. "`n"
+		. "sfdenable/" . A_Tab .			"enable"	. A_Space . "shift diacritic"			. "`n"
+		. "sfdtoggle/" . A_Tab .			"toggle"	. A_Space . "shift diacritic"			. "`n"
+		. "sfcdisable/" . A_Tab .		"disable"	. A_Space . "shift capital"			. "`n"
+		. "sfcenable/" . A_Tab .			"enable"	. A_Space . "shift capital"			. "`n"
+		. "sfctoggle/" . A_Tab .			"toggle" 	. A_Space . "shift capital"			. "`n"
+		. "sfldisable/" . A_Tab .		"disable" . A_Space . "shift CapsLock"			. "`n"
+		. "sflenable/" . A_Tab .			"enable"	. A_Space . "shift CapsLock"			. "`n"
+		. "sfltoggle/" . A_Tab .			"toggle"	. A_Space . "shift CapsLock"			. "`n"
+		. "sfsave/"	. A_Tab .			"save"	. A_Space . "configuratio to file"		. "`n"
+		. "`n`n"
+		. "To cancel immediately Shift behaviour just hit either Control, Esc, Backspace."
+}
+; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 F_sfendis(WhatToDo)
 {
 	global	;assume-globa mode of operation
@@ -342,9 +371,10 @@ F_MenuTray()
 	Menu, Tray, Add, 		% "function Shift Capital:" . A_Tab . 			(f_Capital ? "ENABLED" : "DISABLED"),		F_sfparamToggle
 	Menu, Tray, Add, 		% "function Shift Diacritics:" . A_Tab . 		(f_Diacritics ? "ENABLED" : "DISABLED"),	F_sfparamToggle
 	Menu, Tray, Add, 		% "function Shift CapsLock:" . A_Tab . 			(f_CapsLock ? "ENABLED" : "DISABLED"),		F_sfparamToggle
-	Menu, Tray, Add, About…,																				F_About
+	Menu, Tray, Add,		Hotstrings,																	F_Help
+	Menu, Tray, Add,		Save configuration to current .ini file,											F_Save
+	Menu, Tray, Add, 		About…,																		F_About
     	Menu, Tray, Add ; To add a menu separator line, omit all three parameters. To put your menu items on top of the standard menu items (after adding your own menu items) run Menu, Tray, NoStandard followed by Menu, Tray, Standard.
-    	; Menu, Tray, Default, % A_ScriptName . A_Space . "status:" . A_Space . (v_InputH.InProgress ? "ENABLED" : "DISABLED") ; Default: Changes the menu's default item to be the specified menu item and makes its font bold.
     	Menu, Tray, NoStandard
     	Menu, Tray, Standard
     	Menu, Tray, Tip, % SubStr(A_ScriptName, 1, -4) ; Changes the tray icon's tooltip.
@@ -633,6 +663,7 @@ Remark: you can always run application hotstrings. For more info just enter "sfh
 	else
 		{
 			F_ReadIni(param)
+			v_ConfigIni := param
 		}
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -641,6 +672,11 @@ F_ReadIni(param)
 	global	;assume-global mode of operation
 	local 	DiacriticSectionCounter 	:= 0
 		,	Temp 				:= ""
+
+	IniRead, f_ShiftFunctions, 	% v_ConfigIni, Global, OverallStatus
+	IniRead, f_Capital, 		% v_ConfigIni, Global, ShiftCapital
+	IniRead, f_Diacritics, 		% v_ConfigIni, Global, ShiftDiacritics
+	IniRead, f_CapsLock, 		% v_ConfigIni, Global, ShiftCapsLock
 
 	Loop, Read, % param
 	    if (InStr(A_LoopReadLine, "[Diacritic"))
