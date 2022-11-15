@@ -26,7 +26,7 @@ StringCaseSense, 	On				;for Switch in F_OnKeyUp()
 ;Testing: Alt+Tab, , asdf Shift+Home
 
 ; - - - - - - - - - - - - - - - - Executable section, beginning - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
- AppVersion			:= "1.0.2"
+AppVersion			:= "1.0.2"
 ;@Ahk2Exe-Let vAppVersion=%A_PriorLine~U)^(.+"){1}(.+)".*$~$2% ; Keep these lines together
 ;Overrides the custom EXE icon used for compilation
 ;@Ahk2Exe-SetCopyright GNU GPL 3.x
@@ -35,18 +35,17 @@ StringCaseSense, 	On				;for Switch in F_OnKeyUp()
 ;@Ahk2Exe-Set OriginalScriptlocation, https://github.com/mslonik/ShiftDiacritic
 ;@Ahk2Exe-SetCompanyName  http://mslonik.pl
 ;@Ahk2Exe-SetFileVersion %U_vAppVersion%
-;@Ahk2Exe-ConsoleApp
 
-FileInstall, LICENSE, 			LICENSE, 			0
-FileInstall, ShiftFunctions.ahk, 	ShiftFunctions.ahk, 0
-FileInstall, Czech.ini, 			Czech.ini,		0
-FileInstall, German1.ini, 		German1.ini,		0
-FileInstall, German2.ini, 		German2.ini,		0
-FileInstall, Norwegian.ini,		Norwegian.ini,		0
-FileInstall, Polish.ini, 		Polish.ini, 		0
-FileInstall, Slovakian1.ini,		Slovakian1.ini,	0
-FileInstall, Slovakian2.ini,		Slovakian2.ini,	0
-FileInstall, README.md, 			README.md,		0
+FileInstall, LICENSE, 			LICENSE, 			true
+FileInstall, ShiftFunctions.ahk, 	ShiftFunctions.ahk, true
+FileInstall, Czech.ini, 			Czech.ini,		true
+FileInstall, German1.ini, 		German1.ini,		true
+FileInstall, German2.ini, 		German2.ini,		true
+FileInstall, Norwegian.ini,		Norwegian.ini,		true
+FileInstall, Polish.ini, 		Polish.ini, 		true
+FileInstall, Slovakian1.ini,		Slovakian1.ini,	true
+FileInstall, Slovakian2.ini,		Slovakian2.ini,	true
+FileInstall, README.md, 			README.md,		true
 ; - - - - - - - - - - - - - - - - Executable section, end - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 	v_Char 			:= ""	;global variable
@@ -403,7 +402,7 @@ F_MenuTray()
     	Menu, Tray, Add ; To add a menu separator line, omit all three parameters. To put your menu items on top of the standard menu items (after adding your own menu items) run Menu, Tray, NoStandard followed by Menu, Tray, Standard.
     	Menu, Tray, NoStandard
     	Menu, Tray, Standard
-    	Menu, Tray, Tip, % SubStr(A_ScriptName, 1, -4) ; Changes the tray icon's tooltip.
+    	Menu, Tray, Tip, % A_ScriptName ; Changes the tray icon's tooltip.
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 F_SelectConfig()
@@ -426,9 +425,13 @@ F_About()
 	MsgBox, % c_IconAsteriskInfo, % A_ScriptName
 		, % "`n`n"
 		. "
-	(		 
+	( RTrim0 ; Turns off the omission of spaces and tabs from the end of each line.
 	Author:      	Maciej Słojewski (🐘, mslonik, http://mslonik.pl)
 	Purpose:     	Use Shift key(s) for various purposes.
+	Version:		
+	)" . AppVersion . "`n`n"
+	. "
+	(
 	Description: 	3 functions:
 
 	Shift: Diacritics, when Shift key is pressed and released after character which has diacritic representation, that letter is replaced with diacritic character.
@@ -438,9 +441,7 @@ F_About()
 	Shift: CapsLock, when Shift is pressed and release twice, CapsLock is toggled.
 
 	License:     	GNU GPL v.3
-	Notes:		Run this script as the first one, before any Hotstring definition (static or dynamic).
-	Save this file as UTF-8 with BOM.
-	To cancel Shift behaviour press either Control, Esc or even Backspace.
+	Notes:		Run this script as the first one, before any Hotstring definition (static or dynamic). Save this file as UTF-8 with BOM. To cancel Shift behaviour press either Control, Esc or even Backspace.
 	)"
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -537,13 +538,14 @@ F_OnKeyUp(ih, VK, SC)
 		}
 	}
 
+	OutputDebug, % "WWU :" . WhatWasUp . A_Space "v_Char:" . v_Char . "C:" . f_Char . A_Space . "S:" . f_ShiftPressed . A_Space . "C:" . f_ControlPressed . A_Space . "A:" . f_AltPressed . A_Space . "W:" . f_WinPressed . "`n"
 	Switch WhatWasUp	;These are chars, so have to be filtered out separately
 		{
 			Case "Space", "Enter", "Tab": 	;the rest of not alphanumeric keys
 				f_Char := false
 			,	v_Char := ""
-			,	f_ShiftPressed		:= false
 			,	v_InputH.VisibleText := true
+			,	f_ShiftPressed		:= false
 				return
 			Case "Escape":
 				F_FlagReset()
@@ -559,7 +561,6 @@ F_OnKeyUp(ih, VK, SC)
 			return
 		}
 	;From this moment I know we have character and only Shift
-	; OutputDebug, % "WWU :" . WhatWasUp . A_Space "v_Char:" . v_Char . "C:" . f_Char . A_Space . "S:" . f_ShiftPressed . A_Space . "C:" . f_ControlPressed . A_Space . "A:" . f_AltPressed . A_Space . "W:" . f_WinPressed . "`n"
 
 	if (f_Capital) 
 		and (f_Char)
@@ -572,6 +573,7 @@ F_OnKeyUp(ih, VK, SC)
 		and ((WhatWasUp = "LShift") or (WhatWasUp = "RShift"))
 			F_Diacritics(v_Char)
 
+	OutputDebug, % "WWU :" . WhatWasUp . A_Space "v_Char:" . v_Char . "C:" . f_Char . A_Space . "S:" . f_ShiftPressed . A_Space . "C:" . f_ControlPressed . A_Space . "A:" . f_AltPressed . A_Space . "W:" . f_WinPressed . "`n"
 	if (f_CapsLock)
 		F_DoubleShift(WhatWasUp, f_ShiftPressed)
 
@@ -649,40 +651,14 @@ F_InputArguments()
 
 	for n, param in A_Args
 	{
-		if (InStr(param, "-h", false)) or (InStr(param, "/h", false))
-		{
+		if (InStr(param, "-scdisable", false))
+			f_Capital := false
 
-			FileAppend, 
-			(
-			Shift functions, one parameter per function:
-			
-			Shift Capital:     press <Shift> and release it, next press and release any letter to get capital version of it.
-			Shift Diacritics:  press and release any diacritic letter, next press and release <Shift> to get diacritic character.
-			Shift CapsLock:    press and release <Shift> twice to toggle <CapsLock>.
-			
-			The following list of runtime / startup parameters is available:
-			
-			-scdisable  disable "ShiftCapital"
-			-sddisable  disable "Shift Diacritics"
-			-scdisable  disable "Shift CapsLock"
-			-h, /h      this help
-			-v          show application version
-			
-			Remark: you can always run application hotstrings. For more info just enter "sfhelp/""
-			), *	;* = stdout, ** = stderr
-			return
-		}
-	if (InStr(param, "-v", false))
-		FileAppend, % AppVersion, *
+		if (InStr(param, "-sddisable", false))
+			f_Diacritics := false
 
-	if (InStr(param, "-scdisable", false))
-		f_Capital := false
-	
-	if (InStr(param, "-sddisable", false))
-		f_Diacritics := false
-
-	if (InStr(param, "-scdisable", false))
-		f_CapsLock := false
+		if (InStr(param, "-scdisable", false))
+			f_CapsLock := false
 	}
 	if (!InStr(param, ".ini", false))
 		{
