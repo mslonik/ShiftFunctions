@@ -482,6 +482,33 @@ F_OnKeyDown(ih, VK, SC)
 		; Default:
 			; f_AnyOtherKey		:= true
 	}
+	if (f_ShiftPressed)
+		; and ((WhatWasDown = "LShift") or (WhatWasDown = "RShift"))
+		{
+			Switch v_Char
+			{
+				Case "`t":
+					v_InputH.VisibleText := true
+					SendInput, +{Tab}
+					OutputDebug, % "Shift + Tab" . "`n"
+					f_Char := false
+				,	v_Char := ""
+					return
+				Case "`n":
+					v_InputH.VisibleText := true
+					SendInput, +{Enter}
+					f_Char := false
+				,	v_Char := ""
+					return
+				Case "Space":
+					v_InputH.VisibleText := true
+					SendInput, +{Space}
+					f_Char := false
+				,	v_Char := ""
+					return
+			}
+		}
+
 	; OutputDebug, % "WWD:" . WhatWasDown . A_Space . "S:" . f_ShiftPressed . A_Space . "C:" . f_ControlPressed . A_Space . "A:" . f_AltPressed . A_Space . "W:" . f_WinPressed . A_Space . "O:" . f_AnyOtherKey . "`n"
 	; OutputDebug, % A_ThisFunc . A_Space . "E" . "`n"
 }
@@ -538,14 +565,14 @@ F_OnKeyUp(ih, VK, SC)
 		}
 	}
 
-	OutputDebug, % "WWU :" . WhatWasUp . A_Space "v_Char:" . v_Char . "C:" . f_Char . A_Space . "S:" . f_ShiftPressed . A_Space . "C:" . f_ControlPressed . A_Space . "A:" . f_AltPressed . A_Space . "W:" . f_WinPressed . "`n"
+	; OutputDebug, % "WWU :" . WhatWasUp . A_Space "v_Char:" . v_Char . "C:" . f_Char . A_Space . "S:" . f_ShiftPressed . A_Space . "C:" . f_ControlPressed . A_Space . "A:" . f_AltPressed . A_Space . "W:" . f_WinPressed . "`n"
 	Switch WhatWasUp	;These are chars, so have to be filtered out separately
 		{
 			Case "Space", "Enter", "Tab": 	;the rest of not alphanumeric keys
 				f_Char := false
 			,	v_Char := ""
-			,	v_InputH.VisibleText := true
-			,	f_ShiftPressed		:= false
+			; ,	v_InputH.VisibleText := true
+			; ,	f_ShiftPressed		:= false
 				return
 			Case "Escape":
 				F_FlagReset()
@@ -573,7 +600,7 @@ F_OnKeyUp(ih, VK, SC)
 		and ((WhatWasUp = "LShift") or (WhatWasUp = "RShift"))
 			F_Diacritics(v_Char)
 
-	OutputDebug, % "WWU :" . WhatWasUp . A_Space "v_Char:" . v_Char . "C:" . f_Char . A_Space . "S:" . f_ShiftPressed . A_Space . "C:" . f_ControlPressed . A_Space . "A:" . f_AltPressed . A_Space . "W:" . f_WinPressed . "`n"
+	; OutputDebug, % "WWU :" . WhatWasUp . A_Space "v_Char:" . v_Char . "C:" . f_Char . A_Space . "S:" . f_ShiftPressed . A_Space . "C:" . f_ControlPressed . A_Space . "A:" . f_AltPressed . A_Space . "W:" . f_WinPressed . "`n"
 	if (f_CapsLock)
 		F_DoubleShift(WhatWasUp, f_ShiftPressed)
 
