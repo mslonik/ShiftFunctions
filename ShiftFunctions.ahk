@@ -311,76 +311,57 @@ F_Capital(ByRef v_Char)
 	Switch v_Char
 	{
 		Case "``":
-			v_InputH.VisibleText := true
-			SendInput, ~
+			Send, {BS}~
 		Case "1":
-			v_InputH.VisibleText := true
-			SendInput, {!}
+			Send, {BS}{!}
 		Case "2":
-			v_InputH.VisibleText := true
-			SendInput, @
+			Send, {BS}@
 		Case "3":
-			v_InputH.VisibleText := true
-			SendInput, {#}
+			Send, {BS}{#}
 		Case "4":
-			v_InputH.VisibleText := true
-			SendInput, $
+			Send, {BS}$
 		Case "5":
-			v_InputH.VisibleText := true
-			SendInput, `%
+			Send, {BS}`%
 		Case "6":
-			v_InputH.VisibleText := true
-			SendInput, {^}
+			Send, {BS}{^}
 		Case "7":
-			v_InputH.VisibleText := true
-			SendInput, &
+			Send, {BS}&
 		Case "8":
-			v_InputH.VisibleText := true
-			SendInput, *
+			Send, {BS}*
 		Case "9":
-			v_InputH.VisibleText := true
-			SendInput, (
+			Send, {BS}(
 		Case "0":
-			v_InputH.VisibleText := true
-			SendInput, )
+			Send, {BS})
 		Case "-":
-			v_InputH.VisibleText := true
-			SendInput, _
+			Send, {BS}_
 		Case "=":
-			v_InputH.VisibleText := true
-			SendInput, {+}
+			Send, {BS}{+}
 		Case "[":
-			v_InputH.VisibleText := true
-			SendInput, {{}
+			Send, {BS}{{}
 		Case "]":
-			v_InputH.VisibleText := true
-			SendInput, {}}
+			Send, {BS}{}}
 		Case "\":
-			v_InputH.VisibleText := true
-			SendInput, |
+			Send, {BS}|
 		Case ";":
-			v_InputH.VisibleText := true
-			SendInput, :
+			Send, {BS}:
 		Case "'":
-			v_InputH.VisibleText := true
-			SendInput, "
+			Send, {BS}"
 		Case ",":
-			v_InputH.VisibleText := true
-			SendInput, <
+			Send, {BS}<
 		Case ".":
-			v_InputH.VisibleText := true
-			SendInput, >
+			Send, {BS}>
 		Case "/":
-			v_InputH.VisibleText := true
-			SendInput, ?
+			Send, {BS}?
+		Case "`t":
+			Send, {Shift Down}{Tab 2}{Shift Up}
+		Case "`n":
+			Send, {BS}+{Enter}
 		Default:
 			v_Char := Format("{:U}", v_Char)
-			v_InputH.VisibleText := true
-			SendInput, % v_Char
+			Send, % "{BS}" . v_Char
 	}
 	SendLevel, 0
 	f_ShiftPressed 	:= false
-,	v_InputH.VisibleText := true
 ,	f_Char			:= false
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -472,7 +453,6 @@ F_OnKeyDown(ih, VK, SC)
 	{
 		Case "LShift", "RShift":
 			f_ShiftPressed 	:= true
-,			v_InputH.VisibleText := false
 		Case "LControl", "RControl":
 			f_ControlPressed 	:= true
 		Case "LAlt", "RAlt":
@@ -482,34 +462,7 @@ F_OnKeyDown(ih, VK, SC)
 		; Default:
 			; f_AnyOtherKey		:= true
 	}
-	if (f_ShiftPressed)
-		; and ((WhatWasDown = "LShift") or (WhatWasDown = "RShift"))
-		{
-			Switch v_Char
-			{
-				Case "`t":
-					v_InputH.VisibleText := true
-					SendInput, +{Tab}
-					OutputDebug, % "Shift + Tab" . "`n"
-					f_Char := false
-				,	v_Char := ""
-					return
-				Case "`n":
-					v_InputH.VisibleText := true
-					SendInput, +{Enter}
-					f_Char := false
-				,	v_Char := ""
-					return
-				Case "Space":
-					v_InputH.VisibleText := true
-					SendInput, +{Space}
-					f_Char := false
-				,	v_Char := ""
-					return
-			}
-		}
-
-	; OutputDebug, % "WWD:" . WhatWasDown . A_Space . "S:" . f_ShiftPressed . A_Space . "C:" . f_ControlPressed . A_Space . "A:" . f_AltPressed . A_Space . "W:" . f_WinPressed . A_Space . "O:" . f_AnyOtherKey . "`n"
+	; OutputDebug, % "WWD:" . WhatWasDown . A_Space . "v_Char:" . v_Char . "C:" . f_Char . A_Space . "S:" . f_ShiftPressed . A_Space . "C:" . f_ControlPressed . A_Space . "A:" . f_AltPressed . A_Space . "W:" . f_WinPressed . "`n"
 	; OutputDebug, % A_ThisFunc . A_Space . "E" . "`n"
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -520,7 +473,6 @@ F_FlagReset()
 ,	v_Char 			:= ""
 ,	f_Char			:= false
 ,	f_ShiftPressed		:= false
-,	v_InputH.VisibleText := true
 ,	f_WinPressed 		:= false
 ,	f_AltPressed 		:= false
 	}
@@ -543,37 +495,28 @@ F_OnKeyUp(ih, VK, SC)
 				return
 			Case "LAlt", "RAlt", "LWin", "RWin":		;modifiers
 				f_AltPressed 		:= false
+			,	f_WinPressed		:= false	
 			,	f_ShiftPressed		:= false
-			,	v_InputH.VisibleText := true
 				return
 			Case "Insert", "Home", "PageUp", "Delete", "End", "PageDown", "AppsKey"	;NavPad
 			,	"Up", "Down", "Left", "Right":	;11
 				f_ShiftPressed		:= false
-			,	v_InputH.VisibleText := true
 				return
 			Case "F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10", "F11", "F12", "F13", "F14", "F15", "F16", "F17", "F18", "F19", "F20":	;20
 				f_ShiftPressed		:= false
-			,	v_InputH.VisibleText := true
 				return
 			Case "F21", "F22", "F23", "F24":	;4
 				f_ShiftPressed		:= false
-			,	v_InputH.VisibleText := true
 				return
 			Case "Backspace":
 				F_FlagReset()
 				return
 		}
 	}
-
 	; OutputDebug, % "WWU :" . WhatWasUp . A_Space "v_Char:" . v_Char . "C:" . f_Char . A_Space . "S:" . f_ShiftPressed . A_Space . "C:" . f_ControlPressed . A_Space . "A:" . f_AltPressed . A_Space . "W:" . f_WinPressed . "`n"
+
 	Switch WhatWasUp	;These are chars, so have to be filtered out separately
 		{
-			Case "Space", "Enter", "Tab": 	;the rest of not alphanumeric keys
-				f_Char := false
-			,	v_Char := ""
-			; ,	v_InputH.VisibleText := true
-			; ,	f_ShiftPressed		:= false
-				return
 			Case "Escape":
 				F_FlagReset()
 				return
@@ -627,7 +570,6 @@ F_DoubleShift(WhatWasUp, ByRef f_ShiftPressed)
 		SetCapsLockState % !GetKeyState("CapsLock", "T") 
 		ShiftCounter 			:= 0
 	,	f_ShiftPressed 		:= false
-	,	v_InputH.VisibleText 	:= true
 	}
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -654,7 +596,6 @@ F_DiacriticOutput(Diacritic)
 	Send,		% "{BS}" . Diacritic
 	SendLevel, 	0
 	f_ShiftPressed 		:= false
-,	v_InputH.VisibleText 	:= true
 ,	f_Char 				:= false
 ,	v_Char				:= ""
 	; OutputDebug, % A_ThisFunc . A_Space . "E" . "`n"
@@ -762,7 +703,7 @@ F_ReadIni(param)
 	Loop, %DiacriticSectionCounter%
     	{
 		IniRead,  Temp,          	% param, % "Diacritic"	. A_Index, BaseKey,			Error
-		if (Temp !== "Error")
+		if (Temp != "Error")
 			a_BaseKey.Push(Temp)
 		else
 		{
@@ -775,7 +716,7 @@ F_ReadIni(param)
 		}
  
     		IniRead,  Temp,     		% param, % "Diacritic"	. A_Index, Diacritic,		Error
-		if (Temp !== "Error")
+		if (Temp != "Error")
 			a_Diacritic.Push(Temp)
 		else
 		{
@@ -788,7 +729,7 @@ F_ReadIni(param)
 		}
 
 		IniRead, Temp, 			% param, % "Diacritic"	. A_Index, ShiftBaseKey, 	Error
-		if (Temp !== "Error")
+		if (Temp != "Error")
 			a_BaseKey.Push(Temp)
 		else
 		{
@@ -801,7 +742,7 @@ F_ReadIni(param)
 		}
 
 		IniRead, Temp, 			% param, % "Diacritic"	. A_Index, ShiftDiacritic, 	Error
-		if (Temp !== "Error")
+		if (Temp != "Error")
 			a_Diacritic.Push(Temp)
 		else
 		{
