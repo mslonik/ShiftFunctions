@@ -13,7 +13,7 @@
 #SingleInstance, 	force		; Only one instance of this script may run at a time!
 #NoEnv  						; Recommended for performance and compatibility with future AutoHotkey releases.
 #Warn  	     				; Enable warnings to assist with detecting common errors.
-#Requires, AutoHotkey v1.1.33+ 	; Displays an error and quits if a version requirement is not met.
+#Requires, AutoHotkey v1.1.35+ 	; Displays an error and quits if a version requirement is not met.
 #KeyHistory, 		100			; For debugging purposes.
 #LTrim						; Omits spaces and tabs at the beginning of each line. This is primarily used to allow the continuation section to be indented. Also, this option may be turned on for multiple continuation sections by specifying #LTrim on a line by itself. #LTrim is positional: it affects all continuation sections physically beneath it.
 
@@ -26,7 +26,7 @@ StringCaseSense, 	On				;for Switch in F_OnKeyUp()
 ;Testing: Alt+Tab, , asdf Shift+Home
 
 ; - - - - - - - - - - - - - - - - Executable section, beginning - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-AppVersion			:= "1.0.2"
+AppVersion			:= "1.0.3"
 ;@Ahk2Exe-Let vAppVersion=%A_PriorLine~U)^(.+"){1}(.+)".*$~$2% ; Keep these lines together
 ;Overrides the custom EXE icon used for compilation
 ;@Ahk2Exe-SetCopyright GNU GPL 3.x
