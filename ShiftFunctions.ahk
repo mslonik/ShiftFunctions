@@ -147,7 +147,7 @@ return
 ; - - - - - - - - - - - - - - GLOBAL HOTSTRINGS: END- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 ; - - - - - - - - - - - - - - GLOBAL HOTKEYS: BEGINNING- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-~LButton::	;not sure if this is necessary, but is should also spoil anything
+~LButton::	;not sure if this is necessary, but is should also not spoil anything
 ~RButton::
 ~MButton::
 	F_FlagReset()
@@ -469,9 +469,9 @@ F_OnKeyDown(ih, VK, SC)
 F_FlagReset()
 {
 	global	;assume-global mode of operation
-	f_ControlPressed 	:= false
-,	v_Char 			:= ""
+	v_Char 			:= ""
 ,	f_Char			:= false
+,	f_ControlPressed 	:= false
 ,	f_ShiftPressed		:= false
 ,	f_WinPressed 		:= false
 ,	f_AltPressed 		:= false
@@ -567,7 +567,12 @@ F_DoubleShift(WhatWasUp, ByRef f_ShiftPressed)
 	; OutputDebug, % "ShiftCounter:" . A_Space . ShiftCounter . "`n"
 	if (ShiftCounter = 2)
 	{
-		SetCapsLockState % !GetKeyState("CapsLock", "T") 
+		SetCapsLockState % !GetKeyState("CapsLock", "T")
+		OutputDebug, % "GetKeyState(CapsLock, T):" . A_Space . GetKeyState("CapsLock", "T") . "`n"
+		if (GetKeyState("CapsLock", "T"))
+			SoundPlay, *48		;standard system sound, exclamation
+		else
+			SoundPlay, *16		;standard system sound, hand (stop/error)
 		ShiftCounter 			:= 0
 	,	f_ShiftPressed 		:= false
 	}
