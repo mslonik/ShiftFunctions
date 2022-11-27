@@ -162,11 +162,20 @@ F_Save()
 	OutputDebug, % "v_ConfigIni:" . A_Space . v_ConfigIni . A_Space . "f_ShiftFunctions:" . A_Space . f_ShiftFunctions .  "`n"
 	IniWrite, % f_ShiftFunctions, 	% A_ScriptDir . "\" . v_ConfigIni, Global, OverallStatus
 	if (ErrorLevel)
-		MsgBox, % c_IconAsteriskInfo, % A_ScriptName, "Problem with saving parameter" . A_Space . "overall status" . A_Space . "to the file" . "`n"
+		MsgBox, % c_IconAsteriskInfo, % A_ScriptName, % "Problem with saving parameter" . A_Space . "overall status" . A_Space . "to the file" . "`n"
 			. A_ScriptDir . "\" . v_ConfigIni
 	IniWrite, % f_Capital, 			% A_ScriptDir . "\" . v_ConfigIni, Global, ShiftCapital
+	if (ErrorLevel)
+		MsgBox, % c_IconAsteriskInfo, % A_ScriptName, % "Problem with saving parameter" . A_Space . "shift capital" . A_Space . "to the file" . "`n"
+			. A_ScriptDir . "\" . v_ConfigIni
 	IniWrite, % f_Diacritics, 		% A_ScriptDir . "\" . v_ConfigIni, Global, ShiftDiacritics
+	if (ErrorLevel)
+		MsgBox, % c_IconAsteriskInfo, % A_ScriptName, % "Problem with saving parameter" . A_Space . "shift diacritics" . A_Space . "to the file" . "`n"
+			. A_ScriptDir . "\" . v_ConfigIni
 	IniWrite, % f_CapsLock, 			% A_ScriptDir . "\" . v_ConfigIni, Global, ShiftCapsLock
+	if (ErrorLevel)
+		MsgBox, % c_IconAsteriskInfo, % A_ScriptName, % "Problem with saving parameter" . A_Space . "shift capslock" . A_Space . "to the file" . "`n"
+			. A_ScriptDir . "\" . v_ConfigIni
 
 	MsgBox, % c_IconAsteriskInfo, % A_ScriptName, % "Your settings is saved to" . "`n`n"
 		. A_ScriptDir . "\" . v_ConfigIni . "`n`n"
