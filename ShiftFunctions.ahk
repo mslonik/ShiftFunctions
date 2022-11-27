@@ -26,7 +26,7 @@ StringCaseSense, 	On				;for Switch in F_OnKeyUp()
 ;Testing: Alt+Tab, , asdf Shift+Home
 
 ; - - - - - - - - - - - - - - - - Executable section, beginning - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-AppVersion			:= "1.0.3"
+AppVersion			:= "1.0.4"
 ;@Ahk2Exe-Let vAppVersion=%A_PriorLine~U)^(.+"){1}(.+)".*$~$2% ; Keep these lines together
 ;Overrides the custom EXE icon used for compilation
 ;@Ahk2Exe-SetCopyright GNU GPL 3.x
@@ -159,7 +159,11 @@ F_Save()
 {
 	global	;assume-globa mode of operation
 
+	OutputDebug, % "v_ConfigIni:" . A_Space . v_ConfigIni . A_Space . "f_ShiftFunctions:" . A_Space . f_ShiftFunctions .  "`n"
 	IniWrite, % f_ShiftFunctions, 	% A_ScriptDir . "\" . v_ConfigIni, Global, OverallStatus
+	if (ErrorLevel)
+		MsgBox, % c_IconAsteriskInfo, % A_ScriptName, "Problem with saving parameter" . A_Space . "overall status" . A_Space . "to the file" . "`n"
+			. A_ScriptDir . "\" . v_ConfigIni
 	IniWrite, % f_Capital, 			% A_ScriptDir . "\" . v_ConfigIni, Global, ShiftCapital
 	IniWrite, % f_Diacritics, 		% A_ScriptDir . "\" . v_ConfigIni, Global, ShiftDiacritics
 	IniWrite, % f_CapsLock, 			% A_ScriptDir . "\" . v_ConfigIni, Global, ShiftCapsLock
@@ -500,7 +504,7 @@ F_OnKeyUp(ih, VK, SC)
 				return
 			Case "Insert", "Home", "PageUp", "Delete", "End", "PageDown", "AppsKey"	;NavPad
 			,	"Up", "Down", "Left", "Right":	;11
-				f_ShiftPressed		:= false
+				F_FlagReset()
 				return
 			Case "F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10", "F11", "F12", "F13", "F14", "F15", "F16", "F17", "F18", "F19", "F20":	;20
 				f_ShiftPressed		:= false
@@ -544,37 +548,66 @@ F_OnKeyUp(ih, VK, SC)
 			F_Diacritics(v_Char)
 
 	; OutputDebug, % "WWU :" . WhatWasUp . A_Space "v_Char:" . v_Char . "C:" . f_Char . A_Space . "S:" . f_ShiftPressed . A_Space . "C:" . f_ControlPressed . A_Space . "A:" . f_AltPressed . A_Space . "W:" . f_WinPressed . "`n"
+	F_ShiftReset(WhatWasUp, f_ShiftPressed)
+
 	if (f_CapsLock)
-		F_DoubleShift(WhatWasUp, f_ShiftPressed)
+		F_CapsLock(WhatWasUp, f_ShiftPressed)
 
 	f_Char := false
 	; OutputDebug, % "WWUe:" . WhatWasUp . A_Space "v_Char:" . v_Char . "C:" . f_Char . A_Space . "S:" . f_ShiftPressed . A_Space . "C:" . f_ControlPressed . A_Space . "A:" . f_AltPressed . A_Space . "W:" . f_WinPressed . "`n"
 	; OutputDebug, % A_ThisFunc . A_Space . "E" . "`n"
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-F_DoubleShift(WhatWasUp, ByRef f_ShiftPressed)
+F_ShiftReset(WhatWasUp, ByRef f_ShiftPressed)	;future: undo of previous action (Diacritics or CapsLock)
 {
 	global	;assume-global mode of operation
-	static	ShiftCounter := 0
+	static	SRCounter	:= 0
+	local	SRLimit	:= 2
+		,	SRReset	:= 0	
+
 	if ((WhatWasUp = "LShift") or (WhatWasUp = "RShift")) and (f_ShiftPressed)
-		ShiftCounter++
+		SRCounter++
 	else
 	{
-		ShiftCounter := 0
-		return
+		SRCounter := SRReset
+		; return
 	}
 	
 	; OutputDebug, % "ShiftCounter:" . A_Space . ShiftCounter . "`n"
-	if (ShiftCounter = 2)
+	if (SRCounter = SRLimit)
+	{
+		SRCounter		:= SRReset
+	,	f_ShiftPressed	:= false
+		OutputDebug, % "Reset" . "`n"
+	}
+}
+; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+F_CapsLock(WhatWasUp, ByRef f_ShiftPressed)
+{
+	global	;assume-global mode of operation
+	static	CLCounter := 0
+	local	CLLimit 	:= 3
+		,	CLReset	:= 0	
+
+	if ((WhatWasUp = "LShift") or (WhatWasUp = "RShift")) and (f_ShiftPressed)
+		CLCounter++
+	else
+	{
+		CLCounter := CLReset
+		return
+	}
+	
+	; OutputDebug, % "CapsLock Counter:" . A_Space . CLCounter . "`n"
+	if (CLCounter = CLLimit)
 	{
 		SetCapsLockState % !GetKeyState("CapsLock", "T")
-		OutputDebug, % "GetKeyState(CapsLock, T):" . A_Space . GetKeyState("CapsLock", "T") . "`n"
+		; OutputDebug, % "GetKeyState(CapsLock, T):" . A_Space . GetKeyState("CapsLock", "T") . "`n"
 		if (GetKeyState("CapsLock", "T"))
 			SoundPlay, *48		;standard system sound, exclamation
 		else
 			SoundPlay, *16		;standard system sound, hand (stop/error)
-		ShiftCounter 			:= 0
-	,	f_ShiftPressed 		:= false
+		CLCounter			:= CLReset
+	; ,	f_ShiftPressed		:= false
 	}
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -688,11 +721,47 @@ F_ReadIni(param)
 	global	;assume-global mode of operation
 	local 	DiacriticSectionCounter 	:= 0
 		,	Temp 				:= ""
+		,	ErrorString			:= "Error"
 
-	IniRead, f_ShiftFunctions, 	% v_ConfigIni, Global, OverallStatus
-	IniRead, f_Capital, 		% v_ConfigIni, Global, ShiftCapital
-	IniRead, f_Diacritics, 		% v_ConfigIni, Global, ShiftDiacritics
-	IniRead, f_CapsLock, 		% v_ConfigIni, Global, ShiftCapsLock
+	IniRead, f_ShiftFunctions, 	% v_ConfigIni, Global, OverallStatus, 	% ErrorString
+	if (f_ShiftFunctions = ErrorString)
+	{
+		f_ShiftFunctions := true
+		MsgBox, % c_IconAsteriskInfo, % A_ScriptName, % "Problem with reading parameter" . A_Space . "overall status" . A_Space . "from the file" . "`n"
+			. A_ScriptDir . "\" . v_ConfigIni . "`n`n"
+			. "Default value will be applied now:" . "`n"
+			. "ENABLE" . "."
+	}
+
+	IniRead, f_Capital, 		% v_ConfigIni, Global, ShiftCapital,	% ErrorString
+	if (f_Capital = ErrorString)
+	{
+		f_Capital := true
+		MsgBox, % c_IconAsteriskInfo, % A_ScriptName, % "Problem with reading parameter" . A_Space . "Shift capital" . A_Space . "from the file" . "`n"
+			. A_ScriptDir . "\" . v_ConfigIni . "`n`n"
+			. "Default value will be applied now:" . "`n"
+			. "ENABLE" . "."
+	}
+
+	IniRead, f_Diacritics, 		% v_ConfigIni, Global, ShiftDiacritics,	% ErrorString
+	if (f_Diacritics = ErrorString)
+	{
+		f_Diacritics := true
+		MsgBox, % c_IconAsteriskInfo, % A_ScriptName, % "Problem with reading parameter" . A_Space . "Shift diacritics" . A_Space . "from the file" . "`n"
+			. A_ScriptDir . "\" . v_ConfigIni . "`n`n"
+			. "Default value will be applied now:" . "`n"
+			. "ENABLE" . "."
+	}
+	
+	IniRead, f_CapsLock, 		% v_ConfigIni, Global, ShiftCapsLock,	% ErrorString
+	if (f_CapsLock = ErrorString)
+	{
+		f_CapsLock := true
+		MsgBox, % c_IconAsteriskInfo, % A_ScriptName, % "Problem with reading parameter" . A_Space . "Shift capslock" . A_Space . "from the file" . "`n"
+			. A_ScriptDir . "\" . v_ConfigIni . "`n`n"
+			. "Default value will be applied now:" . "`n"
+			. "ENABLE" . "."
+	}
 
 	Loop, Read, % param
 	    if (InStr(A_LoopReadLine, "[Diacritic"))
