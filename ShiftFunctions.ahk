@@ -26,7 +26,7 @@ StringCaseSense, 	On				;for Switch in F_OnKeyUp()
 ;Testing: Alt+Tab, , asdf Shift+Home
 
 ; - - - - - - - - - - - - - - - - Executable section, beginning - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-AppVersion			:= "1.0.4"
+AppVersion			:= "1.1.0"
 ;@Ahk2Exe-Let vAppVersion=%A_PriorLine~U)^(.+"){1}(.+)".*$~$2% ; Keep these lines together
 ;Overrides the custom EXE icon used for compilation
 ;@Ahk2Exe-SetCopyright GNU GPL 3.x
@@ -63,6 +63,12 @@ FileInstall, README.md, 			README.md,		true
 ,	a_BaseKey 		:= []	;global array: ordinary letters and capital ordinary letters
 ,	a_Diacritic		:= []	;global array: diacritic letters and capital diacritic letters
 ,	v_ConfigIni		:= ""	;global variable, stores filename of current Config.ini.
+,	v_Undo			:= ""	;global variable, stores last character pressed by user before F_Diacritic or F_Capital were in action
+,	f_DUndo			:= false	;global variable, set if F_Diacritics or F_Capital were in action
+,	v_CLCounter 		:= 0
+,	c_CLReset			:= 0	
+,	c_FeedbackSL		:= 2
+,	c_NominalSL		:= 0
 
 F_InitiateInputHook()
 F_InputArguments()
@@ -159,7 +165,7 @@ F_Save()
 {
 	global	;assume-globa mode of operation
 
-	OutputDebug, % "v_ConfigIni:" . A_Space . v_ConfigIni . A_Space . "f_ShiftFunctions:" . A_Space . f_ShiftFunctions .  "`n"
+	; OutputDebug, % "v_ConfigIni:" . A_Space . v_ConfigIni . A_Space . "f_ShiftFunctions:" . A_Space . f_ShiftFunctions .  "`n"
 	IniWrite, % f_ShiftFunctions, 	% A_ScriptDir . "\" . v_ConfigIni, Global, OverallStatus
 	if (ErrorLevel)
 		MsgBox, % c_IconAsteriskInfo, % A_ScriptName, % "Problem with saving parameter" . A_Space . "overall status" . A_Space . "to the file" . "`n"
@@ -320,7 +326,7 @@ F_Capital(ByRef v_Char)
 {
 	global	;assume-global mode of operation
 
-	SendLevel, 2
+	SendLevel, % c_FeedbackSL
 	Switch v_Char
 	{
 		Case "``":
@@ -365,15 +371,14 @@ F_Capital(ByRef v_Char)
 			Send, {BS}>
 		Case "/":
 			Send, {BS}?
-		Case "`t":
-			Send, {Shift Down}{Tab 2}{Shift Up}
+		Case "`t":	;by try and error method
 		Case "`n":
 			Send, {BS}+{Enter}
 		Default:
 			v_Char := Format("{:U}", v_Char)
 			Send, % "{BS}" . v_Char
 	}
-	SendLevel, 0
+	SendLevel, % c_NominalSL
 	f_ShiftPressed 	:= false
 ,	f_Char			:= false
 }
@@ -557,7 +562,7 @@ F_OnKeyUp(ih, VK, SC)
 			F_Diacritics(v_Char)
 
 	; OutputDebug, % "WWU :" . WhatWasUp . A_Space "v_Char:" . v_Char . "C:" . f_Char . A_Space . "S:" . f_ShiftPressed . A_Space . "C:" . f_ControlPressed . A_Space . "A:" . f_AltPressed . A_Space . "W:" . f_WinPressed . "`n"
-	F_ShiftReset(WhatWasUp, f_ShiftPressed)
+	F_ShiftUndo(WhatWasUp, f_ShiftPressed)
 
 	if (f_CapsLock)
 		F_CapsLock(WhatWasUp, f_ShiftPressed)
@@ -567,7 +572,7 @@ F_OnKeyUp(ih, VK, SC)
 	; OutputDebug, % A_ThisFunc . A_Space . "E" . "`n"
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-F_ShiftReset(WhatWasUp, ByRef f_ShiftPressed)	;future: undo of previous action (Diacritics or CapsLock)
+F_ShiftUndo(WhatWasUp, ByRef f_ShiftPressed)	;future: undo of previous action (Diacritics or CapsLock)
 {
 	global	;assume-global mode of operation
 	static	SRCounter	:= 0
@@ -582,32 +587,37 @@ F_ShiftReset(WhatWasUp, ByRef f_ShiftPressed)	;future: undo of previous action (
 		; return
 	}
 	
-	; OutputDebug, % "ShiftCounter:" . A_Space . ShiftCounter . "`n"
+	OutputDebug, % "SRCounter:" . A_Space . SRCounter . "`n"
 	if (SRCounter = SRLimit)
 	{
 		SRCounter		:= SRReset
-	,	f_ShiftPressed	:= false
-		OutputDebug, % "Reset" . "`n"
+		if (f_DUndo)
+			{
+				SendLevel, % c_FeedbackSL
+				Send, % "{BS}" . v_Undo
+				SendLevel, % c_NominalSL
+				v_Undo 		:= ""
+			,	f_DUndo 		:= false
+			,	v_CLCounter 	:= c_CLReset
+			}
+		OutputDebug, % "Undo" . "`n"
 	}
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 F_CapsLock(WhatWasUp, ByRef f_ShiftPressed)
 {
 	global	;assume-global mode of operation
-	static	CLCounter := 0
 	local	CLLimit 	:= 3
-		,	CLReset	:= 0	
 
 	if ((WhatWasUp = "LShift") or (WhatWasUp = "RShift")) and (f_ShiftPressed)
-		CLCounter++
+		v_CLCounter++
 	else
 	{
-		CLCounter := CLReset
+		v_CLCounter := c_CLReset
 		return
 	}
-	
-	; OutputDebug, % "CapsLock Counter:" . A_Space . CLCounter . "`n"
-	if (CLCounter = CLLimit)
+	; OutputDebug, % "CLCounter:" . A_Space . CLCounter . "`n"
+	if (v_CLCounter = CLLimit)
 	{
 		SetCapsLockState % !GetKeyState("CapsLock", "T")
 		; OutputDebug, % "GetKeyState(CapsLock, T):" . A_Space . GetKeyState("CapsLock", "T") . "`n"
@@ -615,8 +625,7 @@ F_CapsLock(WhatWasUp, ByRef f_ShiftPressed)
 			SoundPlay, *48		;standard system sound, exclamation
 		else
 			SoundPlay, *16		;standard system sound, hand (stop/error)
-		CLCounter			:= CLReset
-	; ,	f_ShiftPressed		:= false
+		v_CLCounter		:= c_CLReset
 	}
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -626,12 +635,17 @@ F_Diacritics(v_Char)
 ; 		,	a_BaseKey 		:= []
 ; 		,	a_Diacritic		:= []
 	; OutputDebug, % A_ThisFunc . A_Space . "B" . "`n"
-	local	index := 0
+	local	index := % c_NominalSL
 		,	value := ""
 
 	for index, value in a_BaseKey
 		if (value == v_Char)	;Case sensitive comparison
+		{
 			F_DiacriticOutput(a_Diacritic[index])
+			v_Undo := v_Char
+,			f_DUndo := true
+			OutputDebug, % "f_DUndo:" . A_Space . f_DUndo . A_Space . "v_Undo:" . v_Undo . "`n"
+		}
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 F_DiacriticOutput(Diacritic)
@@ -639,9 +653,9 @@ F_DiacriticOutput(Diacritic)
 	global	;assume-global mode of operation
 
 	; OutputDebug, % A_ThisFunc . A_Space . "B" . "`n"
-	SendLevel, 	2
+	SendLevel, 	% c_FeedbackSL
 	Send,		% "{BS}" . Diacritic
-	SendLevel, 	0
+	SendLevel, 	% c_NominalSL
 	f_ShiftPressed 		:= false
 ,	f_Char 				:= false
 ,	v_Char				:= ""
