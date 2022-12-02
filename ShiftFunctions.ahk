@@ -13,7 +13,7 @@
 #SingleInstance, 	force		; Only one instance of this script may run at a time!
 #NoEnv  						; Recommended for performance and compatibility with future AutoHotkey releases.
 #Warn  	     				; Enable warnings to assist with detecting common errors.
-#Requires, AutoHotkey v1.1.35+ 	; Displays an error and quits if a version requirement is not met.
+#Requires, AutoHotkey v1.1.34+ 	; Displays an error and quits if a version requirement is not met.
 #KeyHistory, 		100			; For debugging purposes.
 #LTrim						; Omits spaces and tabs at the beginning of each line. This is primarily used to allow the continuation section to be indented. Also, this option may be turned on for multiple continuation sections by specifying #LTrim on a line by itself. #LTrim is positional: it affects all continuation sections physically beneath it.
 
@@ -26,7 +26,7 @@ StringCaseSense, 	On				;for Switch in F_OnKeyUp()
 ;Testing: Alt+Tab, , asdf Shift+Home
 
 ; - - - - - - - - - - - - - - - - Executable section, beginning - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-AppVersion			:= "1.1.0"
+AppVersion			:= "1.1.1"
 ;@Ahk2Exe-Let vAppVersion=%A_PriorLine~U)^(.+"){1}(.+)".*$~$2% ; Keep these lines together
 ;Overrides the custom EXE icon used for compilation
 ;@Ahk2Exe-SetCopyright GNU GPL 3.x
@@ -67,8 +67,8 @@ FileInstall, README.md, 			README.md,		true
 ,	f_DUndo			:= false	;global variable, set if F_Diacritics or F_Capital were in action
 ,	v_CLCounter 		:= 0
 ,	c_CLReset			:= 0	
-,	c_FeedbackSL		:= 2
-,	c_NominalSL		:= 0
+,	c_FeedbackSL		:= 2		;global variable, value for SendLevel, which is feedback for other scripts
+,	c_NominalSL		:= 0		;global variable, nominal / default value for SendLevel
 
 F_InitiateInputHook()
 F_InputArguments()
@@ -373,10 +373,11 @@ F_Capital(ByRef v_Char)
 			Send, {BS}?
 		Case "`t":	;by try and error method
 		Case "`n":
-			Send, {BS}+{Enter}
+			; Send, {BS}+{Enter}
 		Default:
 			v_Char := Format("{:U}", v_Char)
 			Send, % "{BS}" . v_Char
+			OutputDebug, % "Tu jestem" . "`n"
 	}
 	SendLevel, % c_NominalSL
 	f_ShiftPressed 	:= false
@@ -587,7 +588,7 @@ F_ShiftUndo(WhatWasUp, ByRef f_ShiftPressed)	;future: undo of previous action (D
 		; return
 	}
 	
-	OutputDebug, % "SRCounter:" . A_Space . SRCounter . "`n"
+	; OutputDebug, % "SRCounter:" . A_Space . SRCounter . "`n"
 	if (SRCounter = SRLimit)
 	{
 		SRCounter		:= SRReset
@@ -599,8 +600,9 @@ F_ShiftUndo(WhatWasUp, ByRef f_ShiftPressed)	;future: undo of previous action (D
 				v_Undo 		:= ""
 			,	f_DUndo 		:= false
 			,	v_CLCounter 	:= c_CLReset
+			,	f_ShiftPressed := false
 			}
-		OutputDebug, % "Undo" . "`n"
+		; OutputDebug, % "Undo" . "`n"
 	}
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -625,7 +627,8 @@ F_CapsLock(WhatWasUp, ByRef f_ShiftPressed)
 			SoundPlay, *48		;standard system sound, exclamation
 		else
 			SoundPlay, *16		;standard system sound, hand (stop/error)
-		v_CLCounter		:= c_CLReset
+		v_CLCounter	:= c_CLReset
+	,	f_ShiftPressed := false	
 	}
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -667,9 +670,10 @@ F_OneCharPressed(ih, Char)
 	global	;assume-global mode of operation
 
 	; OutputDebug, % A_ThisFunc . A_Space . "B" . "`n"
-	; OutputDebug, % A_ThisFunc . A_Space . "Char:" . Char . A_Space . "f_ShiftPressed:" . f_ShiftPressed . "`n"
+	; OutputDebug, % A_ThisFunc . A_Space . "Char:" . Char . "|" . A_Space . "f_ShiftPressed:" . f_ShiftPressed . "`n"
 	f_Char := true
 ,	v_Char := Char
+,	f_DUndo := false
 	; OutputDebug, % A_ThisFunc . A_Space . "E" . "`n"
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
