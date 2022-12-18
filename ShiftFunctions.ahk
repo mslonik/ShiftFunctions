@@ -65,10 +65,14 @@ FileInstall, README.md, 			README.md,		true
 ,	v_ConfigIni		:= ""	;global variable, stores filename of current Config.ini.
 ,	v_Undo			:= ""	;global variable, stores last character pressed by user before F_Diacritic or F_Capital were in action
 ,	f_DUndo			:= false	;global variable, set if F_Diacritics or F_Capital were in action
-,	v_CLCounter 		:= 0
-,	c_CLReset			:= 0	
-,	c_FeedbackSL		:= 2		;global variable, value for SendLevel, which is feedback for other scripts
-,	c_NominalSL		:= 0		;global variable, nominal / default value for SendLevel
+,	v_CLCounter 		:= 0		;global variable, CapsLock counter
+,	c_CLReset			:= 0		;global constant: CapsLock counter reset 
+,	c_FeedbackSL		:= 2		;global constant: value for SendLevel, which is feedback for other scripts
+,	c_NominalSL		:= 0		;global constant: nominal / default value for SendLevel
+,	f_LShift			:= false
+,	f_RShift			:= false
+,	f_LShiftU			:= true
+,	f_RShiftU			:= true
 
 F_InitiateInputHook()
 F_InputArguments()
@@ -470,8 +474,12 @@ F_OnKeyDown(ih, VK, SC)
 
 	Switch WhatWasDown
 	{
-		Case "LShift", "RShift":
-			f_ShiftPressed 	:= true
+		Case "LShift":
+			f_RShift			:= true
+		,	f_ShiftPressed 	:= true
+		Case "RShift":
+			f_LShift			:= true
+		,	f_ShiftPressed 	:= true
 		Case "LControl", "RControl":
 			f_ControlPressed 	:= true
 		Case "LAlt", "RAlt":
@@ -550,6 +558,18 @@ F_OnKeyUp(ih, VK, SC)
 			return
 		}
 	;From this moment I know we have character and only Shift
+	if (f_LShift) and (WhatWasUp = "LShift")
+	{
+		OutputDebug, % "LShiftUp" . "`n"
+		f_LShiftU := true
+		SetTimer, F_IfOppositeLShift, -100		;Run only once, 100 ms from now
+	}
+	if (f_RShift) and (WhatWasUp = "RShift")
+	{
+		OutputDebug, % "RShiftUp" . "`n"
+		f_RShiftU := true
+		SetTimer, F_IfOppositeRShift, -100		;run only once, 100 ms from now
+	}
 
 	if (f_Capital) 
 		and (f_Char)
@@ -571,6 +591,32 @@ F_OnKeyUp(ih, VK, SC)
 	f_Char := false
 	; OutputDebug, % "WWUe:" . WhatWasUp . A_Space "v_Char:" . v_Char . "C:" . f_Char . A_Space . "S:" . f_ShiftPressed . A_Space . "C:" . f_ControlPressed . A_Space . "A:" . f_AltPressed . A_Space . "W:" . f_WinPressed . "`n"
 	; OutputDebug, % A_ThisFunc . A_Space . "E" . "`n"
+}
+; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+F_IfOppositeLShift()
+{
+	global	;assume-global mode of operation
+	f_LShiftU := false
+	if (f_RShiftU)
+		{
+			f_RShiftU := false
+		,	f_ShiftPressed := false
+		,	v_CLCounter := 0
+			OutputDebug, % A_ThisFunc . "`n"	
+		}
+}
+; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+F_IfOppositeRShift()
+{
+	global	;assume-global mode of operation
+	f_RShiftU := false
+	if (f_LShiftU)
+		{
+			f_LShiftU := false
+		,	f_ShiftPressed := false
+		,	v_CLCounter := 0
+			OutputDebug, % A_ThisFunc . "`n"	
+		}
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 F_ShiftUndo(WhatWasUp, ByRef f_ShiftPressed)	;future: undo of previous action (Diacritics or CapsLock)
