@@ -10,15 +10,15 @@
 				Save this file as UTF-8 with BOM.
 				To cancel Shift behaviour press either Control, Esc or even Backspace.
 */
-#SingleInstance, 	force		; Only one instance of this script may run at a time!
-#NoEnv  						; Recommended for performance and compatibility with future AutoHotkey releases.
-#Warn  	     				; Enable warnings to assist with detecting common errors.
-#Requires, AutoHotkey v1.1.34+ 	; Displays an error and quits if a version requirement is not met.
-#KeyHistory, 		100			; For debugging purposes.
-#LTrim						; Omits spaces and tabs at the beginning of each line. This is primarily used to allow the continuation section to be indented. Also, this option may be turned on for multiple continuation sections by specifying #LTrim on a line by itself. #LTrim is positional: it affects all continuation sections physically beneath it.
+#SingleInstance, 	force			; Only one instance of this script may run at a time!
+#NoEnv  							; Recommended for performance and compatibility with future AutoHotkey releases.
+#Warn  	     					; Enable warnings to assist with detecting common errors.
+#Requires, AutoHotkey v1.1.34+ 		; Displays an error and quits if a version requirement is not met.
+#KeyHistory, 		100				; For debugging purposes.
+#LTrim							; Omits spaces and tabs at the beginning of each line. This is primarily used to allow the continuation section to be indented. Also, this option may be turned on for multiple continuation sections by specifying #LTrim on a line by itself. #LTrim is positional: it affects all continuation sections physically beneath it.
 
 FileEncoding, 		UTF-8			; Sets the default encoding for FileRead, FileReadLine, Loop Read, FileAppend, and FileOpen(). Unicode UTF-16, little endian byte order (BMP of ISO 10646). Useful for .ini files which by default are coded as UTF-16. https://docs.microsoft.com/pl-pl/windows/win32/intl/code-page-identifiers?redirectedfrom=MSDN
-SetBatchLines, 	-1				; Never sleep (i.e. have the script run at maximum speed).
+SetBatchLines, 	-1				; -1 = never sleep (i.e. have the script run at maximum speed).
 SendMode,			Input			; Recommended for new scripts due to its superior speed and reliability.
 SetWorkingDir, 	%A_ScriptDir%		; Ensures a consistent starting directory.
 StringCaseSense, 	On				;for Switch in F_OnKeyUp()
@@ -26,7 +26,7 @@ StringCaseSense, 	On				;for Switch in F_OnKeyUp()
 ;Testing: Alt+Tab, , asdf Shift+Home
 
 ; - - - - - - - - - - - - - - - - Executable section, beginning - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-AppVersion			:= "1.1.1"
+AppVersion			:= "1.2.0"
 ;@Ahk2Exe-Let vAppVersion=%A_PriorLine~U)^(.+"){1}(.+)".*$~$2% ; Keep these lines together
 ;Overrides the custom EXE icon used for compilation
 ;@Ahk2Exe-SetCopyright GNU GPL 3.x
@@ -67,12 +67,13 @@ FileInstall, README.md, 			README.md,		true
 ,	f_DUndo			:= false	;global variable, set if F_Diacritics or F_Capital were in action
 ,	v_CLCounter 		:= 0		;global variable, CapsLock counter
 ,	c_CLReset			:= 0		;global constant: CapsLock counter reset 
-,	c_FeedbackSL		:= 2		;global constant: value for SendLevel, which is feedback for other scripts
+,	c_OutputSL		:= 1		;global constant: value for SendLevel, which is feedback for other scripts
 ,	c_NominalSL		:= 0		;global constant: nominal / default value for SendLevel
 ,	f_LShift			:= false
 ,	f_RShift			:= false
 ,	f_LShiftU			:= true
 ,	f_RShiftU			:= true
+,	c_InputSL			:= 2		;global constant: default value for InputHook (MinSendLevel)
 
 F_InitiateInputHook()
 F_InputArguments()
@@ -330,7 +331,7 @@ F_Capital(ByRef v_Char)
 {
 	global	;assume-global mode of operation
 
-	SendLevel, % c_FeedbackSL
+	SendLevel, % c_OutputSL
 	Switch v_Char
 	{
 		Case "``":
@@ -455,10 +456,12 @@ F_Empty()	;dummy function useful for test purposes
 F_InitiateInputHook()	;why InputHook: to process triggerstring tips.
 {
 	global	;assume-global mode of operation
-	v_InputH 			:= InputHook("I3 V L0")	;I3 to not feed back this script; V to show pressed keys; L0 as only last char is analysed
-,	v_InputH.OnChar 	:= Func("F_OneCharPressed")
-,	v_InputH.OnKeyDown	:= Func("F_OnKeyDown")
-,	v_InputH.OnKeyUp 	:= Func("F_OnKeyUp")
+
+	v_InputH 				:= InputHook("V L0")	;I3 to not feed back this script; V to show pressed keys; L0 as only last char is analysed
+,	v_InputH.MinSendLevel 	:= c_InputSL	
+,	v_InputH.OnChar 		:= Func("F_OneCharPressed")
+,	v_InputH.OnKeyDown		:= Func("F_OnKeyDown")
+,	v_InputH.OnKeyUp 		:= Func("F_OnKeyUp")
 	v_InputH.KeyOpt("{All}", "N")
 	if (f_ShiftFunctions)
 		v_InputH.Start()
@@ -640,7 +643,7 @@ F_ShiftUndo(WhatWasUp, ByRef f_ShiftPressed)	;future: undo of previous action (D
 		SRCounter		:= SRReset
 		if (f_DUndo)
 			{
-				SendLevel, % c_FeedbackSL
+				SendLevel, % c_OutputSL
 				Send, % "{BS}" . v_Undo
 				SendLevel, % c_NominalSL
 				v_Undo 		:= ""
@@ -702,7 +705,7 @@ F_DiacriticOutput(Diacritic)
 	global	;assume-global mode of operation
 
 	; OutputDebug, % A_ThisFunc . A_Space . "B" . "`n"
-	SendLevel, 	% c_FeedbackSL
+	SendLevel, 	% c_OutputSL
 	Send,		% "{BS}" . Diacritic
 	SendLevel, 	% c_NominalSL
 	f_ShiftPressed 		:= false
@@ -716,7 +719,7 @@ F_OneCharPressed(ih, Char)
 	global	;assume-global mode of operation
 
 	; OutputDebug, % A_ThisFunc . A_Space . "B" . "`n"
-	; OutputDebug, % A_ThisFunc . A_Space . "Char:" . Char . "|" . A_Space . "f_ShiftPressed:" . f_ShiftPressed . "`n"
+	OutputDebug, % A_ThisFunc . A_Space . "Char:" . Char . "|" . A_Space . "f_ShiftPressed:" . f_ShiftPressed . "`n"
 	f_Char := true
 ,	v_Char := Char
 ,	f_DUndo := false
