@@ -26,7 +26,7 @@ StringCaseSense, 	On				;for Switch in F_OnKeyUp()
 ;Testing: Alt+Tab, , asdf Shift+Home
 
 ; - - - - - - - - - - - - - - - - Executable section, beginning - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-AppVersion			:= "1.2.0"
+AppVersion			:= "1.2.1"
 ;@Ahk2Exe-Let vAppVersion=%A_PriorLine~U)^(.+"){1}(.+)".*$~$2% ; Keep these lines together
 ;Overrides the custom EXE icon used for compilation
 ;@Ahk2Exe-SetCopyright GNU GPL 3.x
@@ -376,10 +376,28 @@ F_Capital(ByRef v_Char)
 			Send, {BS}>
 		Case "/":
 			Send, {BS}?
+		Case "!":		;when other AutoHotkey script (e.g. Hotstrings) sends out any special character where Shift is applied (e.g. # = Shift + 3), it have to be also send out, but without bouncing.
+			SendLevel, % c_NominalSL
+			Send, {!}
+		Case "{":		;when other AutoHotkey script (e.g. Hotstrings) sends out any special character where Shift is applied (e.g. # = Shift + 3), it have to be also send out, but without bouncing.
+			SendLevel, % c_NominalSL
+			Send, {{}
+		Case "}":		;when other AutoHotkey script (e.g. Hotstrings) sends out any special character where Shift is applied (e.g. # = Shift + 3), it have to be also send out, but without bouncing.
+			SendLevel, % c_NominalSL
+			Send, {}}
+		Case "#":		;when other AutoHotkey script (e.g. Hotstrings) sends out any special character where Shift is applied (e.g. # = Shift + 3), it have to be also send out, but without bouncing.
+			SendLevel, % c_NominalSL
+			Send, {#}
+		Case "^":		;when other AutoHotkey script (e.g. Hotstrings) sends out any special character where Shift is applied (e.g. # = Shift + 3), it have to be also send out, but without bouncing.
+			SendLevel, % c_NominalSL
+			Send, {^}	;when other AutoHotkey script (e.g. Hotstrings) sends out any special character where Shift is applied (e.g. # = Shift + 3), it have to be also send out, but without bouncing.
+		Case "+":
+			SendLevel, % c_NominalSL
+			Send, {+}	;when other AutoHotkey script (e.g. Hotstrings) sends out any special character where Shift is applied (e.g. # = Shift + 3), it have to be also send out, but without bouncing.
 		Case "`t":	;by try and error method
 		Case "`n":
-			; Send, {BS}+{Enter}
 		Default:
+			OutputDebug, % "v_Char:" . v_Char . "|" . "`n"
 			v_Char := Format("{:U}", v_Char)
 			Send, % "{BS}" . v_Char
 			OutputDebug, % "Tu jestem" . "`n"
@@ -719,10 +737,13 @@ F_OneCharPressed(ih, Char)
 	global	;assume-global mode of operation
 
 	; OutputDebug, % A_ThisFunc . A_Space . "B" . "`n"
-	OutputDebug, % A_ThisFunc . A_Space . "Char:" . Char . "|" . A_Space . "f_ShiftPressed:" . f_ShiftPressed . "`n"
 	f_Char := true
 ,	v_Char := Char
 ,	f_DUndo := false
+
+	if (f_ShiftPressed) and (f_Char)	;This is helpful to let user use Shifts in usual way (concurrently with any other key).
+		f_ShiftPressed := false
+	; OutputDebug, % A_ThisFunc . A_Space . "Char:" . Char . "|" . A_Space . "f_ShiftPressed:" . f_ShiftPressed . "`n"
 	; OutputDebug, % A_ThisFunc . A_Space . "E" . "`n"
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
