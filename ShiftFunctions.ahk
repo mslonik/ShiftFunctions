@@ -50,10 +50,11 @@ FileInstall, README.md, 			README.md,		true
 
 	v_Char 			:= ""	;global variable
 ,	f_ShiftPressed 	:= false	;global flag, set when any Shift key (left or right) was pressed.
+,	f_ShiftDown		:= false
 ,	f_ControlPressed	:= false	;global flag, set when any Control key (left or right) was pressed.
 ,	f_AltPressed		:= false	;global flag, set when any Alt key (left or right) was pressed.
 ,	f_WinPressed		:= false	;global flag, set when any Windows key (left or right) was pressed.
-; ,	f_AnyOtherKey		:= false	;global flag
+,	f_AOK_Down		:= false	;global flag AOK = Any Other Key
 ,	f_Char			:= false	;global flag, set when printable character was pressed down (and not yet released).
 ,	f_ShiftFunctions	:= true	;global flag, state of InputHook
 ,	f_Capital			:= true	;global flag: enable / disable function Shift Capital
@@ -497,18 +498,18 @@ F_OnKeyDown(ih, VK, SC)
 	{
 		Case "LShift":
 			f_RShift			:= true
-		,	f_ShiftPressed 	:= true
+		; ,	f_ShiftPressed 	:= true
 		Case "RShift":
 			f_LShift			:= true
-		,	f_ShiftPressed 	:= true
+		; ,	f_ShiftPressed 	:= true
 		Case "LControl", "RControl":
 			f_ControlPressed 	:= true
 		Case "LAlt", "RAlt":
 			f_AltPressed 		:= true
 		Case "LWin", "RWin":
 			f_WinPressed 		:= true
-		; Default:
-			; f_AnyOtherKey		:= true
+		Default:
+			f_AOK_Down		:= true
 	}
 	; OutputDebug, % "WWD:" . WhatWasDown . A_Space . "v_Char:" . v_Char . "C:" . f_Char . A_Space . "S:" . f_ShiftPressed . A_Space . "C:" . f_ControlPressed . A_Space . "A:" . f_AltPressed . A_Space . "W:" . f_WinPressed . "`n"
 	; OutputDebug, % A_ThisFunc . A_Space . "E" . "`n"
@@ -561,6 +562,11 @@ F_OnKeyUp(ih, VK, SC)
 				return
 		}
 	}
+
+	if ((WhatWasUp = "LShift") or (WhatWasUp = "RShift")) and (!f_Char)
+	; if ((WhatWasUp = "LShift") or (WhatWasUp = "RShift")) and (!f_AOK_Down)
+		f_ShiftPressed := true
+
 	; OutputDebug, % "WWU :" . WhatWasUp . A_Space "v_Char:" . v_Char . "C:" . f_Char . A_Space . "S:" . f_ShiftPressed . A_Space . "C:" . f_ControlPressed . A_Space . "A:" . f_AltPressed . A_Space . "W:" . f_WinPressed . "`n"
 
 	Switch WhatWasUp	;These are chars, so have to be filtered out separately
@@ -579,19 +585,22 @@ F_OnKeyUp(ih, VK, SC)
 			return
 		}
 	;From this moment I know we have character and only Shift
-	if (f_LShift) and (WhatWasUp = "LShift")
-	{
-		OutputDebug, % "LShiftUp" . "`n"
-		f_LShiftU := true
-		SetTimer, F_IfOppositeLShift, -100		;Run only once, 100 ms from now
-	}
-	if (f_RShift) and (WhatWasUp = "RShift")
-	{
-		OutputDebug, % "RShiftUp" . "`n"
-		f_RShiftU := true
-		SetTimer, F_IfOppositeRShift, -100		;run only once, 100 ms from now
-	}
 
+	; if (f_LShift) and (WhatWasUp = "LShift")
+	; {
+	; 	OutputDebug, % "LShiftUp" . "`n"
+	; 	f_LShiftU := true
+	; 	SetTimer, F_IfOppositeLShift, -100		;Run only once, 100 ms from now
+	; }
+	; if (f_RShift) and (WhatWasUp = "RShift")
+	; {
+	; 	OutputDebug, % "RShiftUp" . "`n"
+	; 	f_RShiftU := true
+	; 	SetTimer, F_IfOppositeRShift, -100		;run only once, 100 ms from now
+	; }
+
+	OutputDebug, % "WWU :" . WhatWasUp . A_Space "v_Char:" . v_Char . "C:" . f_Char . A_Space . "S:" . f_ShiftPressed . A_Space . "A:" . f_AOK_Down . "`n"
+	; OutputDebug, % "WWU :" . WhatWasUp . A_Space "v_Char:" . v_Char . "C:" . f_Char . A_Space . "S:" . f_ShiftPressed . A_Space . "C:" . f_ControlPressed . A_Space . "A:" . f_AltPressed . A_Space . "W:" . f_WinPressed . "`n"
 	if (f_Capital) 
 		and (f_Char)
 		and (f_ShiftPressed)
@@ -603,13 +612,21 @@ F_OnKeyUp(ih, VK, SC)
 		and ((WhatWasUp = "LShift") or (WhatWasUp = "RShift"))
 			F_Diacritics(v_Char)
 
-	; OutputDebug, % "WWU :" . WhatWasUp . A_Space "v_Char:" . v_Char . "C:" . f_Char . A_Space . "S:" . f_ShiftPressed . A_Space . "C:" . f_ControlPressed . A_Space . "A:" . f_AltPressed . A_Space . "W:" . f_WinPressed . "`n"
 	F_ShiftUndo(WhatWasUp, f_ShiftPressed)
 
 	if (f_CapsLock)
 		F_CapsLock(WhatWasUp, f_ShiftPressed)
 
-	f_Char := false
+	; if ((WhatWasUp = "LShift") or (WhatWasUp = "RShift"))
+		; and (f_ShiftPressed)
+		; f_ShiftPressed := false
+
+	; if (f_ShiftPressed) and (f_Char)	;This is helpful to let user use Shifts in usual way (concurrently with any other key).
+	; 	f_ShiftPressed := false
+
+	; if (WhatWasUp = v_Char)
+		f_Char := false
+	OutputDebug, % "WWUe:" . WhatWasUp . A_Space "v_Char:" . v_Char . "C:" . f_Char . A_Space . "S:" . f_ShiftPressed . A_Space . "A:" . f_AOK_Down . "`n"
 	; OutputDebug, % "WWUe:" . WhatWasUp . A_Space "v_Char:" . v_Char . "C:" . f_Char . A_Space . "S:" . f_ShiftPressed . A_Space . "C:" . f_ControlPressed . A_Space . "A:" . f_AltPressed . A_Space . "W:" . f_WinPressed . "`n"
 	; OutputDebug, % A_ThisFunc . A_Space . "E" . "`n"
 }
@@ -741,9 +758,7 @@ F_OneCharPressed(ih, Char)
 ,	v_Char := Char
 ,	f_DUndo := false
 
-	if (f_ShiftPressed) and (f_Char)	;This is helpful to let user use Shifts in usual way (concurrently with any other key).
-		f_ShiftPressed := false
-	; OutputDebug, % A_ThisFunc . A_Space . "Char:" . Char . "|" . A_Space . "f_ShiftPressed:" . f_ShiftPressed . "`n"
+	OutputDebug, % A_ThisFunc . A_Space . "Char:" . Char . "|" . A_Space . "f_ShiftPressed:" . f_ShiftPressed . "`n"
 	; OutputDebug, % A_ThisFunc . A_Space . "E" . "`n"
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
