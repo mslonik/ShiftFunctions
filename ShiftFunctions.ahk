@@ -21,12 +21,12 @@ FileEncoding, 		UTF-8			; Sets the default encoding for FileRead, FileReadLine, 
 SetBatchLines, 	-1				; -1 = never sleep (i.e. have the script run at maximum speed).
 SendMode,			Input			; Recommended for new scripts due to its superior speed and reliability.
 SetWorkingDir, 	%A_ScriptDir%		; Ensures a consistent starting directory.
-StringCaseSense, 	On				;for Switch in F_OnKeyUp()
+StringCaseSense, 	On				;for Switch in F_OKU()
 
 ;Testing: Alt+Tab, , asdf Shift+Home
 
 ; - - - - - - - - - - - - - - - - Executable section, beginning - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-AppVersion			:= "1.2.1"
+AppVersion			:= "1.3.0"
 ;@Ahk2Exe-Let vAppVersion=%A_PriorLine~U)^(.+"){1}(.+)".*$~$2% ; Keep these lines together
 ;Overrides the custom EXE icon used for compilation
 ;@Ahk2Exe-SetCopyright GNU GPL 3.x
@@ -48,14 +48,15 @@ FileInstall, Slovakian2.ini,		Slovakian2.ini,	true
 FileInstall, README.md, 			README.md,		true
 ; - - - - - - - - - - - - - - - - Executable section, end - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-	v_Char 			:= ""	;global variable
-,	f_ShiftPressed 	:= false	;global flag, set when any Shift key (left or right) was pressed.
+	v_Char 			:= ""	;global variable, character pressed (main area of keyboard)
+,	f_Char			:= false	;global flag, set when printable character was pressed down (and not yet released).
+,	f_AChar			:= false	;global flag, set when artificial (hook) key is pressed down (and not yet released).
+,	f_SPA 			:= false	;global flag, set when any Shift key (left or right) was Pressed Alone.
 ,	f_ShiftDown		:= false
 ,	f_ControlPressed	:= false	;global flag, set when any Control key (left or right) was pressed.
 ,	f_AltPressed		:= false	;global flag, set when any Alt key (left or right) was pressed.
 ,	f_WinPressed		:= false	;global flag, set when any Windows key (left or right) was pressed.
 ,	f_AOK_Down		:= false	;global flag AOK = Any Other Key
-,	f_Char			:= false	;global flag, set when printable character was pressed down (and not yet released).
 ,	f_ShiftFunctions	:= true	;global flag, state of InputHook
 ,	f_Capital			:= true	;global flag: enable / disable function Shift Capital
 ,	f_Diacritics		:= true	;global flag: enable / disable function Shift Diacritics
@@ -75,6 +76,10 @@ FileInstall, README.md, 			README.md,		true
 ,	f_LShiftU			:= true
 ,	f_RShiftU			:= true
 ,	c_InputSL			:= 2		;global constant: default value for InputHook (MinSendLevel)
+,	f_SDCD			:= false	;global flag: Shift (S) is down (D) and Character (C) is down (D)
+,	f_ASDCD			:= false	;global flag: Artificial (hook generated) Shift (S) is down (D) and artificial Character (C) is down (D)
+,	f_ALShift			:= false	;global flag: Artificial (hook generated) Left Shift
+,	f_ARShift			:= false	;global flag: Artificial (hook generated) Right Shift
 
 F_InitiateInputHook()
 F_InputArguments()
@@ -99,8 +104,7 @@ return
 :*:sfstop/::
 :*:sfquit/::
 :*:sfexit/::
-	TrayTip, % A_ScriptName, % "exits with code" . A_Space . "0", 5, 1
-	ExitApp, 0
+	TrayTip, % A_ScriptName, % "exits with code" . A_Space . "0", 5, 1	ExitApp, 0
 return
 
 :*:sfswitch/::
@@ -404,8 +408,11 @@ F_Capital(ByRef v_Char)
 			OutputDebug, % "Tu jestem" . "`n"
 	}
 	SendLevel, % c_NominalSL
-	f_ShiftPressed 	:= false
-,	f_Char			:= false
+	f_SPA 		:= false
+,	f_RShift 		:= false
+,	f_LShift 		:= false
+,	f_Char		:= false
+,	f_AOK_Down	:= false
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 F_MenuTray()
@@ -478,9 +485,9 @@ F_InitiateInputHook()	;why InputHook: to process triggerstring tips.
 
 	v_InputH 				:= InputHook("V L0")	;I3 to not feed back this script; V to show pressed keys; L0 as only last char is analysed
 ,	v_InputH.MinSendLevel 	:= c_InputSL	
-,	v_InputH.OnChar 		:= Func("F_OneCharPressed")
-,	v_InputH.OnKeyDown		:= Func("F_OnKeyDown")
-,	v_InputH.OnKeyUp 		:= Func("F_OnKeyUp")
+,	v_InputH.OnChar 		:= Func("F_OCD")
+,	v_InputH.OnKeyDown		:= Func("F_OKD")
+,	v_InputH.OnKeyUp 		:= Func("F_OKU")
 	v_InputH.KeyOpt("{All}", "N")
 	if (f_ShiftFunctions)
 		v_InputH.Start()
@@ -488,20 +495,41 @@ F_InitiateInputHook()	;why InputHook: to process triggerstring tips.
 		v_InputH.Stop()
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-F_OnKeyDown(ih, VK, SC)
+F_OKD(ih, VK, SC)	;On Key Down
 {
-	global	;assume-global mode of operation
+	global		;assume-global mode of operation
+	Critical, On	;This function starts as the first one (prior to "On Character Down"), but unfortunately can be interrupted by it. To prevent it Critical command is applied.
 	; OutputDebug, % A_ThisFunc . A_Space . "B" . "`n"
-	local	WhatWasDown := GetKeyName(Format("vk{:x}sc{:x}", VK, SC))
+	local	WhatWasDown 	:= GetKeyName(Format("vk{:x}sc{:x}", VK, SC)) 
+		,	f_Phys		:= false
 
+	Sleep, 30		;sleep is required by function GetKeyState to correctly update: "Systems with unusual keyboard drivers might be slow to update the state of their keys".
+	f_Phys 		:= GetKeyState(WhatWasDown, "P")	;if s comes from keyboard hook (is artificial) or is physically pressed by user
+	; OutputDebug, % "WhatWasDown:" . WhatWasDown . A_Space . "f_Phys:" . f_Phys . A_Space . GetKeyState(WhatWasDown, "P") . "`n"
 	Switch WhatWasDown
 	{
 		Case "LShift":
-			f_RShift			:= true
-		; ,	f_ShiftPressed 	:= true
+			if (f_Phys)
+			{
+				f_LShift		:= true
+			,	f_ALShift		:= false	
+			}
+			else
+			{
+				f_LShift		:= false
+			,	f_ALShift		:= true
+			}
 		Case "RShift":
-			f_LShift			:= true
-		; ,	f_ShiftPressed 	:= true
+			if (f_Phys)
+			{
+				f_RShift		:= true
+			,	f_ARShift		:= false
+			}
+			else
+			{
+				f_RShift		:= false
+			,	f_ARShift		:= true
+			}
 		Case "LControl", "RControl":
 			f_ControlPressed 	:= true
 		Case "LAlt", "RAlt":
@@ -509,81 +537,100 @@ F_OnKeyDown(ih, VK, SC)
 		Case "LWin", "RWin":
 			f_WinPressed 		:= true
 		Default:
-			f_AOK_Down		:= true
+			f_AOK_Down		:= true	;Any Other Key
+			; OutputDebug, % "Default:" . A_Space . "WhatWasDown:" . WhatWasDown . "`n"
+			if (f_ALShift or f_ARShift) and f_Phys	;assumption: from another script Shift is always send before next ordinary character
+				{
+					f_AChar	:= true
+				,	f_Char 	:= false
+				}
+				else
+				{
+					f_AChar	:= false
+				,	f_Char 	:= true
+				}
 	}
-	; OutputDebug, % "WWD:" . WhatWasDown . A_Space . "v_Char:" . v_Char . "C:" . f_Char . A_Space . "S:" . f_ShiftPressed . A_Space . "C:" . f_ControlPressed . A_Space . "A:" . f_AltPressed . A_Space . "W:" . f_WinPressed . "`n"
+	OutputDebug, % A_ThisFunc . A_Space . "WWD:" . A_Space . WhatWasDown . "|" . A_Space 
+		. "v_Char:" . v_Char . "|" . "f_Char:" . f_Char . A_Space . "f_AChar:" . f_AChar . A_Space
+		. "PS:" . f_RShift 	. f_LShift 
+		. A_Space 
+		. "AS:" . f_ALShift . f_ARShift 
+		. "`n"
+	; "C:" . f_ControlPressed . A_Space . "A:" . f_AltPressed . A_Space . "W:" . f_WinPressed . A_Space . "AOK:" . f_AOK_Down . "`n"
+	; OutputDebug, % A_ThisFunc . A_Space . "E" . "`n"
+	Critical, Off
+}
+; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+F_OCD(ih, Char)	;On Character Down; this function can interrupt "On Key Down"
+{	;This function detects only "characters" according to AutoHotkey rules, what means: not modifiers (Shifts, Controls, Alts, Windows), function keys, ; yes: Esc, Space, Enter, Tab and all other main keys.
+	global	;assume-global mode of operation
+	; OutputDebug, % A_ThisFunc . A_Space . "B" . "`n"
+
+	v_Char := Char
+,	f_DUndo := false
+
+	if (f_RShift or f_LShift) and f_Char
+		f_SDCD := true	;Shift (S) is down (D) and Character (C) is down (D)
+	if (f_ARShift or f_ALShift) and f_AChar
+		f_ASDCD := true ;Artificial (A) is down (D) and artificial Character (C) is down (D)
+
+	; OutputDebug, % A_ThisFunc . A_Space . "Char:" . Char . "|" . A_Space 
+	; 	. "f_Char:" 	. f_Char 	. A_Space . "PS:" . f_LShift . f_RShift 	. A_Space . "f_SDCD:" 	. f_SDCD 	
+	; 	. A_Space 
+	; 	. "f_AChar:" 	. f_AChar . A_Space . "AS:" . f_ALShift . f_ARShift 	. A_Space . "f_ASDCD:" 	. f_ASDCD 
+	; 	. "`n"
+	; OutputDebug, % A_ThisFunc . A_Space . "Char:" . Char . "|" . A_Space . "f_SPA:" . f_SPA . "`n"
 	; OutputDebug, % A_ThisFunc . A_Space . "E" . "`n"
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-F_FlagReset()
-{
-	global	;assume-global mode of operation
-	v_Char 			:= ""
-,	f_Char			:= false
-,	f_ControlPressed 	:= false
-,	f_ShiftPressed		:= false
-,	f_WinPressed 		:= false
-,	f_AltPressed 		:= false
-	}
-; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-F_OnKeyUp(ih, VK, SC)
+F_OKU(ih, VK, SC)	;On Key Up
 {
 	global	;assume-global mode of operation
 	local	WhatWasUp := GetKeyName(Format("vk{:x}sc{:x}", VK, SC))
 	
 	; OutputDebug, % A_ThisFunc . A_Space . "B" . "`n"
-	; OutputDebug, % "WWUb:" . WhatWasUp . A_Space "v_Char:" . v_Char . "C:" . f_Char . A_Space . "S:" . f_ShiftPressed . A_Space . "C:" . f_ControlPressed . A_Space . "A:" . f_AltPressed . A_Space . "W:" . f_WinPressed . "`n"
+	; OutputDebug, % "WWUb:" . WhatWasUp . "|" . A_Space "v_Char:" . v_Char . A_Space . "f_SDCD:" . f_SDCD . A_Space . "f_ASDCD:" . f_ASDCD . "`n"
+	; "C:" . f_Char . A_Space . "S:" . f_SPA . A_Space . "C:" . f_ControlPressed . A_Space . "A:" . f_AltPressed . A_Space . "W:" . f_WinPressed . "`n"
 
 	; Filtering section
-	if (!f_Char)
+	Switch WhatWasUp	;only Shifts are not included ;According to AutoHotkey documentation each case may list up to 20 values
 	{
-		Switch WhatWasUp	;only Shifts are not included ;According to AutoHotkey documentation each case may list up to 20 values
-		{
-			Case "LControl", "RControl":	;modifiers
-				F_FlagReset()
-				return
-			Case "LAlt", "RAlt", "LWin", "RWin":		;modifiers
-				f_AltPressed 		:= false
-			,	f_WinPressed		:= false	
-			,	f_ShiftPressed		:= false
-				return
-			Case "Insert", "Home", "PageUp", "Delete", "End", "PageDown", "AppsKey"	;NavPad
-			,	"Up", "Down", "Left", "Right":	;11
-				F_FlagReset()
-				return
-			Case "F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10", "F11", "F12", "F13", "F14", "F15", "F16", "F17", "F18", "F19", "F20":	;20
-				f_ShiftPressed		:= false
-				return
-			Case "F21", "F22", "F23", "F24":	;4
-				f_ShiftPressed		:= false
-				return
-			Case "Backspace":
-				F_FlagReset()
-				return
-		}
-	}
-
-	if ((WhatWasUp = "LShift") or (WhatWasUp = "RShift")) and (!f_Char)
-	; if ((WhatWasUp = "LShift") or (WhatWasUp = "RShift")) and (!f_AOK_Down)
-		f_ShiftPressed := true
-
-	; OutputDebug, % "WWU :" . WhatWasUp . A_Space "v_Char:" . v_Char . "C:" . f_Char . A_Space . "S:" . f_ShiftPressed . A_Space . "C:" . f_ControlPressed . A_Space . "A:" . f_AltPressed . A_Space . "W:" . f_WinPressed . "`n"
-
-	Switch WhatWasUp	;These are chars, so have to be filtered out separately
-		{
-			Case "Escape":
-				F_FlagReset()
-				return
-		}
-
-	if ((f_ShiftPressed) and (f_WinPressed))
-		or ((f_ShiftPressed) and (f_AltPressed))
-		or ((f_ShiftPressed) and (f_ControlPressed))
-		{
-			; OutputDebug, % "Two modifiers at the same time" . "`n"
-			F_FlagReset()
+		Case "LAlt", "RAlt", "LWin", "RWin", "LControl", "RControl":		;modifiers
 			return
-		}
+		Case "Insert", "Home", "PageUp", "Delete", "End", "PageDown", "AppsKey"	;NavPad
+		,	"Up", "Down", "Left", "Right":	;11
+			return
+		Case "F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10", "F11", "F12", "F13", "F14", "F15", "F16", "F17", "F18", "F19", "F20":	;20
+			return
+		Case "F21", "F22", "F23", "F24":	;4
+			return
+		Case "Backspace", "Escape":
+			return
+		Case "LShift", "RShift":
+			; OutputDebug, % A_ThisFunc . A_Space . "WWU :" . WhatWasUp . A_Space "v_Char:" . v_Char . "C:" . f_Char . A_Space . "f_SDCD:" . f_SDCD . "`n"
+			; "S:" . f_SPA . A_Space . "C:" . f_ControlPressed . A_Space . "A:" . f_AltPressed . A_Space . "W:" . f_WinPressed . "`n"
+			f_RShift := false
+		,	f_LShift := false
+		,	f_ARShift := false
+		,	f_ALShift := false
+			if (f_SDCD)	;Shift (S) is down (D) and Character (C) is down (D)
+			{
+				f_SDCD := false
+				return
+			}
+			if (f_ASDCD)
+			{
+				v_Char 	:= Format("{:U}", v_Char)
+			,	f_ASDCD 	:= false
+				OutputDebug, % "v_Char:" . v_Char . "|" . "`n"
+				; return
+			}
+			f_SPA := true	;Shift key (left or right) was Pressed Alone.
+		Default:
+			f_Char := false
+	}
+	; OutputDebug, % A_ThisFunc . A_Space . "f_SPA:" . f_SPA . A_Space . "WhatWasUp:" . WhatWasUp . A_Space . "f_SDCD:" . f_SDCD . A_Space . "f_ASDCD:" . f_ASDCD . "`n"
+
 	;From this moment I know we have character and only Shift
 
 	; if (f_LShift) and (WhatWasUp = "LShift")
@@ -599,37 +646,41 @@ F_OnKeyUp(ih, VK, SC)
 	; 	SetTimer, F_IfOppositeRShift, -100		;run only once, 100 ms from now
 	; }
 
-	OutputDebug, % "WWU :" . WhatWasUp . A_Space "v_Char:" . v_Char . "C:" . f_Char . A_Space . "S:" . f_ShiftPressed . A_Space . "A:" . f_AOK_Down . "`n"
-	; OutputDebug, % "WWU :" . WhatWasUp . A_Space "v_Char:" . v_Char . "C:" . f_Char . A_Space . "S:" . f_ShiftPressed . A_Space . "C:" . f_ControlPressed . A_Space . "A:" . f_AltPressed . A_Space . "W:" . f_WinPressed . "`n"
+	; OutputDebug, % "WWU :" . WhatWasUp . A_Space "v_Char:" . v_Char . "C:" . f_Char . A_Space . "S:" . f_SPA . A_Space . "A:" . f_AOK_Down . "`n"
+	; OutputDebug, % "WWU :" . WhatWasUp . A_Space "v_Char:" . v_Char . "C:" . f_Char . A_Space . "S:" . f_SPA . A_Space . "C:" . f_ControlPressed . A_Space . "A:" . f_AltPressed . A_Space . "W:" . f_WinPressed . "`n"
 	if (f_Capital) 
-		and (f_Char)
-		and (f_ShiftPressed)
+		; and (f_Char)
+		and (f_SPA)
 		and (WhatWasUp != "LShift") and (WhatWasUp != "RShift")
 			F_Capital(v_Char)
 
 	if (f_Diacritics)
-		and (f_ShiftPressed)
+		and (f_SPA)
 		and ((WhatWasUp = "LShift") or (WhatWasUp = "RShift"))
 			F_Diacritics(v_Char)
 
-	F_ShiftUndo(WhatWasUp, f_ShiftPressed)
+	F_ShiftUndo(WhatWasUp, f_SPA)
 
 	if (f_CapsLock)
-		F_CapsLock(WhatWasUp, f_ShiftPressed)
+		F_CapsLock(WhatWasUp, f_SPA)
 
-	; if ((WhatWasUp = "LShift") or (WhatWasUp = "RShift"))
-		; and (f_ShiftPressed)
-		; f_ShiftPressed := false
-
-	; if (f_ShiftPressed) and (f_Char)	;This is helpful to let user use Shifts in usual way (concurrently with any other key).
-	; 	f_ShiftPressed := false
-
-	; if (WhatWasUp = v_Char)
-		f_Char := false
-	OutputDebug, % "WWUe:" . WhatWasUp . A_Space "v_Char:" . v_Char . "C:" . f_Char . A_Space . "S:" . f_ShiftPressed . A_Space . "A:" . f_AOK_Down . "`n"
-	; OutputDebug, % "WWUe:" . WhatWasUp . A_Space "v_Char:" . v_Char . "C:" . f_Char . A_Space . "S:" . f_ShiftPressed . A_Space . "C:" . f_ControlPressed . A_Space . "A:" . f_AltPressed . A_Space . "W:" . f_WinPressed . "`n"
+	; OutputDebug, % "WWUe:" . WhatWasUp . A_Space "v_Char:" . v_Char . "C:" . f_Char . A_Space . "S:" . f_SPA . A_Space . "A:" . f_AOK_Down . "`n"
+	; OutputDebug, % "WWUe:" . WhatWasUp . A_Space "v_Char:" . v_Char . "C:" . f_Char . A_Space . "S:" . f_SPA . A_Space . "C:" . f_ControlPressed . A_Space . "A:" . f_AltPressed . A_Space . "W:" . f_WinPressed . "`n"
 	; OutputDebug, % A_ThisFunc . A_Space . "E" . "`n"
 }
+; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+F_FlagReset()
+{
+	global	;assume-global mode of operation
+	v_Char 			:= ""
+,	f_Char			:= false
+,	f_ControlPressed 	:= false
+,	f_SPA			:= false
+,	f_RShift 			:= false
+,	f_LShift 			:= false
+,	f_WinPressed 		:= false
+,	f_AltPressed 		:= false
+	}
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 F_IfOppositeLShift()
 {
@@ -638,7 +689,7 @@ F_IfOppositeLShift()
 	if (f_RShiftU)
 		{
 			f_RShiftU := false
-		,	f_ShiftPressed := false
+		,	f_SPA := false
 		,	v_CLCounter := 0
 			OutputDebug, % A_ThisFunc . "`n"	
 		}
@@ -650,21 +701,23 @@ F_IfOppositeRShift()
 	f_RShiftU := false
 	if (f_LShiftU)
 		{
-			f_LShiftU := false
-		,	f_ShiftPressed := false
-		,	v_CLCounter := 0
+			f_LShiftU 	:= false
+		,	f_SPA 		:= false
+		,	f_RShift 		:= false
+		,	f_LShift 		:= false
+		,	v_CLCounter 	:= 0
 			OutputDebug, % A_ThisFunc . "`n"	
 		}
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-F_ShiftUndo(WhatWasUp, ByRef f_ShiftPressed)	;future: undo of previous action (Diacritics or CapsLock)
+F_ShiftUndo(WhatWasUp, ByRef f_SPA)	;future: undo of previous action (Diacritics or CapsLock)
 {
 	global	;assume-global mode of operation
 	static	SRCounter	:= 0
 	local	SRLimit	:= 2
 		,	SRReset	:= 0	
 
-	if ((WhatWasUp = "LShift") or (WhatWasUp = "RShift")) and (f_ShiftPressed)
+	if ((WhatWasUp = "LShift") or (WhatWasUp = "RShift")) and (f_SPA)
 		SRCounter++
 	else
 	{
@@ -684,18 +737,21 @@ F_ShiftUndo(WhatWasUp, ByRef f_ShiftPressed)	;future: undo of previous action (D
 				v_Undo 		:= ""
 			,	f_DUndo 		:= false
 			,	v_CLCounter 	:= c_CLReset
-			,	f_ShiftPressed := false
+			,	f_SPA 		:= false
+			,	f_RShift 		:= false
+			,	f_LShift 		:= false
+
 			}
 		; OutputDebug, % "Undo" . "`n"
 	}
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-F_CapsLock(WhatWasUp, ByRef f_ShiftPressed)
+F_CapsLock(WhatWasUp, ByRef f_SPA)
 {
 	global	;assume-global mode of operation
 	local	CLLimit 	:= 3
 
-	if ((WhatWasUp = "LShift") or (WhatWasUp = "RShift")) and (f_ShiftPressed)
+	if ((WhatWasUp = "LShift") or (WhatWasUp = "RShift")) and (f_SPA)
 		v_CLCounter++
 	else
 	{
@@ -712,15 +768,15 @@ F_CapsLock(WhatWasUp, ByRef f_ShiftPressed)
 		else
 			SoundPlay, *16		;standard system sound, hand (stop/error)
 		v_CLCounter	:= c_CLReset
-	,	f_ShiftPressed := false	
+	,	f_SPA 		:= false	;Shift Pressed Alone
+	,	f_RShift 		:= false
+	,	f_LShift 		:= false
 	}
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 F_Diacritics(v_Char)
 {
 	global	;assume-global mode of operation
-; 		,	a_BaseKey 		:= []
-; 		,	a_Diacritic		:= []
 	; OutputDebug, % A_ThisFunc . A_Space . "B" . "`n"
 	local	index := % c_NominalSL
 		,	value := ""
@@ -743,22 +799,12 @@ F_DiacriticOutput(Diacritic)
 	SendLevel, 	% c_OutputSL
 	Send,		% "{BS}" . Diacritic
 	SendLevel, 	% c_NominalSL
-	f_ShiftPressed 		:= false
-,	f_Char 				:= false
-,	v_Char				:= ""
-	; OutputDebug, % A_ThisFunc . A_Space . "E" . "`n"
-}
-; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-F_OneCharPressed(ih, Char)
-{	;This function detects only "characters" according to AutoHotkey rules, what means: not modifiers (Shifts, Controls, Alts, Windows), function keys, ; yes: Esc, Space, Enter, Tab and all other main keys.
-	global	;assume-global mode of operation
-
-	; OutputDebug, % A_ThisFunc . A_Space . "B" . "`n"
-	f_Char := true
-,	v_Char := Char
-,	f_DUndo := false
-
-	OutputDebug, % A_ThisFunc . A_Space . "Char:" . Char . "|" . A_Space . "f_ShiftPressed:" . f_ShiftPressed . "`n"
+	f_SPA 		:= false	;Shift Pressed Alone
+,	f_RShift 		:= false
+,	f_LShift 		:= false
+,	f_Char 		:= false
+,	v_Char		:= ""
+,	f_AOK_Down	:= false
 	; OutputDebug, % A_ThisFunc . A_Space . "E" . "`n"
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
