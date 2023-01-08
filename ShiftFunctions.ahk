@@ -402,10 +402,10 @@ F_Capital(ByRef v_Char)
 		Case "`t":	;by try and error method
 		Case "`n":
 		Default:
-			OutputDebug, % "v_Char:" . v_Char . "|" . "`n"
+			; OutputDebug, % "v_Char:" . v_Char . "|" . "`n"
 			v_Char := Format("{:U}", v_Char)
 			Send, % "{BS}" . v_Char
-			OutputDebug, % "Tu jestem" . "`n"
+			; OutputDebug, % "Tu jestem" . "`n"
 	}
 	SendLevel, % c_NominalSL
 	f_SPA 		:= false
@@ -495,6 +495,12 @@ F_InitiateInputHook()	;why InputHook: to process triggerstring tips.
 		v_InputH.Stop()
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+F_ShiftReset()
+{
+	global	;assume-global mode of operation
+	
+}
+; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 F_OKD(ih, VK, SC)	;On Key Down
 {
 	global		;assume-global mode of operation
@@ -512,7 +518,17 @@ F_OKD(ih, VK, SC)	;On Key Down
 			if (f_Phys)
 			{
 				f_LShift		:= true
-			,	f_ALShift		:= false	
+			,	f_ALShift		:= false
+				KeyWait, RShift, D T0.05
+				if (!ErrorLevel)
+				{
+					; ToolTip, % "Concurrent" . A_Space . v_CLCounter
+					F_FlagReset()
+					v_CLCounter := c_CLReset
+					return
+				}
+				; else
+					; ToolTip, Not concurrent
 			}
 			else
 			{
@@ -524,6 +540,16 @@ F_OKD(ih, VK, SC)	;On Key Down
 			{
 				f_RShift		:= true
 			,	f_ARShift		:= false
+				KeyWait, LShift, D T0.05
+				if (!ErrorLevel)
+				{
+					; ToolTip, % "Concurrent" . A_Space . v_CLCounter
+					F_FlagReset()
+					v_CLCounter := c_CLReset
+					return
+				}
+				; else
+					; ToolTip, Not concurrent
 			}
 			else
 			{
@@ -550,12 +576,12 @@ F_OKD(ih, VK, SC)	;On Key Down
 				,	f_Char 	:= true
 				}
 	}
-	OutputDebug, % A_ThisFunc . A_Space . "WWD:" . A_Space . WhatWasDown . "|" . A_Space 
-		. "v_Char:" . v_Char . "|" . "f_Char:" . f_Char . A_Space . "f_AChar:" . f_AChar . A_Space
-		. "PS:" . f_RShift 	. f_LShift 
-		. A_Space 
-		. "AS:" . f_ALShift . f_ARShift 
-		. "`n"
+	; OutputDebug, % A_ThisFunc . A_Space . "WWD:" . A_Space . WhatWasDown . "|" . A_Space 
+	; 	. "v_Char:" . v_Char . "|" . "f_Char:" . f_Char . A_Space . "f_AChar:" . f_AChar . A_Space
+	; 	. "PS:" . f_RShift 	. f_LShift 
+	; 	. A_Space 
+	; 	. "AS:" . f_ALShift . f_ARShift 
+	; 	. "`n"
 	; "C:" . f_ControlPressed . A_Space . "A:" . f_AltPressed . A_Space . "W:" . f_WinPressed . A_Space . "AOK:" . f_AOK_Down . "`n"
 	; OutputDebug, % A_ThisFunc . A_Space . "E" . "`n"
 	Critical, Off
@@ -609,6 +635,8 @@ F_OKU(ih, VK, SC)	;On Key Up
 		Case "LShift", "RShift":
 			; OutputDebug, % A_ThisFunc . A_Space . "WWU :" . WhatWasUp . A_Space "v_Char:" . v_Char . "C:" . f_Char . A_Space . "f_SDCD:" . f_SDCD . "`n"
 			; "S:" . f_SPA . A_Space . "C:" . f_ControlPressed . A_Space . "A:" . f_AltPressed . A_Space . "W:" . f_WinPressed . "`n"
+			if (!f_RShift) and (!f_LShift)	;after F_FlagReset()
+				return
 			f_RShift := false
 		,	f_LShift := false
 		,	f_ARShift := false
@@ -630,22 +658,6 @@ F_OKU(ih, VK, SC)	;On Key Up
 			f_Char := false
 	}
 	; OutputDebug, % A_ThisFunc . A_Space . "f_SPA:" . f_SPA . A_Space . "WhatWasUp:" . WhatWasUp . A_Space . "f_SDCD:" . f_SDCD . A_Space . "f_ASDCD:" . f_ASDCD . "`n"
-
-	;From this moment I know we have character and only Shift
-
-	; if (f_LShift) and (WhatWasUp = "LShift")
-	; {
-	; 	OutputDebug, % "LShiftUp" . "`n"
-	; 	f_LShiftU := true
-	; 	SetTimer, F_IfOppositeLShift, -100		;Run only once, 100 ms from now
-	; }
-	; if (f_RShift) and (WhatWasUp = "RShift")
-	; {
-	; 	OutputDebug, % "RShiftUp" . "`n"
-	; 	f_RShiftU := true
-	; 	SetTimer, F_IfOppositeRShift, -100		;run only once, 100 ms from now
-	; }
-
 	; OutputDebug, % "WWU :" . WhatWasUp . A_Space "v_Char:" . v_Char . "C:" . f_Char . A_Space . "S:" . f_SPA . A_Space . "A:" . f_AOK_Down . "`n"
 	; OutputDebug, % "WWU :" . WhatWasUp . A_Space "v_Char:" . v_Char . "C:" . f_Char . A_Space . "S:" . f_SPA . A_Space . "C:" . f_ControlPressed . A_Space . "A:" . f_AltPressed . A_Space . "W:" . f_WinPressed . "`n"
 	if (f_Capital) 
@@ -681,34 +693,6 @@ F_FlagReset()
 ,	f_WinPressed 		:= false
 ,	f_AltPressed 		:= false
 	}
-; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-F_IfOppositeLShift()
-{
-	global	;assume-global mode of operation
-	f_LShiftU := false
-	if (f_RShiftU)
-		{
-			f_RShiftU := false
-		,	f_SPA := false
-		,	v_CLCounter := 0
-			OutputDebug, % A_ThisFunc . "`n"	
-		}
-}
-; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-F_IfOppositeRShift()
-{
-	global	;assume-global mode of operation
-	f_RShiftU := false
-	if (f_LShiftU)
-		{
-			f_LShiftU 	:= false
-		,	f_SPA 		:= false
-		,	f_RShift 		:= false
-		,	f_LShift 		:= false
-		,	v_CLCounter 	:= 0
-			OutputDebug, % A_ThisFunc . "`n"	
-		}
-}
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 F_ShiftUndo(WhatWasUp, ByRef f_SPA)	;future: undo of previous action (Diacritics or CapsLock)
 {
@@ -750,6 +734,7 @@ F_CapsLock(WhatWasUp, ByRef f_SPA)
 {
 	global	;assume-global mode of operation
 	local	CLLimit 	:= 3
+		,	CapsLockState := false
 
 	if ((WhatWasUp = "LShift") or (WhatWasUp = "RShift")) and (f_SPA)
 		v_CLCounter++
@@ -758,10 +743,14 @@ F_CapsLock(WhatWasUp, ByRef f_SPA)
 		v_CLCounter := c_CLReset
 		return
 	}
-	; OutputDebug, % "CLCounter:" . A_Space . CLCounter . "`n"
+	OutputDebug, % "CLCounter:" . A_Space . v_CLCounter . "`n"
 	if (v_CLCounter = CLLimit)
 	{
-		SetCapsLockState % !GetKeyState("CapsLock", "T")
+		CapsLockState	:= GetKeyState("CapsLock", "T")
+		; Sleep, 30		;sleep is required by function GetKeyState to correctly update: "Systems with unusual keyboard drivers might be slow to update the state of their keys".
+		SetCapsLockState, % !CapsLockState
+		; SetCapsLockState, % !GetKeyState("CapsLock", "T")
+		Sleep, 30		;sleep is required by function GetKeyState to correctly update: "Systems with unusual keyboard drivers might be slow to update the state of their keys".
 		; OutputDebug, % "GetKeyState(CapsLock, T):" . A_Space . GetKeyState("CapsLock", "T") . "`n"
 		if (GetKeyState("CapsLock", "T"))
 			SoundPlay, *48		;standard system sound, exclamation
