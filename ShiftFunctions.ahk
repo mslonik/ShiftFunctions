@@ -14,7 +14,7 @@
 #NoEnv  							; Recommended for performance and compatibility with future AutoHotkey releases.
 #Warn  	     					; Enable warnings to assist with detecting common errors.
 #Requires, AutoHotkey v1.1.34+ 		; Displays an error and quits if a version requirement is not met.
-#KeyHistory, 		100				; For debugging purposes.
+#KeyHistory, 		150				; For debugging purposes.
 #LTrim							; Omits spaces and tabs at the beginning of each line. This is primarily used to allow the continuation section to be indented. Also, this option may be turned on for multiple continuation sections by specifying #LTrim on a line by itself. #LTrim is positional: it affects all continuation sections physically beneath it.
 
 FileEncoding, 		UTF-8			; Sets the default encoding for FileRead, FileReadLine, Loop Read, FileAppend, and FileOpen(). Unicode UTF-16, little endian byte order (BMP of ISO 10646). Useful for .ini files which by default are coded as UTF-16. https://docs.microsoft.com/pl-pl/windows/win32/intl/code-page-identifiers?redirectedfrom=MSDN
@@ -26,7 +26,7 @@ StringCaseSense, 	On				;for Switch in F_OKU()
 ;Testing: Alt+Tab, , asdf Shift+Home
 
 ; - - - - - - - - - - - - - - - - Executable section, beginning - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-AppVersion			:= "1.3.0"
+AppVersion			:= "1.3.1"
 ;@Ahk2Exe-Let vAppVersion=%A_PriorLine~U)^(.+"){1}(.+)".*$~$2% ; Keep these lines together
 ;Overrides the custom EXE icon used for compilation
 ;@Ahk2Exe-SetCopyright GNU GPL 3.x
@@ -396,6 +396,7 @@ F_Capital(ByRef v_Char)
 		Case "^":		;when other AutoHotkey script (e.g. Hotstrings) sends out any special character where Shift is applied (e.g. # = Shift + 3), it have to be also send out, but without bouncing.
 			SendLevel, % c_NominalSL
 			Send, {^}	;when other AutoHotkey script (e.g. Hotstrings) sends out any special character where Shift is applied (e.g. # = Shift + 3), it have to be also send out, but without bouncing.
+			OutputDebug, % "Tu jestem" . "`n"
 		Case "+":
 			SendLevel, % c_NominalSL
 			Send, {+}	;when other AutoHotkey script (e.g. Hotstrings) sends out any special character where Shift is applied (e.g. # = Shift + 3), it have to be also send out, but without bouncing.
@@ -405,7 +406,6 @@ F_Capital(ByRef v_Char)
 			; OutputDebug, % "v_Char:" . v_Char . "|" . "`n"
 			v_Char := Format("{:U}", v_Char)
 			Send, % "{BS}" . v_Char
-			; OutputDebug, % "Tu jestem" . "`n"
 	}
 	SendLevel, % c_NominalSL
 	f_SPA 		:= false
@@ -575,13 +575,12 @@ F_OKD(ih, VK, SC)	;On Key Down
 			,	f_Char 	:= false
 			}
 	}
-	OutputDebug, % A_ThisFunc . A_Space . "WWD:" . A_Space . WhatWasDown . "|" . A_Space 
-		. "f_Phys:" . f_Phys . A_Space . "f_Char:" . f_Char . A_Space . "f_AChar:" . f_AChar . A_Space
-		. "PS:" . f_RShift 	. f_LShift 
-		. A_Space 
-		. "AS:" . f_ALShift . f_ARShift 
-		. "`n"
-	; "C:" . f_ControlPressed . A_Space . "A:" . f_AltPressed . A_Space . "W:" . f_WinPressed . A_Space . "AOK:" . f_AOK_Down . "`n"
+	; OutputDebug, % A_ThisFunc . A_Space . "WWD:" . A_Space . WhatWasDown . "|" . A_Space 
+	; 	. "f_Phys:" . f_Phys . A_Space . "f_Char:" . f_Char . A_Space . "f_AChar:" . f_AChar . A_Space
+	; 	. "PS:" . f_RShift 	. f_LShift 
+	; 	. A_Space 
+	; 	. "AS:" . f_ALShift . f_ARShift 
+	; 	. "`n"
 	; OutputDebug, % A_ThisFunc . A_Space . "E" . "`n"
 	Critical, Off
 }
@@ -604,11 +603,11 @@ F_OCD(ih, Char)	;On Character Down; this function can interrupt "On Key Down"
 	else
 		f_ASDCD := false
 
-	OutputDebug, % A_ThisFunc . A_Space . "Char:" . Char . "|" . A_Space 
-		. "f_Char:" 	. f_Char 	. A_Space . "PS:" . f_LShift . f_RShift 	. A_Space . "f_SDCD:" 	. f_SDCD 	
-		. A_Space 
-		. "f_AChar:" 	. f_AChar . A_Space . "AS:" . f_ALShift . f_ARShift 	. A_Space . "f_ASDCD:" 	. f_ASDCD 
-		. "`n"
+	; OutputDebug, % A_ThisFunc . A_Space . "Char:" . Char . "|" . A_Space 
+	; 	. "f_Char:" 	. f_Char 	. A_Space . "PS:" . f_LShift . f_RShift 	. A_Space . "f_SDCD:" 	. f_SDCD 	
+	; 	. A_Space 
+	; 	. "f_AChar:" 	. f_AChar . A_Space . "AS:" . f_ALShift . f_ARShift 	. A_Space . "f_ASDCD:" 	. f_ASDCD 
+	; 	. "`n"
 	; OutputDebug, % A_ThisFunc . A_Space . "Char:" . Char . "|" . A_Space . "f_SPA:" . f_SPA . "`n"
 	; OutputDebug, % A_ThisFunc . A_Space . "E" . "`n"
 }
@@ -637,15 +636,13 @@ F_OKU(ih, VK, SC)	;On Key Up
 		Case "Backspace", "Escape":
 			return
 		Case "LShift", "RShift":
-			; OutputDebug, % A_ThisFunc . A_Space . "WWU :" . WhatWasUp . A_Space "v_Char:" . v_Char . "C:" . f_Char . A_Space . "f_SDCD:" . f_SDCD . "`n"
-			; "S:" . f_SPA . A_Space . "C:" . f_ControlPressed . A_Space . "A:" . f_AltPressed . A_Space . "W:" . f_WinPressed . "`n"
+			; OutputDebug, % A_ThisFunc . A_Space . "f_SPA:" . f_SPA . A_Space . "WhatWasUp:" . WhatWasUp . A_Space . "f_SDCD:" . f_SDCD . A_Space . "f_ASDCD:" . f_ASDCD . "`n"
 			if (!f_RShift) and (!f_LShift)	;after F_FlagReset()
 				return
 			f_RShift 	:= false
 		,	f_LShift 	:= false
 		,	f_ARShift := false
 		,	f_ALShift := false
-		,	f_SPA 	:= true	;Shift key (left or right) was Pressed Alone.
 			if (f_SDCD)	;Shift (S) is down (D) and Character (C) is down (D)
 			{
 				f_SDCD := false
@@ -657,6 +654,8 @@ F_OKU(ih, VK, SC)	;On Key Up
 			,	f_ASDCD 	:= false
 				OutputDebug, % "v_Char:" . v_Char . "|" . "`n"
 			}
+			if (!f_Char)
+				f_SPA 	:= true	;Shift key (left or right) was Pressed Alone.
 		Default:
 			f_Char := false
 	}
