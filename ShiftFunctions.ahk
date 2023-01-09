@@ -510,7 +510,7 @@ F_OKD(ih, VK, SC)	;On Key Down
 		,	f_Phys		:= false
 
 	Sleep, 30		;sleep is required by function GetKeyState to correctly update: "Systems with unusual keyboard drivers might be slow to update the state of their keys".
-	f_Phys 		:= GetKeyState(WhatWasDown, "P")	;if s comes from keyboard hook (is artificial) or is physically pressed by user
+	f_Phys 		:= GetKeyState(WhatWasDown, "P")	;if character comes from keyboard hook (is artificial) or is physically pressed by user
 	; OutputDebug, % "WhatWasDown:" . WhatWasDown . A_Space . "f_Phys:" . f_Phys . A_Space . GetKeyState(WhatWasDown, "P") . "`n"
 	Switch WhatWasDown
 	{
@@ -564,24 +564,23 @@ F_OKD(ih, VK, SC)	;On Key Down
 			f_WinPressed 		:= true
 		Default:
 			f_AOK_Down		:= true	;Any Other Key
-			; OutputDebug, % "Default:" . A_Space . "WhatWasDown:" . WhatWasDown . "`n"
-			if (f_ALShift or f_ARShift) and f_Phys	;assumption: from another script Shift is always send before next ordinary character
-				{
-					f_AChar	:= true
-				,	f_Char 	:= false
-				}
-				else
-				{
-					f_AChar	:= false
-				,	f_Char 	:= true
-				}
+			if (f_Phys)
+			{
+				f_AChar	:= false
+			,	f_Char 	:= true
+			}
+			else
+			{
+				f_AChar	:= true
+			,	f_Char 	:= false
+			}
 	}
-	; OutputDebug, % A_ThisFunc . A_Space . "WWD:" . A_Space . WhatWasDown . "|" . A_Space 
-	; 	. "v_Char:" . v_Char . "|" . "f_Char:" . f_Char . A_Space . "f_AChar:" . f_AChar . A_Space
-	; 	. "PS:" . f_RShift 	. f_LShift 
-	; 	. A_Space 
-	; 	. "AS:" . f_ALShift . f_ARShift 
-	; 	. "`n"
+	OutputDebug, % A_ThisFunc . A_Space . "WWD:" . A_Space . WhatWasDown . "|" . A_Space 
+		. "f_Phys:" . f_Phys . A_Space . "f_Char:" . f_Char . A_Space . "f_AChar:" . f_AChar . A_Space
+		. "PS:" . f_RShift 	. f_LShift 
+		. A_Space 
+		. "AS:" . f_ALShift . f_ARShift 
+		. "`n"
 	; "C:" . f_ControlPressed . A_Space . "A:" . f_AltPressed . A_Space . "W:" . f_WinPressed . A_Space . "AOK:" . f_AOK_Down . "`n"
 	; OutputDebug, % A_ThisFunc . A_Space . "E" . "`n"
 	Critical, Off
@@ -597,14 +596,19 @@ F_OCD(ih, Char)	;On Character Down; this function can interrupt "On Key Down"
 
 	if (f_RShift or f_LShift) and f_Char
 		f_SDCD := true	;Shift (S) is down (D) and Character (C) is down (D)
-	if (f_ARShift or f_ALShift) and f_AChar
-		f_ASDCD := true ;Artificial (A) is down (D) and artificial Character (C) is down (D)
+	else
+		f_SDCD := false
 
-	; OutputDebug, % A_ThisFunc . A_Space . "Char:" . Char . "|" . A_Space 
-	; 	. "f_Char:" 	. f_Char 	. A_Space . "PS:" . f_LShift . f_RShift 	. A_Space . "f_SDCD:" 	. f_SDCD 	
-	; 	. A_Space 
-	; 	. "f_AChar:" 	. f_AChar . A_Space . "AS:" . f_ALShift . f_ARShift 	. A_Space . "f_ASDCD:" 	. f_ASDCD 
-	; 	. "`n"
+	if (f_ARShift or f_ALShift) and f_AChar
+		f_ASDCD := true ;Artificial (A) Shift (S) is down (D) and artificial Character (C) is down (D)
+	else
+		f_ASDCD := false
+
+	OutputDebug, % A_ThisFunc . A_Space . "Char:" . Char . "|" . A_Space 
+		. "f_Char:" 	. f_Char 	. A_Space . "PS:" . f_LShift . f_RShift 	. A_Space . "f_SDCD:" 	. f_SDCD 	
+		. A_Space 
+		. "f_AChar:" 	. f_AChar . A_Space . "AS:" . f_ALShift . f_ARShift 	. A_Space . "f_ASDCD:" 	. f_ASDCD 
+		. "`n"
 	; OutputDebug, % A_ThisFunc . A_Space . "Char:" . Char . "|" . A_Space . "f_SPA:" . f_SPA . "`n"
 	; OutputDebug, % A_ThisFunc . A_Space . "E" . "`n"
 }
@@ -637,10 +641,11 @@ F_OKU(ih, VK, SC)	;On Key Up
 			; "S:" . f_SPA . A_Space . "C:" . f_ControlPressed . A_Space . "A:" . f_AltPressed . A_Space . "W:" . f_WinPressed . "`n"
 			if (!f_RShift) and (!f_LShift)	;after F_FlagReset()
 				return
-			f_RShift := false
-		,	f_LShift := false
+			f_RShift 	:= false
+		,	f_LShift 	:= false
 		,	f_ARShift := false
 		,	f_ALShift := false
+		,	f_SPA 	:= true	;Shift key (left or right) was Pressed Alone.
 			if (f_SDCD)	;Shift (S) is down (D) and Character (C) is down (D)
 			{
 				f_SDCD := false
@@ -651,9 +656,7 @@ F_OKU(ih, VK, SC)	;On Key Up
 				v_Char 	:= Format("{:U}", v_Char)
 			,	f_ASDCD 	:= false
 				OutputDebug, % "v_Char:" . v_Char . "|" . "`n"
-				; return
 			}
-			f_SPA := true	;Shift key (left or right) was Pressed Alone.
 		Default:
 			f_Char := false
 	}
