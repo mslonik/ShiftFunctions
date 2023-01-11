@@ -26,7 +26,7 @@ StringCaseSense, 	On				;for Switch in F_OKU()
 ;Testing: Alt+Tab, , asdf Shift+Home
 
 ; - - - - - - - - - - - - - - - - Executable section, beginning - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-AppVersion			:= "1.3.1"
+AppVersion			:= "1.3.2"
 ;@Ahk2Exe-Let vAppVersion=%A_PriorLine~U)^(.+"){1}(.+)".*$~$2% ; Keep these lines together
 ;Overrides the custom EXE icon used for compilation
 ;@Ahk2Exe-SetCopyright GNU GPL 3.x
@@ -52,7 +52,7 @@ FileInstall, README.md, 			README.md,		true
 ,	f_Char			:= false	;global flag, set when printable character was pressed down (and not yet released).
 ,	f_AChar			:= false	;global flag, set when artificial (hook) key is pressed down (and not yet released).
 ,	f_SPA 			:= false	;global flag, set when any Shift key (left or right) was Pressed Alone.
-,	f_ShiftDown		:= false
+,	f_ShiftDown		:= false	;global flag, set by F_OKD when any Shift key is pressed
 ,	f_ControlPressed	:= false	;global flag, set when any Control key (left or right) was pressed.
 ,	f_AltPressed		:= false	;global flag, set when any Alt key (left or right) was pressed.
 ,	f_WinPressed		:= false	;global flag, set when any Windows key (left or right) was pressed.
@@ -71,10 +71,8 @@ FileInstall, README.md, 			README.md,		true
 ,	c_CLReset			:= 0		;global constant: CapsLock counter reset 
 ,	c_OutputSL		:= 1		;global constant: value for SendLevel, which is feedback for other scripts
 ,	c_NominalSL		:= 0		;global constant: nominal / default value for SendLevel
-,	f_LShift			:= false
-,	f_RShift			:= false
-,	f_LShiftU			:= true
-,	f_RShiftU			:= true
+,	f_LShift			:= false	;global flag, set when Left Shift is pressed down
+,	f_RShift			:= false	;global flag, set when Right Shift is pressed down
 ,	c_InputSL			:= 2		;global constant: default value for InputHook (MinSendLevel)
 ,	f_SDCD			:= false	;global flag: Shift (S) is down (D) and Character (C) is down (D)
 ,	f_ASDCD			:= false	;global flag: Artificial (hook generated) Shift (S) is down (D) and artificial Character (C) is down (D)
@@ -87,7 +85,7 @@ F_MenuTray()
 ;end initialization section
 
 ; - - - - - - - - - - - - - - GLOBAL HOTSTRINGS: BEGINNING- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-:*:sfhelp/::
+:*:sfhelp/::		;stands for: Shift functions help
 	F_Help()
 return
 
@@ -95,10 +93,10 @@ return
 	F_Save()
 return
 
-:*:sfreload/::
-:*:sfrestart/::     ;global hotstring
+:*:sfreload/::		;stands for: Shift functions reload (synonym of restart)
+:*:sfrestart/::     ;stands for: Shift functions restart (synonym of reload)
 	MsgBox, % c_IconAsteriskInfo, % A_ScriptName, % A_ScriptName . A_Space . "will be restarted!"
-	reload
+	Reload
 return
 
 :*:sfstop/::
@@ -413,6 +411,7 @@ F_Capital(ByRef v_Char)
 ,	f_LShift 		:= false
 ,	f_Char		:= false
 ,	f_AOK_Down	:= false
+,	v_CLCounter 	:= c_CLReset
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 F_MenuTray()
@@ -426,6 +425,7 @@ F_MenuTray()
 	Menu, Tray, Add, 		% "function Shift Capital:" . A_Tab . 			(f_Capital ? "ENABLED" : "DISABLED"),		F_sfparamToggle
 	Menu, Tray, Add, 		% "function Shift Diacritics:" . A_Tab . 		(f_Diacritics ? "ENABLED" : "DISABLED"),	F_sfparamToggle
 	Menu, Tray, Add, 		% "function Shift CapsLock:" . A_Tab . 			(f_CapsLock ? "ENABLED" : "DISABLED"),		F_sfparamToggle
+	Menu, Tray, Add
 	Menu, Tray, Add,		% "loaded .ini file" . A_Tab .				v_ConfigIni,							F_SelectConfig
 	Menu, Tray, Add,		Hotstrings,																	F_Help
 	Menu, Tray, Add,		Save configuration to current .ini file,											F_Save
@@ -558,10 +558,13 @@ F_OKD(ih, VK, SC)	;On Key Down
 			}
 		Case "LControl", "RControl":
 			f_ControlPressed 	:= true
+		,	f_AOK_Down		:= true	;Any Other Key	
 		Case "LAlt", "RAlt":
 			f_AltPressed 		:= true
+		,	f_AOK_Down		:= true	;Any Other Key	
 		Case "LWin", "RWin":
 			f_WinPressed 		:= true
+		,	f_AOK_Down		:= true	;Any Other KeJ	
 		Default:
 			f_AOK_Down		:= true	;Any Other Key
 			if (f_Phys)
@@ -625,15 +628,27 @@ F_OKU(ih, VK, SC)	;On Key Up
 	Switch WhatWasUp	;only Shifts are not included ;According to AutoHotkey documentation each case may list up to 20 values
 	{
 		Case "LAlt", "RAlt", "LWin", "RWin", "LControl", "RControl":		;modifiers
+			f_Char 		:= false
+			if (!f_RShift) and (!f_LShift)
+				f_AOK_Down := false
 			return
 		Case "Insert", "Home", "PageUp", "Delete", "End", "PageDown", "AppsKey"	;NavPad
 		,	"Up", "Down", "Left", "Right":	;11
+			f_Char 		:= false
+		,	v_Char		:= ""
+			if (!f_RShift) and (!f_LShift)
+				f_AOK_Down 	:= false	
 			return
 		Case "F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10", "F11", "F12", "F13", "F14", "F15", "F16", "F17", "F18", "F19", "F20":	;20
+			f_Char := false
 			return
 		Case "F21", "F22", "F23", "F24":	;4
+			f_Char := false
 			return
 		Case "Backspace", "Escape":
+			f_Char 		:= false
+		,	f_AOK_Down 	:= false	
+		,	v_Char		:= ""
 			return
 		Case "LShift", "RShift":
 			; OutputDebug, % A_ThisFunc . A_Space . "f_SPA:" . f_SPA . A_Space . "WhatWasUp:" . WhatWasUp . A_Space . "f_SDCD:" . f_SDCD . A_Space . "f_ASDCD:" . f_ASDCD . "`n"
@@ -654,10 +669,11 @@ F_OKU(ih, VK, SC)	;On Key Up
 			,	f_ASDCD 	:= false
 				OutputDebug, % "v_Char:" . v_Char . "|" . "`n"
 			}
-			if (!f_Char)
+			if (!f_Char) and (!f_AOK_Down)
 				f_SPA 	:= true	;Shift key (left or right) was Pressed Alone.
 		Default:
-			f_Char := false
+			f_Char 		:= false
+		,	f_AOK_Down 	:= false
 	}
 	; OutputDebug, % A_ThisFunc . A_Space . "f_SPA:" . f_SPA . A_Space . "WhatWasUp:" . WhatWasUp . A_Space . "f_SDCD:" . f_SDCD . A_Space . "f_ASDCD:" . f_ASDCD . "`n"
 	; OutputDebug, % "WWU :" . WhatWasUp . A_Space "v_Char:" . v_Char . "C:" . f_Char . A_Space . "S:" . f_SPA . A_Space . "A:" . f_AOK_Down . "`n"
@@ -676,7 +692,8 @@ F_OKU(ih, VK, SC)	;On Key Up
 	F_ShiftUndo(WhatWasUp, f_SPA)
 
 	if (f_CapsLock)
-		F_CapsLock(WhatWasUp, f_SPA)
+		and (f_SPA)
+			F_CapsLock(WhatWasUp, f_SPA)
 
 	; OutputDebug, % "WWUe:" . WhatWasUp . A_Space "v_Char:" . v_Char . "C:" . f_Char . A_Space . "S:" . f_SPA . A_Space . "A:" . f_AOK_Down . "`n"
 	; OutputDebug, % "WWUe:" . WhatWasUp . A_Space "v_Char:" . v_Char . "C:" . f_Char . A_Space . "S:" . f_SPA . A_Space . "C:" . f_ControlPressed . A_Space . "A:" . f_AltPressed . A_Space . "W:" . f_WinPressed . "`n"
@@ -694,6 +711,7 @@ F_FlagReset()
 ,	f_LShift 			:= false
 ,	f_WinPressed 		:= false
 ,	f_AltPressed 		:= false
+,	f_AOK_Down		:= false
 	}
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 F_ShiftUndo(WhatWasUp, ByRef f_SPA)	;future: undo of previous action (Diacritics or CapsLock)
