@@ -26,7 +26,7 @@ StringCaseSense, 	On				;for Switch in F_OKU()
 ;Testing: Alt+Tab, , asdf Shift+Home
 
 ; - - - - - - - - - - - - - - - - Executable section, beginning - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-AppVersion			:= "1.3.2"
+AppVersion			:= "1.3.3"
 ;@Ahk2Exe-Let vAppVersion=%A_PriorLine~U)^(.+"){1}(.+)".*$~$2% ; Keep these lines together
 ;Overrides the custom EXE icon used for compilation
 ;@Ahk2Exe-SetCopyright GNU GPL 3.x
@@ -636,19 +636,23 @@ F_OKU(ih, VK, SC)	;On Key Up
 		,	"Up", "Down", "Left", "Right":	;11
 			f_Char 		:= false
 		,	v_Char		:= ""
+		,	f_SPA 		:= false
 			if (!f_RShift) and (!f_LShift)
 				f_AOK_Down 	:= false	
 			return
 		Case "F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10", "F11", "F12", "F13", "F14", "F15", "F16", "F17", "F18", "F19", "F20":	;20
-			f_Char := false
+			f_Char 	:= false
+		,	f_SPA	:= false
 			return
 		Case "F21", "F22", "F23", "F24":	;4
-			f_Char := false
+			f_Char 	:= false
+		,	f_SPA 	:= false	
 			return
 		Case "Backspace", "Escape":
 			f_Char 		:= false
 		,	f_AOK_Down 	:= false	
 		,	v_Char		:= ""
+		,	f_SPA 		:= false
 			return
 		Case "LShift", "RShift":
 			; OutputDebug, % A_ThisFunc . A_Space . "f_SPA:" . f_SPA . A_Space . "WhatWasUp:" . WhatWasUp . A_Space . "f_SDCD:" . f_SDCD . A_Space . "f_ASDCD:" . f_ASDCD . "`n"
