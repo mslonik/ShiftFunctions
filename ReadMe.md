@@ -332,12 +332,12 @@ The are available the following ways to control **ShiftFunctions** behavior, ena
 
 ### System tray icon
 Microsoft Windows 10: left click on SystemTray **<** icon (*Show hidden icons*):
-(attachments/Pasted image 20230111230254.png)
+![](attachments/Pasted image 20230111230254.png)
 Right click on **ShiftFunctions** icon:
-(attachments/Pasted image 20230111230320.png)
+![](attachments/Pasted image 20230111230320.png)
 
 The following options are available:
-(attachments/Pasted image 20230111231308.png)
+![](attachments/Pasted image 20230111231308.png)
 By left click on any of the following options it is possible to toggle them (ENABLED ↔ DISABLED):
 - function Shift Capital,
 - function Shift Diacritics,
@@ -352,14 +352,14 @@ For example in order to run **ShiftFunctions.exe** with *-scdisable*:
 1. Prepare shortcut (.lnk extension) file. 
 2. Enter *Properties* section of that file.
 3. Modify *Target* field accordingly:
-(attachments/Pasted image 20230111232751.png)
+![](attachments/Pasted image 20230111232751.png)
 Now you can add the shortcut file e.g. to *Startup* folder.
 
 You can also specify configuration file (.ini) as command line parameter.
 
 ### Hotstrings
 List of available hotstrings (like shortcuts, but without keyboard modifiers) left click on system tray, next right click icon of **ShiftFunctions** and finally left click on *Hotstrings*:
-(attachments/Pasted image 20230111233414.png)
+![](attachments/Pasted image 20230111233414.png)
 
 ## Remarks
 - Last character is kept in memory. This can be useful to undo last diacritic character by double pressing of any Shift key. For example:
