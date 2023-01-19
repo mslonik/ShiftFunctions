@@ -649,7 +649,10 @@ F_OKU(ih, VK, SC)	;On Key Up
 	if (f_WasReset)
 	{
 		if (++WasResetMemory = 2)	;secures against LShift and after that RShift or RShift and after that LShift
-			f_WasReset := false
+		{
+			f_WasReset 	:= false
+			WasResetMemory := 0
+		}	
 		; OutputDebug, % "WasResetMemoryE:" . WasResetMemory . A_Space . "f_WasReset:" . f_WasReset . "`n"	
 		return
 	}
@@ -660,12 +663,19 @@ F_OKU(ih, VK, SC)	;On Key Up
 		f_SPA 	:= true	;Shift key (left or right) was Pressed Alone.
 		; OutputDebug, % "f_SPA:" . f_SPA . "`n"
 	}
+	if (WhatWasUp != v_Char)
+		f_Char := false
 
+	if (WhatWasUp = "Backspace") or (WhatWasUp = "Esc") 
+		or (WhatWasUp = "Left") or (WhatWasUp = "Right") or (WhatWasUp = "Up") or (WhatWasUp = "Down")
+		or (WhatWasUp = "Delete") or (WhatWasUp = "Insert") or (WhatWasUp = "Home") or (WhatWasUp = "End") or (WhatWasUp = "PgUp") or (WhatWasUp = "PgDn")
+		or (WhatWasUp = "F1") or (WhatWasUp = "F2") or (WhatWasUp = "F3") or (WhatWasUp = "F4") or (WhatWasUp = "F5") or (WhatWasUp = "F6") or (WhatWasUp = "F7") or (WhatWasUp = "F8") or (WhatWasUp = "F9") or (WhatWasUp = "F10") or (WhatWasUp = "F11") or (WhatWasUp = "F12") or (WhatWasUp = "F13") or (WhatWasUp = "F14") or (WhatWasUp = "F15") or (WhatWasUp = "F16") or (WhatWasUp = "F17") or (WhatWasUp = "F18") or (WhatWasUp = "F19") or (WhatWasUp = "F20") or (WhatWasUp = "F21") or (WhatWasUp = "F22") or (WhatWasUp = "F23") or (WhatWasUp = "F24")
+		f_SPA 	:= false
 	; OutputDebug, % A_ThisFunc . A_Space . "f_SPA:" . f_SPA . A_Space . "WhatWasUp:" . WhatWasUp . A_Space . "f_SDCD:" . f_SDCD . A_Space . "f_ASDCD:" . f_ASDCD . "`n"
 	; OutputDebug, % "WWU :" . WhatWasUp . A_Space "v_Char:" . v_Char . "C:" . f_Char . A_Space . "S:" . f_SPA . A_Space . "A:" . f_AOK_Down . "`n"
-	; OutputDebug, % "WWU :" . WhatWasUp . A_Space "v_Char:" . v_Char . "C:" . f_Char . A_Space . "S:" . f_SPA . A_Space . "C:" . f_ControlPressed . A_Space . "A:" . f_AltPressed . A_Space . "W:" . f_WinPressed . "`n"
+	; OutputDebug, % "WWU :" . WhatWasUp . A_Space . "v_Char:" . v_Char . "C:" . f_Char . A_Space . "S:" . f_SPA . A_Space . "C:" . f_ControlPressed . A_Space . "A:" . f_AltPressed . A_Space . "W:" . f_WinPressed . "`n"
 	if (f_Capital) 
-		; and (f_Char)
+		and (f_Char)
 		and (f_SPA)
 		and (WhatWasUp != "LShift") and (WhatWasUp != "RShift")
 			F_Capital(v_Char)
