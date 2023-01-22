@@ -666,7 +666,8 @@ F_OKU(ih, VK, SC)	;On Key Up
 	if (WhatWasUp != v_Char)
 		f_Char := false
 
-	if (WhatWasUp = "Backspace") or (WhatWasUp = "Esc") 
+	if (WhatWasUp = "Backspace") or (WhatWasUp = "Esc")
+		or  (WhatWasUp = "Space") or (WhatWasUp = "Enter")
 		or (WhatWasUp = "Left") or (WhatWasUp = "Right") or (WhatWasUp = "Up") or (WhatWasUp = "Down")
 		or (WhatWasUp = "Delete") or (WhatWasUp = "Insert") or (WhatWasUp = "Home") or (WhatWasUp = "End") or (WhatWasUp = "PgUp") or (WhatWasUp = "PgDn")
 		or (WhatWasUp = "F1") or (WhatWasUp = "F2") or (WhatWasUp = "F3") or (WhatWasUp = "F4") or (WhatWasUp = "F5") or (WhatWasUp = "F6") or (WhatWasUp = "F7") or (WhatWasUp = "F8") or (WhatWasUp = "F9") or (WhatWasUp = "F10") or (WhatWasUp = "F11") or (WhatWasUp = "F12") or (WhatWasUp = "F13") or (WhatWasUp = "F14") or (WhatWasUp = "F15") or (WhatWasUp = "F16") or (WhatWasUp = "F17") or (WhatWasUp = "F18") or (WhatWasUp = "F19") or (WhatWasUp = "F20") or (WhatWasUp = "F21") or (WhatWasUp = "F22") or (WhatWasUp = "F23") or (WhatWasUp = "F24")
@@ -681,6 +682,7 @@ F_OKU(ih, VK, SC)	;On Key Up
 			F_Capital(v_Char)
 
 	if (f_Diacritics)
+		and (f_Char)
 		and (f_SPA)
 		and ((WhatWasUp = "LShift") or (WhatWasUp = "RShift"))
 			F_Diacritics(v_Char)
