@@ -671,18 +671,21 @@ F_OKU(ih, VK, SC)	;On Key Up
 		or (WhatWasUp = "Left") or (WhatWasUp = "Right") or (WhatWasUp = "Up") or (WhatWasUp = "Down")
 		or (WhatWasUp = "Delete") or (WhatWasUp = "Insert") or (WhatWasUp = "Home") or (WhatWasUp = "End") or (WhatWasUp = "PgUp") or (WhatWasUp = "PgDn")
 		or (WhatWasUp = "F1") or (WhatWasUp = "F2") or (WhatWasUp = "F3") or (WhatWasUp = "F4") or (WhatWasUp = "F5") or (WhatWasUp = "F6") or (WhatWasUp = "F7") or (WhatWasUp = "F8") or (WhatWasUp = "F9") or (WhatWasUp = "F10") or (WhatWasUp = "F11") or (WhatWasUp = "F12") or (WhatWasUp = "F13") or (WhatWasUp = "F14") or (WhatWasUp = "F15") or (WhatWasUp = "F16") or (WhatWasUp = "F17") or (WhatWasUp = "F18") or (WhatWasUp = "F19") or (WhatWasUp = "F20") or (WhatWasUp = "F21") or (WhatWasUp = "F22") or (WhatWasUp = "F23") or (WhatWasUp = "F24")
+	{
 		f_SPA 	:= false
+	,	v_Char	:= ""
+	}		
 	; OutputDebug, % A_ThisFunc . A_Space . "f_SPA:" . f_SPA . A_Space . "WhatWasUp:" . WhatWasUp . A_Space . "f_SDCD:" . f_SDCD . A_Space . "f_ASDCD:" . f_ASDCD . "`n"
 	; OutputDebug, % "WWU :" . WhatWasUp . A_Space "v_Char:" . v_Char . "C:" . f_Char . A_Space . "S:" . f_SPA . A_Space . "A:" . f_AOK_Down . "`n"
-	; OutputDebug, % "WWU :" . WhatWasUp . A_Space . "v_Char:" . v_Char . "C:" . f_Char . A_Space . "S:" . f_SPA . A_Space . "C:" . f_ControlPressed . A_Space . "A:" . f_AltPressed . A_Space . "W:" . f_WinPressed . "`n"
 	if (f_Capital) 
-		and (f_Char)
+		; and (f_Char)
 		and (f_SPA)
 		and (WhatWasUp != "LShift") and (WhatWasUp != "RShift")
 			F_Capital(v_Char)
 
+	; OutputDebug, % "WWU :" . WhatWasUp . A_Space . "v_Char:" . v_Char . "C:" . f_Char . A_Space . "S:" . f_SPA . A_Space . "C:" . f_ControlPressed . A_Space . "A:" . f_AltPressed . A_Space . "W:" . f_WinPressed . "`n"
 	if (f_Diacritics)
-		and (f_Char)
+		; and (f_Char)
 		and (f_SPA)
 		and ((WhatWasUp = "LShift") or (WhatWasUp = "RShift"))
 			F_Diacritics(v_Char)
@@ -761,7 +764,7 @@ F_CapsLock(WhatWasUp, ByRef f_SPA)
 		v_CLCounter := c_CLReset
 		return
 	}
-	OutputDebug, % "CLCounter:" . A_Space . v_CLCounter . "`n"
+	; OutputDebug, % "CLCounter:" . A_Space . v_CLCounter . "`n"
 	if (v_CLCounter = CLLimit)
 	{
 		CapsLockState	:= GetKeyState("CapsLock", "T")
@@ -794,7 +797,7 @@ F_Diacritics(v_Char)
 			F_DiacriticOutput(a_Diacritic[index])
 			v_Undo := v_Char
 ,			f_DUndo := true
-			OutputDebug, % "f_DUndo:" . A_Space . f_DUndo . A_Space . "v_Undo:" . v_Undo . "`n"
+			; OutputDebug, % "f_DUndo:" . A_Space . f_DUndo . A_Space . "v_Undo:" . v_Undo . "`n"
 		}
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
