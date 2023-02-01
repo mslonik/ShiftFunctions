@@ -514,10 +514,11 @@ F_OKD(ih, VK, SC)	;On Key Down
 	; OutputDebug, % A_ThisFunc . A_Space . "WhatWasDown:" . v_WhatWasDown . A_Space . "B" . "`n"
 	Sleep, 30		;sleep is required by function GetKeyState to correctly update: "Systems with unusual keyboard drivers might be slow to update the state of their keys".
 	f_Phys 		:= GetKeyState(v_WhatWasDown, "P")	;if character comes from keyboard hook, another script e.g. Hotstrings (is artificial) or is physically pressed by user. There is library of Hotstrings "FirstCapital.csv" which sends back if set with S2 attribute artificial Shifts.
-	; OutputDebug, % "WhatWasDown:" . v_WhatWasDown . A_Space . "f_Phys:" . f_Phys . "`n"
+	OutputDebug, % "WhatWasDown:" . v_WhatWasDown . A_Space . "f_Phys:" . f_Phys . "`n"
 	Switch v_WhatWasDown
 	{
 		Case "LShift":
+			; if (GetKeyState(v_WhatWasDown, "P"))
 			if (f_Phys)
 			{
 				f_LShift		:= true
@@ -529,6 +530,7 @@ F_OKD(ih, VK, SC)	;On Key Down
 				}
 				else
 				{
+					; KeyWait, RShift, D T10	;Wait 0.05 s (50 ms) for pressing Down other Shift key. If other Shift key is down, flags are reset.
 					KeyWait, RShift, D T0.05	;Wait 0.05 s (50 ms) for pressing Down other Shift key. If other Shift key is down, flags are reset.
 					if (!ErrorLevel)	;not timed out, event took place below 0.05 s (50 ms)
 					{
@@ -547,6 +549,7 @@ F_OKD(ih, VK, SC)	;On Key Down
 			,	f_WasReset	:= false
 			}
 		Case "RShift":
+			; if (GetKeyState(v_WhatWasDown, "P"))
 			if (f_Phys)
 			{
 				f_RShift		:= true
@@ -558,6 +561,7 @@ F_OKD(ih, VK, SC)	;On Key Down
 				}
 				else
 				{
+					; KeyWait, LShift, D T10
 					KeyWait, LShift, D T0.05
 					if (!ErrorLevel)
 					{
@@ -582,9 +586,8 @@ F_OKD(ih, VK, SC)	;On Key Down
 		,	f_AOK_Down		:= true	;Any Other Key	
 		Case "LWin", "RWin":
 			f_WinPressed 		:= true
-		,	f_AOK_Down		:= true	;Any Other KeJ	
+		,	f_AOK_Down		:= true	;Any Other Key
 		Default:
-			f_AOK_Down		:= true	;Any Other Key
 			if (f_Phys)
 			{
 				f_AChar	:= false
@@ -614,16 +617,6 @@ F_OCD(ih, Char)	;On Character Down; this function can interrupt "On Key Down"
 
 	v_Char := Char
 ,	f_DUndo := false
-
-	if (f_RShift or f_LShift) and f_Char
-		f_SDCD := true	;Shift (S) is down (D) and Character (C) is down (D)
-	else
-		f_SDCD := false
-
-	if (f_ARShift or f_ALShift) and f_AChar
-		f_ASDCD := true ;Artificial (A) Shift (S) is down (D) and artificial Character (C) is down (D)
-	else
-		f_ASDCD := false
 
 	; OutputDebug, % A_ThisFunc . A_Space . "Char:" . Char . "|" . A_Space 
 	; 	. "f_Char:" 	. f_Char 	. A_Space . "PS:" . f_LShift . f_RShift 	. A_Space . "f_SDCD:" 	. f_SDCD 	
@@ -659,6 +652,7 @@ F_OKU(ih, VK, SC)	;On Key Up
 
 	if ((WhatWasUp = "LShift") or (WhatWasUp = "RShift"))
 		and (WhatWasUp = v_WhatWasDown)
+		and (!f_AOK_Down)
 	{
 		f_SPA 	:= true	;Shift key (left or right) was Pressed Alone.
 		; OutputDebug, % "f_SPA:" . f_SPA . "`n"
@@ -695,6 +689,11 @@ F_OKU(ih, VK, SC)	;On Key Up
 	if (f_CapsLock)
 		and (f_SPA)
 			F_CapsLock(WhatWasUp, f_SPA)
+
+	if (WhatWasUp = "LControl") or (WhatWasUp =  "RControl")
+		or (WhatWasUp = "LAlt") or (WhatWasUp = "RAlt")
+		or (WhatWasUp = "LWin") or (WhatWasUp = "RWin")
+			f_AOK_Down		:= false	;Any Other Key
 
 	; OutputDebug, % "WWUe:" . WhatWasUp . A_Space "v_Char:" . v_Char . "C:" . f_Char . A_Space . "S:" . f_SPA . A_Space . "A:" . f_AOK_Down . "`n"
 	; OutputDebug, % "WWUe:" . WhatWasUp . A_Space "v_Char:" . v_Char . "C:" . f_Char . A_Space . "S:" . f_SPA . A_Space . "C:" . f_ControlPressed . A_Space . "A:" . f_AltPressed . A_Space . "W:" . f_WinPressed . "`n"
@@ -806,6 +805,7 @@ F_DiacriticOutput(Diacritic)
 	global	;assume-global mode of operation
 
 	; OutputDebug, % A_ThisFunc . A_Space . "B" . "`n"
+	Critical, On
 	SendLevel, 	% c_OutputSL
 	Send,		% "{BS}" . Diacritic
 	SendLevel, 	% c_NominalSL
@@ -815,6 +815,7 @@ F_DiacriticOutput(Diacritic)
 ,	f_Char 		:= false
 ,	v_Char		:= ""
 ,	f_AOK_Down	:= false
+	Critical, Off
 	; OutputDebug, % A_ThisFunc . A_Space . "E" . "`n"
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
