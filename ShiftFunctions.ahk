@@ -26,7 +26,7 @@ StringCaseSense, 	On				;for Switch in F_OKU()
 ;Testing: Alt+Tab, , asdf Shift+Home
 
 ; - - - - - - - - - - - - - - - - Executable section, beginning - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-AppVersion			:= "1.3.4"
+AppVersion			:= "1.3.5"
 ;@Ahk2Exe-Let vAppVersion=%A_PriorLine~U)^(.+"){1}(.+)".*$~$2% ; Keep these lines together
 ;Overrides the custom EXE icon used for compilation
 ;@Ahk2Exe-SetCopyright GNU GPL 3.x
@@ -75,11 +75,12 @@ FileInstall, README.md, 			README.md,		true
 ,	f_RShift			:= false	;global flag, set when Right Shift is pressed down
 ,	c_InputSL			:= 2		;global constant: default value for InputHook (MinSendLevel)
 ,	f_SDCD			:= false	;global flag: Shift (S) is down (D) and Character (C) is down (D)
-,	f_ASDCD			:= false	;global flag: Artificial (hook generated) Shift (S) is down (D) and artificial Character (C) is down (D)
-,	f_ALShift			:= false	;global flag: Artificial (hook generated) Left Shift
-,	f_ARShift			:= false	;global flag: Artificial (hook generated) Right Shift
+; ,	f_ASDCD			:= false	;global flag: Artificial (hook generated) Shift (S) is down (D) and artificial Character (C) is down (D)
+; ,	f_ALShift			:= false	;global flag: Artificial (hook generated) Left Shift
+; ,	f_ARShift			:= false	;global flag: Artificial (hook generated) Right Shift
 ,	v_WhatWasDown		:= ""	;global variable, name of key which was pressed down
 ,	f_WasReset		:= false	;global flag: Shift key memory reset (to reset v_CLCounter)
+,	f_50msRun			:= false	;global flag: timer is running
 
 F_InitiateInputHook()
 F_InputArguments()
@@ -503,81 +504,52 @@ F_ShiftReset()
 	
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+F_50msTimeout()
+{
+	global		;assume-global mode of operation
+
+	f_50msRun 	:= false
+}
+; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+F_CheckIf50ms()
+{
+	global		;assume-global mode of operation
+
+	if (f_50msRun)
+		{
+			F_FlagReset()
+			SetTimer, F_50msTimeout, Off
+			f_50msRun 	:= false
+			f_WasReset	:= true
+			; OutputDebug, % "concurrent" . "`n"
+		}
+	else
+		{
+			SetTimer, F_50msTimeout, -50	;50 ms once
+			f_50msRun 	:= true
+		}
+}
+; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 F_OKD(ih, VK, SC)	;On Key Down
 {
 	global		;assume-global mode of operation
 	Critical, On	;This function starts as the first one (prior to "On Character Down"), but unfortunately can be interrupted by it. To prevent it Critical command is applied.
 	; OutputDebug, % A_ThisFunc . A_Space . "B" . "`n"
-	local		f_Phys		:= false
+	; local		f_Phys		:= false
 
 	v_WhatWasDown 	:= GetKeyName(Format("vk{:x}sc{:x}", VK, SC)) 
 	; OutputDebug, % A_ThisFunc . A_Space . "WhatWasDown:" . v_WhatWasDown . A_Space . "B" . "`n"
-	Sleep, 30		;sleep is required by function GetKeyState to correctly update: "Systems with unusual keyboard drivers might be slow to update the state of their keys".
-	f_Phys 		:= GetKeyState(v_WhatWasDown, "P")	;if character comes from keyboard hook, another script e.g. Hotstrings (is artificial) or is physically pressed by user. There is library of Hotstrings "FirstCapital.csv" which sends back if set with S2 attribute artificial Shifts.
-	OutputDebug, % "WhatWasDown:" . v_WhatWasDown . A_Space . "f_Phys:" . f_Phys . "`n"
+	; Sleep, 30		;sleep is required by function GetKeyState to correctly update: "Systems with unusual keyboard drivers might be slow to update the state of their keys".
+	; f_Phys 		:= GetKeyState(v_WhatWasDown, "P")	;if character comes from keyboard hook, another script e.g. Hotstrings (is artificial) or is physically pressed by user. There is library of Hotstrings "FirstCapital.csv" which sends back if set with S2 attribute artificial Shifts.
+	; OutputDebug, % "WhatWasDown:" . v_WhatWasDown . A_Space . "f_Phys:" . f_Phys . "`n"
 	Switch v_WhatWasDown
 	{
 		Case "LShift":
-			; if (GetKeyState(v_WhatWasDown, "P"))
-			if (f_Phys)
-			{
-				f_LShift		:= true
-			,	f_ALShift		:= false
-				if (f_WasReset)
-				{
-					; OutputDebug, % "f_WasReset:" . f_WasReset . "`n"
-					return
-				}
-				else
-				{
-					; KeyWait, RShift, D T10	;Wait 0.05 s (50 ms) for pressing Down other Shift key. If other Shift key is down, flags are reset.
-					KeyWait, RShift, D T0.05	;Wait 0.05 s (50 ms) for pressing Down other Shift key. If other Shift key is down, flags are reset.
-					if (!ErrorLevel)	;not timed out, event took place below 0.05 s (50 ms)
-					{
-						; OutputDebug, % "Concurrent" . A_Space . v_CLCounter . "`n"
-						F_FlagReset()
-						v_CLCounter 	:= c_CLReset
-					,	f_WasReset	:= true
-						return
-					}
-				}
-			}
-			else
-			{
-				f_LShift		:= false
-			,	f_ALShift		:= true
-			,	f_WasReset	:= false
-			}
+			f_LShift		:= true
+			F_CheckIf50ms()
 		Case "RShift":
-			; if (GetKeyState(v_WhatWasDown, "P"))
-			if (f_Phys)
-			{
-				f_RShift		:= true
-			,	f_ARShift		:= false
-				if (f_WasReset)
-				{
-					; OutputDebug, % "f_WasReset:" . f_WasReset . "`n"
-					return
-				}
-				else
-				{
-					; KeyWait, LShift, D T10
-					KeyWait, LShift, D T0.05
-					if (!ErrorLevel)
-					{
-						; OutputDebug, % "Concurrent" . A_Space . v_CLCounter . "`n"
-						F_FlagReset()
-						v_CLCounter := c_CLReset
-						return
-					}
-				}	
-			}
-			else
-			{
-				f_RShift		:= false
-			,	f_ARShift		:= true
-			,	f_WasReset	:= false
-			}
+			f_RShift		:= true
+			F_CheckIf50ms()
 		Case "LControl", "RControl":
 			f_ControlPressed 	:= true
 		,	f_AOK_Down		:= true	;Any Other Key	
@@ -588,23 +560,14 @@ F_OKD(ih, VK, SC)	;On Key Down
 			f_WinPressed 		:= true
 		,	f_AOK_Down		:= true	;Any Other Key
 		Default:
-			if (f_Phys)
-			{
-				f_AChar	:= false
-			,	f_Char 	:= true
-			}
-			else
-			{
-				f_AChar	:= true
-			,	f_Char 	:= false
-			}
+			f_Char 	:= true
 	}
-	; OutputDebug, % A_ThisFunc . A_Space . "WWD:" . A_Space . WhatWasDown . "|" . A_Space 
+	; OutputDebug, % A_ThisFunc . A_Space . "WWD:" . A_Space . v_WhatWasDown . "|" . A_Space 
 	; 	. "f_Phys:" . f_Phys . A_Space . "f_Char:" . f_Char . A_Space . "f_AChar:" . f_AChar . A_Space
-	; 	. "PS:" . f_RShift 	. f_LShift 
+		; . "PS:" . f_LShift . f_RShift
 	; 	. A_Space 
 	; 	. "AS:" . f_ALShift . f_ARShift 
-	; 	. "`n"
+		; . "`n"
 	; OutputDebug, % A_ThisFunc . A_Space . "E" . "`n"
 	Critical, Off
 }
@@ -641,12 +604,8 @@ F_OKU(ih, VK, SC)	;On Key Up
 	; OutputDebug, % "WasResetMemoryB:" . WasResetMemory . "`n"
 	if (f_WasReset)
 	{
-		if (++WasResetMemory = 2)	;secures against LShift and after that RShift or RShift and after that LShift
-		{
-			f_WasReset 	:= false
-			WasResetMemory := 0
-		}	
-		; OutputDebug, % "WasResetMemoryE:" . WasResetMemory . A_Space . "f_WasReset:" . f_WasReset . "`n"	
+		v_CLCounter 	:= c_CLReset
+		f_WasReset 	:= false
 		return
 	}
 
