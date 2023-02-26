@@ -26,7 +26,7 @@ StringCaseSense, 	On				;for Switch in F_OKU()
 ;Testing: Alt+Tab, , asdf Shift+Home
 
 ; - - - - - - - - - - - - - - - - Executable section, beginning - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-AppVersion			:= "1.3.5"
+AppVersion			:= "1.3.6"
 ;@Ahk2Exe-Let vAppVersion=%A_PriorLine~U)^(.+"){1}(.+)".*$~$2% ; Keep these lines together
 ;Overrides the custom EXE icon used for compilation
 ;@Ahk2Exe-SetCopyright GNU GPL 3.x
@@ -80,7 +80,7 @@ FileInstall, README.md, 			README.md,		true
 ; ,	f_ARShift			:= false	;global flag: Artificial (hook generated) Right Shift
 ,	v_WhatWasDown		:= ""	;global variable, name of key which was pressed down
 ,	f_WasReset		:= false	;global flag: Shift key memory reset (to reset v_CLCounter)
-,	f_50msRun			:= false	;global flag: timer is running
+,	f_100msRun			:= false	;global flag: timer is running
 
 F_InitiateInputHook()
 F_InputArguments()
@@ -367,9 +367,9 @@ F_Capital(ByRef v_Char)
 		Case "=":
 			Send, {BS}{+}
 		Case "[":
-			Send, {BS}{{}
+			Send, {BS}{{}	;alternative: SendRaw, `b{
 		Case "]":
-			Send, {BS}{}}
+			Send, {BS}{}}	;alternative: SendRaw, `b}
 		Case "\":
 			Send, {BS}|
 		Case ";":
@@ -429,6 +429,19 @@ F_MenuTray()
 	Menu, Tray, Add, 		% "function Shift Diacritics:" . A_Tab . 		(f_Diacritics ? "ENABLED" : "DISABLED"),	F_sfparamToggle
 	Menu, Tray, Add, 		% "function Shift CapsLock:" . A_Tab . 			(f_CapsLock ? "ENABLED" : "DISABLED"),		F_sfparamToggle
 	Menu, Tray, Add
+	Menu, MinSendLevelSubm,	Add, 0,																		F_SetMinSendLevel
+	Menu, MinSendLevelSubm,	Add, 1,																		F_SetMinSendLevel
+	Menu, MinSendLevelSubm,	Add, 2,																		F_SetMinSendLevel
+	Menu, MinSendLevelSubm,	Add, 3,																		F_SetMinSendLevel
+	Menu, Tray, Add,		% "MinSendLevel value",															:MinSendLevelSubm
+	Menu, MinSendLevelSubm, 	Check, 	% c_InputSL
+	Menu, SendLevelSumbmenu,	Add, 0,																		F_SetSendLevel
+	Menu, SendLevelSumbmenu,	Add, 1,																		F_SetSendLevel
+	Menu, SendLevelSumbmenu,	Add, 2,																		F_SetSendLevel
+	Menu, SendLevelSumbmenu,	Add, 3,																		F_SetSendLevel
+	Menu, Tray,		 	Add, % "SendLevel value",														:SendLevelSumbmenu
+	Menu, SendLevelSumbmenu, Check, 	% c_OutputSL
+	Menu, Tray, Add
 	Menu, Tray, Add,		% "loaded .ini file" . A_Tab .				v_ConfigIni,							F_SelectConfig
 	Menu, Tray, Add,		Hotstrings,																	F_Help
 	Menu, Tray, Add,		Save configuration to current .ini file,											F_Save
@@ -437,6 +450,44 @@ F_MenuTray()
     	Menu, Tray, NoStandard
     	Menu, Tray, Standard
     	Menu, Tray, Tip, % A_ScriptName ; Changes the tray icon's tooltip.
+}
+; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+F_SetSendLevel()
+{
+	global	;assume-global mode of operation
+	
+	Loop, 4
+	{
+		if (A_Index - 1 = A_ThisMenuItem)
+			{
+				Menu, SendLevelSumbmenu, Check, 	% A_Index - 1
+				c_OutputSL := A_Index - 1
+				IniWrite, % c_OutputSL, 	% A_ScriptDir . "\" . v_ConfigIni, Global, SendLevel
+			}
+			else
+				Menu, SendLevelSumbmenu, UnCheck, 	% A_Index - 1
+		}
+		OutputDebug, % "c_OutputSL:" . c_OutputSL . "`n"
+	}
+; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+F_SetMinSendLevel()
+{
+	global	;assume-global mode of operation
+
+	Loop, 4
+	{
+		if (A_Index - 1 = A_ThisMenuItem)
+		{
+			Menu, MinSendLevelSubm, Check, 	% A_Index - 1
+			c_InputSL 			:= A_Index - 1
+		,	v_InputH.MinSendLevel 	:= c_InputSL
+			IniWrite, % c_InputSL - 1, 	% A_ScriptDir . "\" . v_ConfigIni, Global, MinSendLevel
+		}
+		else
+			Menu, MinSendLevelSubm, UnCheck, 	% A_Index - 1
+	}
+	OutputDebug, % "c_InputSL:" . c_InputSL . "`n"
+
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 F_SelectConfig()
@@ -487,7 +538,7 @@ F_InitiateInputHook()	;why InputHook: to process triggerstring tips.
 	global	;assume-global mode of operation
 
 	v_InputH 				:= InputHook("V L0")	;I3 to not feed back this script; V to show pressed keys; L0 as only last char is analysed
-,	v_InputH.MinSendLevel 	:= c_InputSL	
+,	v_InputH.MinSendLevel 	:= c_InputSL
 ,	v_InputH.OnChar 		:= Func("F_OCD")
 ,	v_InputH.OnKeyDown		:= Func("F_OKD")
 ,	v_InputH.OnKeyUp 		:= Func("F_OKU")
@@ -498,35 +549,29 @@ F_InitiateInputHook()	;why InputHook: to process triggerstring tips.
 		v_InputH.Stop()
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-F_ShiftReset()
-{
-	global	;assume-global mode of operation
-	
-}
-; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-F_50msTimeout()
+F_100msTimeout()
 {
 	global		;assume-global mode of operation
 
-	f_50msRun 	:= false
+	f_100msRun 	:= false
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-F_CheckIf50ms()
+F_CheckIf100ms()
 {
 	global		;assume-global mode of operation
 
-	if (f_50msRun)
+	if (f_100msRun)
 		{
 			F_FlagReset()
-			SetTimer, F_50msTimeout, Off
-			f_50msRun 	:= false
+			SetTimer, F_100msTimeout, Off
+			f_100msRun 	:= false
 			f_WasReset	:= true
 			; OutputDebug, % "concurrent" . "`n"
 		}
 	else
 		{
-			SetTimer, F_50msTimeout, -50	;50 ms once
-			f_50msRun 	:= true
+			SetTimer, F_100msTimeout, -100	;100 ms once
+			f_100msRun 	:= true
 		}
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -546,10 +591,10 @@ F_OKD(ih, VK, SC)	;On Key Down
 	{
 		Case "LShift":
 			f_LShift		:= true
-			F_CheckIf50ms()
+			F_CheckIf100ms()
 		Case "RShift":
 			f_RShift		:= true
-			F_CheckIf50ms()
+			F_CheckIf100ms()
 		Case "LControl", "RControl":
 			f_ControlPressed 	:= true
 		,	f_AOK_Down		:= true	;Any Other Key	
@@ -605,7 +650,8 @@ F_OKU(ih, VK, SC)	;On Key Up
 	if (f_WasReset)
 	{
 		v_CLCounter 	:= c_CLReset
-		f_WasReset 	:= false
+	,	f_WasReset 	:= false
+		SoundPlay, *16	;future: add option to choose behavior (play sound or not, how long to play sound, what sound) and to define time to wait for reset scenario
 		return
 	}
 
@@ -729,12 +775,12 @@ F_CapsLock(WhatWasUp, ByRef f_SPA)
 		; Sleep, 30		;sleep is required by function GetKeyState to correctly update: "Systems with unusual keyboard drivers might be slow to update the state of their keys".
 		SetCapsLockState, % !CapsLockState
 		; SetCapsLockState, % !GetKeyState("CapsLock", "T")
-		Sleep, 30		;sleep is required by function GetKeyState to correctly update: "Systems with unusual keyboard drivers might be slow to update the state of their keys".
+		; Sleep, 30		;sleep is required by function GetKeyState to correctly update: "Systems with unusual keyboard drivers might be slow to update the state of their keys".
 		; OutputDebug, % "GetKeyState(CapsLock, T):" . A_Space . GetKeyState("CapsLock", "T") . "`n"
-		if (GetKeyState("CapsLock", "T"))
-			SoundPlay, *48		;standard system sound, exclamation
-		else
-			SoundPlay, *16		;standard system sound, hand (stop/error)
+		; if (GetKeyState("CapsLock", "T"))
+		SoundPlay, *48		;standard system sound, exclamation
+		; else
+			; SoundPlay, *16		;standard system sound, hand (stop/error)
 		v_CLCounter	:= c_CLReset
 	,	f_SPA 		:= false	;Shift Pressed Alone
 	,	f_RShift 		:= false
@@ -850,6 +896,26 @@ F_ReadIni(param)
 	local 	DiacriticSectionCounter 	:= 0
 		,	Temp 				:= ""
 		,	ErrorString			:= "Error"
+
+	IniRead, c_OutputSL,			% v_ConfigIni, Global, SendLevel,		% ErrorString
+	if (c_OutputSL = ErrorString)
+	{
+		c_OutputSL := 2
+		MsgBox, % c_IconAsteriskInfo, % A_ScriptName, % "Problem with reading parameter" . A_Space . "SendLevel" . A_Space . "from the file" . "`n"
+			. A_ScriptDir . "\" . v_ConfigIni . "`n`n"
+			. "Default value will be applied now:" . "`n"
+			. c_OutputSL . "."
+	}
+
+	IniRead, c_InputSL,			% v_ConfigIni, Global, MinSendLevel,		% ErrorString
+	if (c_InputSL = ErrorString)
+	{
+		c_InputSL := 1
+		MsgBox, % c_IconAsteriskInfo, % A_ScriptName, % "Problem with reading parameter" . A_Space . "MinSendLevel" . A_Space . "from the file" . "`n"
+			. A_ScriptDir . "\" . v_ConfigIni . "`n`n"
+			. "Default value will be applied now:" . "`n"
+			. c_InputSL . "."
+	}
 
 	IniRead, f_ShiftFunctions, 	% v_ConfigIni, Global, OverallStatus, 	% ErrorString
 	if (f_ShiftFunctions = ErrorString)
