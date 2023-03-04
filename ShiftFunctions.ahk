@@ -75,12 +75,9 @@ FileInstall, README.md, 			README.md,		true
 ,	f_RShift			:= false	;global flag, set when Right Shift is pressed down
 ,	c_InputSL			:= 2		;global constant: default value for InputHook (MinSendLevel)
 ,	f_SDCD			:= false	;global flag: Shift (S) is down (D) and Character (C) is down (D)
-; ,	f_ASDCD			:= false	;global flag: Artificial (hook generated) Shift (S) is down (D) and artificial Character (C) is down (D)
-; ,	f_ALShift			:= false	;global flag: Artificial (hook generated) Left Shift
-; ,	f_ARShift			:= false	;global flag: Artificial (hook generated) Right Shift
 ,	v_WhatWasDown		:= ""	;global variable, name of key which was pressed down
 ,	f_WasReset		:= false	;global flag: Shift key memory reset (to reset v_CLCounter)
-,	f_100msRun			:= false	;global flag: timer is running
+,	f_100msRun		:= false	;global flag: timer is running
 
 F_InitiateInputHook()
 F_InputArguments()
@@ -570,7 +567,7 @@ F_CheckIf100ms()
 		}
 	else
 		{
-			SetTimer, F_100msTimeout, -100	;100 ms once
+			SetTimer, F_100msTimeout, -100	;100 ms one time only
 			f_100msRun 	:= true
 		}
 }
@@ -590,11 +587,21 @@ F_OKD(ih, VK, SC)	;On Key Down
 	Switch v_WhatWasDown
 	{
 		Case "LShift":
-			f_LShift		:= true
-			F_CheckIf100ms()
+			if (f_LShift)	;protection against "auto-repeat", function of operating system
+				return
+			else
+			{
+				f_LShift		:= true
+				F_CheckIf100ms()
+			}	
 		Case "RShift":
-			f_RShift		:= true
-			F_CheckIf100ms()
+			if (f_RShift)
+				return
+			else
+			{
+				f_RShift		:= true
+				F_CheckIf100ms()
+			}	
 		Case "LControl", "RControl":
 			f_ControlPressed 	:= true
 		,	f_AOK_Down		:= true	;Any Other Key	
