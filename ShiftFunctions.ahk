@@ -26,7 +26,7 @@ StringCaseSense, 	On				;for Switch in F_OKU()
 ;Testing: Alt+Tab, , asdf Shift+Home
 
 ; - - - - - - - - - - - - - - - - Executable section, beginning - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-AppVersion			:= "1.3.7"
+AppVersion			:= "1.3.8"
 ;@Ahk2Exe-Let vAppVersion=%A_PriorLine~U)^(.+"){1}(.+)".*$~$2% ; Keep these lines together
 ;Overrides the custom EXE icon used for compilation
 ;@Ahk2Exe-SetCopyright GNU GPL 3.x
@@ -539,6 +539,8 @@ F_InitiateInputHook()	;why InputHook: to process triggerstring tips.
 ,	v_InputH.OnChar 		:= Func("F_OCD")
 ,	v_InputH.OnKeyDown		:= Func("F_OKD")
 ,	v_InputH.OnKeyUp 		:= Func("F_OKU")
+,	v_InputH.VisibleText 	:= false				;By default whatever user presses it is automatically visible. Now it is not. So now are visible only those characters which are send by this script. This trick is essential in order to not get interrupted sequences send by this script by user input. As now all user input is invisible, only this script controls what and when will be printed out.
+,	v_InputH.BackspaceIsUndo := false				;By trial and error I've found this flag must be set.
 	v_InputH.KeyOpt("{All}", "N")
 	if (f_ShiftFunctions)
 		v_InputH.Start()
@@ -625,15 +627,25 @@ F_OKD(ih, VK, SC)	;On Key Down
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 F_OCD(ih, Char)	;On Character Down; this function can interrupt "On Key Down"
-{	;This function detects only "characters" according to AutoHotkey rules, what means: not modifiers (Shifts, Controls, Alts, Windows), function keys, ; yes: Esc, Space, Enter, Tab and all other main keys.
+{	;This function detects only "characters" according to AutoHotkey rules, what means: not modifiers (Shifts, Controls, Alts, Windows), function keys, Backspace ; yes: Esc, Space, Enter, Tab and all other main keys.
 	global	;assume-global mode of operation
 	; OutputDebug, % A_ThisFunc . A_Space . "B" . "`n"
 	; OutputDebug, % A_ThisFunc . A_Space . "Char:" . Char . A_Space . "B" . "`n"
-
-	v_Char := Char
-,	f_DUndo := false
-
-	; OutputDebug, % A_ThisFunc . A_Space . "Char:" . Char . "|" . A_Space 
+	v_Char 	:= Char
+,	f_DUndo 	:= false
+	SendLevel, 	% c_OutputSL
+	Switch Char
+	{
+		Case "{", "}", "^", "!", "+", "#":
+			Send, % "{" . Char . "}"
+		Case "`n":
+			if (f_RShift) or (f_LShift)	;This is exception to me. I don't know why this is necessary, but seems it does.
+				Send, +{Enter}
+		Default:
+			Send, % Char
+	}
+	SendLevel, 	% c_NominalSL
+	; OutputDebug, 	% A_ThisFunc . A_Space . "Char:" . Char . "|" . "`n"
 	; 	. "f_Char:" 	. f_Char 	. A_Space . "PS:" . f_LShift . f_RShift 	. A_Space . "f_SDCD:" 	. f_SDCD 	
 	; 	. A_Space 
 	; 	. "f_AChar:" 	. f_AChar . A_Space . "AS:" . f_ALShift . f_ARShift 	. A_Space . "f_ASDCD:" 	. f_ASDCD 
@@ -645,11 +657,12 @@ F_OCD(ih, Char)	;On Character Down; this function can interrupt "On Key Down"
 F_OKU(ih, VK, SC)	;On Key Up
 {
 	global	;assume-global mode of operation
+	Critical, On
 	local	WhatWasUp := GetKeyName(Format("vk{:x}sc{:x}", VK, SC))
 	static	WasResetMemory := 0
 	
 	; OutputDebug, % A_ThisFunc . A_Space . "B" . "`n"
-	; OutputDebug, % A_ThisFunc . A_Space . "WhatWasUp:" . WhatWasUp . A_Space . "B" . "`n"
+	; OutputDebug, % A_ThisFunc . A_Space . "WhatWasUp:" . WhatWasUp . "|" . A_Space . "v_Char:" . v_Char . "|" . "`n"
 	; OutputDebug, % "WWUb:" . WhatWasUp . "|" . A_Space "v_Char:" . v_Char . A_Space . "f_SDCD:" . f_SDCD . A_Space . "f_ASDCD:" . f_ASDCD . "`n"
 	; "C:" . f_Char . A_Space . "S:" . f_SPA . A_Space . "C:" . f_ControlPressed . A_Space . "A:" . f_AltPressed . A_Space . "W:" . f_WinPressed . "`n"
 
@@ -685,14 +698,14 @@ F_OKU(ih, VK, SC)	;On Key Up
 	; OutputDebug, % A_ThisFunc . A_Space . "f_SPA:" . f_SPA . A_Space . "WhatWasUp:" . WhatWasUp . A_Space . "f_SDCD:" . f_SDCD . A_Space . "f_ASDCD:" . f_ASDCD . "`n"
 	; OutputDebug, % "WWU :" . WhatWasUp . A_Space "v_Char:" . v_Char . "C:" . f_Char . A_Space . "S:" . f_SPA . A_Space . "A:" . f_AOK_Down . "`n"
 	if (f_Capital) 
-		; and (f_Char)
+		and (f_Char)	;without this line LShift D, LShift U, LCtrl D, LCtrl U used to send Backspace
 		and (f_SPA)
 		and (WhatWasUp != "LShift") and (WhatWasUp != "RShift")
 			F_Capital(v_Char)
 
 	; OutputDebug, % "WWU :" . WhatWasUp . A_Space . "v_Char:" . v_Char . "C:" . f_Char . A_Space . "S:" . f_SPA . A_Space . "C:" . f_ControlPressed . A_Space . "A:" . f_AltPressed . A_Space . "W:" . f_WinPressed . "`n"
 	if (f_Diacritics)
-		; and (f_Char)
+		; and (f_Char)	
 		and (f_SPA)
 		and ((WhatWasUp = "LShift") or (WhatWasUp = "RShift"))
 			F_Diacritics(v_Char)
@@ -708,6 +721,7 @@ F_OKU(ih, VK, SC)	;On Key Up
 		or (WhatWasUp = "LWin") or (WhatWasUp = "RWin")
 			f_AOK_Down		:= false	;Any Other Key
 
+	Critical, Off
 	; OutputDebug, % "WWUe:" . WhatWasUp . A_Space "v_Char:" . v_Char . "C:" . f_Char . A_Space . "S:" . f_SPA . A_Space . "A:" . f_AOK_Down . "`n"
 	; OutputDebug, % "WWUe:" . WhatWasUp . A_Space "v_Char:" . v_Char . "C:" . f_Char . A_Space . "S:" . f_SPA . A_Space . "C:" . f_ControlPressed . A_Space . "A:" . f_AltPressed . A_Space . "W:" . f_WinPressed . "`n"
 	; OutputDebug, % A_ThisFunc . A_Space . "E" . "`n"
@@ -818,7 +832,6 @@ F_DiacriticOutput(Diacritic)
 	global	;assume-global mode of operation
 
 	; OutputDebug, % A_ThisFunc . A_Space . "B" . "`n"
-	Critical, On
 	SendLevel, 	% c_OutputSL
 	Send,		% "{BS}" . Diacritic
 	SendLevel, 	% c_NominalSL
@@ -828,7 +841,6 @@ F_DiacriticOutput(Diacritic)
 ,	f_Char 		:= false
 ,	v_Char		:= ""
 ,	f_AOK_Down	:= false
-	Critical, Off
 	; OutputDebug, % A_ThisFunc . A_Space . "E" . "`n"
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
