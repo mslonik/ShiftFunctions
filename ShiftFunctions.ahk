@@ -641,6 +641,8 @@ F_OCD(ih, Char)	;On Character Down; this function can interrupt "On Key Down"
 		Case "`n":
 			if (f_RShift) or (f_LShift)	;This is exception to me. I don't know why this is necessary, but seems it does.
 				Send, +{Enter}
+			else
+				Send, {Enter}
 		Default:
 			Send, % Char
 	}
