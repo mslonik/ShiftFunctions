@@ -640,9 +640,26 @@ F_OCD(ih, Char)	;On Character Down; this function can interrupt "On Key Down"
 			Send, % "{" . Char . "}"
 		Case "`n":
 			if (f_RShift) or (f_LShift)	;This is exception to me. I don't know why this is necessary, but seems it does.
+			{
+				; OutputDebug, % "Shift+Enter" . "`n"
 				Send, +{Enter}
+			}	
 			else
+			{
+				; OutputDebug, % "Enter" . "`n"
 				Send, {Enter}
+			}
+		Case "`t":
+			if (f_RShift) or (f_LShift)
+			{
+				; OutputDebug, % "Shift+Tab" . "`n"
+				Send, +{Tab}
+			}
+			else
+			{
+				; OutputDebug, % "Tab" . "`n"
+				Send, {Tab}
+			}	
 		Default:
 			Send, % Char
 	}
@@ -722,6 +739,17 @@ F_OKU(ih, VK, SC)	;On Key Up
 		or (WhatWasUp = "LAlt") or (WhatWasUp = "RAlt")
 		or (WhatWasUp = "LWin") or (WhatWasUp = "RWin")
 			f_AOK_Down		:= false	;Any Other Key
+
+	if (WhatWasUp = "LShift") 
+	{
+		f_LShift := false
+		OutputDebug, % "LShift Up" . "`n"
+	}	
+	if (WhatWasUp = "RShift")
+	{
+		f_RShift := false
+		OutputDebug, % "RShift Up" . "`n"
+	}
 
 	Critical, Off
 	; OutputDebug, % "WWUe:" . WhatWasUp . A_Space "v_Char:" . v_Char . "C:" . f_Char . A_Space . "S:" . f_SPA . A_Space . "A:" . f_AOK_Down . "`n"
