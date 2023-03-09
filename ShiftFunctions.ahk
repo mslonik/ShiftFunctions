@@ -79,8 +79,8 @@ FileInstall, README.md, 			README.md,		true
 ,	f_WasReset		:= false	;global flag: Shift key memory reset (to reset v_CLCounter)
 ,	f_100msRun		:= false	;global flag: timer is running
 
-F_InitiateInputHook()
 F_InputArguments()
+F_InitiateInputHook()
 F_MenuTray()
 ;end initialization section
 
@@ -534,6 +534,7 @@ F_InitiateInputHook()	;why InputHook: to process triggerstring tips.
 {
 	global	;assume-global mode of operation
 
+	OutputDebug, % "c_InputSL:" . c_InputSL . "`n"
 	v_InputH 				:= InputHook("V L0")	;I3 to not feed back this script; V to show pressed keys; L0 as only last char is analysed
 ,	v_InputH.MinSendLevel 	:= c_InputSL
 ,	v_InputH.OnChar 		:= Func("F_OCD")
@@ -630,7 +631,7 @@ F_OCD(ih, Char)	;On Character Down; this function can interrupt "On Key Down"
 {	;This function detects only "characters" according to AutoHotkey rules, what means: not modifiers (Shifts, Controls, Alts, Windows), function keys, Backspace ; yes: Esc, Space, Enter, Tab and all other main keys.
 	global	;assume-global mode of operation
 	; OutputDebug, % A_ThisFunc . A_Space . "B" . "`n"
-	; OutputDebug, % A_ThisFunc . A_Space . "Char:" . Char . A_Space . "B" . "`n"
+	; OutputDebug, % A_ThisFunc . A_Space . "Char:" . Char . "|" . A_Space . "B" . "`n"
 	v_Char 	:= Char
 ,	f_DUndo 	:= false
 	SendLevel, 	% c_OutputSL
@@ -950,7 +951,7 @@ F_ReadIni(param)
 	IniRead, c_OutputSL,			% v_ConfigIni, Global, SendLevel,		% ErrorString
 	if (c_OutputSL = ErrorString)
 	{
-		c_OutputSL := 2
+		c_OutputSL := 1	;default value
 		MsgBox, % c_IconAsteriskInfo, % A_ScriptName, % "Problem with reading parameter" . A_Space . "SendLevel" . A_Space . "from the file" . "`n"
 			. A_ScriptDir . "\" . v_ConfigIni . "`n`n"
 			. "Default value will be applied now:" . "`n"
@@ -960,7 +961,7 @@ F_ReadIni(param)
 	IniRead, c_InputSL,			% v_ConfigIni, Global, MinSendLevel,		% ErrorString
 	if (c_InputSL = ErrorString)
 	{
-		c_InputSL := 1
+		c_InputSL := 2		;default value
 		MsgBox, % c_IconAsteriskInfo, % A_ScriptName, % "Problem with reading parameter" . A_Space . "MinSendLevel" . A_Space . "from the file" . "`n"
 			. A_ScriptDir . "\" . v_ConfigIni . "`n`n"
 			. "Default value will be applied now:" . "`n"
@@ -970,7 +971,7 @@ F_ReadIni(param)
 	IniRead, f_ShiftFunctions, 	% v_ConfigIni, Global, OverallStatus, 	% ErrorString
 	if (f_ShiftFunctions = ErrorString)
 	{
-		f_ShiftFunctions := true
+		f_ShiftFunctions := true	;default value
 		MsgBox, % c_IconAsteriskInfo, % A_ScriptName, % "Problem with reading parameter" . A_Space . "overall status" . A_Space . "from the file" . "`n"
 			. A_ScriptDir . "\" . v_ConfigIni . "`n`n"
 			. "Default value will be applied now:" . "`n"
@@ -980,7 +981,7 @@ F_ReadIni(param)
 	IniRead, f_Capital, 		% v_ConfigIni, Global, ShiftCapital,	% ErrorString
 	if (f_Capital = ErrorString)
 	{
-		f_Capital := true
+		f_Capital := true	;default value
 		MsgBox, % c_IconAsteriskInfo, % A_ScriptName, % "Problem with reading parameter" . A_Space . "Shift capital" . A_Space . "from the file" . "`n"
 			. A_ScriptDir . "\" . v_ConfigIni . "`n`n"
 			. "Default value will be applied now:" . "`n"
@@ -990,7 +991,7 @@ F_ReadIni(param)
 	IniRead, f_Diacritics, 		% v_ConfigIni, Global, ShiftDiacritics,	% ErrorString
 	if (f_Diacritics = ErrorString)
 	{
-		f_Diacritics := true
+		f_Diacritics := true	;default value
 		MsgBox, % c_IconAsteriskInfo, % A_ScriptName, % "Problem with reading parameter" . A_Space . "Shift diacritics" . A_Space . "from the file" . "`n"
 			. A_ScriptDir . "\" . v_ConfigIni . "`n`n"
 			. "Default value will be applied now:" . "`n"
@@ -1000,7 +1001,7 @@ F_ReadIni(param)
 	IniRead, f_CapsLock, 		% v_ConfigIni, Global, ShiftCapsLock,	% ErrorString
 	if (f_CapsLock = ErrorString)
 	{
-		f_CapsLock := true
+		f_CapsLock := true	;default value
 		MsgBox, % c_IconAsteriskInfo, % A_ScriptName, % "Problem with reading parameter" . A_Space . "Shift capslock" . A_Space . "from the file" . "`n"
 			. A_ScriptDir . "\" . v_ConfigIni . "`n`n"
 			. "Default value will be applied now:" . "`n"
