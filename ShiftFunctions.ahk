@@ -17,12 +17,11 @@
 #KeyHistory, 		150				; For debugging purposes.
 #LTrim							; Omits spaces and tabs at the beginning of each line. This is primarily used to allow the continuation section to be indented. Also, this option may be turned on for multiple continuation sections by specifying #LTrim on a line by itself. #LTrim is positional: it affects all continuation sections physically beneath it.
 
-FileEncoding, 		UTF-8			; Sets the default encoding for FileRead, FileReadLine, Loop Read, FileAppend, and FileOpen(). Unicode UTF-16, little endian byte order (BMP of ISO 10646). Useful for .ini files which by default are coded as UTF-16. https://docs.microsoft.com/pl-pl/windows/win32/intl/code-page-identifiers?redirectedfrom=MSDN
-SetBatchLines, 	-1				; -1 = never sleep (i.e. have the script run at maximum speed).
-SendMode,			Input			; Recommended for new scripts due to its superior speed and reliability.
-SetWorkingDir, 	%A_ScriptDir%		; Ensures a consistent starting directory.
-StringCaseSense, 	On				;for Switch in F_OKU()
-
+FileEncoding, 			UTF-8			; Sets the default encoding for FileRead, FileReadLine, Loop Read, FileAppend, and FileOpen(). Unicode UTF-16, little endian byte order (BMP of ISO 10646). Useful for .ini files which by default are coded as UTF-16. https://docs.microsoft.com/pl-pl/windows/win32/intl/code-page-identifiers?redirectedfrom=MSDN
+SetBatchLines, 		-1				; -1 = never sleep (i.e. have the script run at maximum speed).
+SendMode,				Input			; Recommended for new scripts due to its superior speed and reliability.
+SetWorkingDir, 		%A_ScriptDir%		; Ensures a consistent starting directory.
+StringCaseSense, 		On				;for Switch in F_OKU()
 ;Testing: Alt+Tab, , asdf Shift+Home
 
 ; - - - - - - - - - - - - - - - - Executable section, beginning - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -483,7 +482,7 @@ F_SetMinSendLevel()
 		else
 			Menu, MinSendLevelSubm, UnCheck, 	% A_Index - 1
 	}
-	OutputDebug, % "c_InputSL:" . c_InputSL . "`n"
+	; OutputDebug, % "c_InputSL:" . c_InputSL . "`n"
 
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -534,7 +533,7 @@ F_InitiateInputHook()	;why InputHook: to process triggerstring tips.
 {
 	global	;assume-global mode of operation
 
-	OutputDebug, % "c_InputSL:" . c_InputSL . "`n"
+	; OutputDebug, % "c_InputSL:" . c_InputSL . "`n"
 	v_InputH 				:= InputHook("V L0")	;I3 to not feed back this script; V to show pressed keys; L0 as only last char is analysed
 ,	v_InputH.MinSendLevel 	:= c_InputSL
 ,	v_InputH.OnChar 		:= Func("F_OCD")
@@ -662,7 +661,46 @@ F_OCD(ih, Char)	;On Character Down; this function can interrupt "On Key Down"
 				Send, {Tab}
 			}	
 		Default:
-			Send, % Char
+			if (GetKeyState("CapsLock", "T"))
+			{
+				SetStoreCapslockMode, Off	;This is the only way which I know to get rid of blinking CapsLock
+				Switch Char				;This is the only way which I know to get rid of blinking CapsLock
+				{
+					Case "A":	Send, {U+0041}
+					Case "B":	Send, {U+0042}
+					Case "C":	Send, {U+0043}
+					Case "D":	Send, {U+0044}
+					Case "E":	Send, {U+0045}
+					Case "F":	Send, {U+0046}
+					Case "G":	Send, {U+0047}
+					Case "H":	Send, {U+0048}
+					Case "I":	Send, {U+0049}
+					Case "J":	Send, {U+004a}
+					Case "K":	Send, {U+004b}
+					Case "L":	Send, {U+004c}
+					Case "M":	Send, {U+004d}
+					Case "N":	Send, {U+004e}
+					Case "O":	Send, {U+004f}
+					Case "P":	Send, {U+0050}
+					Case "Q":	Send, {U+0051}
+					Case "R":	Send, {U+0052}
+					Case "S":	Send, {U+0053}
+					Case "T":	Send, {U+0054}
+					Case "U":	Send, {U+0055}
+					Case "V":	Send, {U+0056}
+					Case "W":	Send, {U+0057}
+					Case "X":	Send, {U+0058}
+					Case "Y":	Send, {U+0059}
+					Case "Z":	Send, {U+005a}
+					Default: 	Send, % Char
+				}
+			}	
+			else
+			{
+				SetStoreCapslockMode, On
+				Send, % Char
+			}	
+			; OutputDebug, % "A_StoreCapsLockMode:" . A_StoreCapsLockMode . "`n"
 	}
 	SendLevel, 	% c_NominalSL
 	; OutputDebug, 	% A_ThisFunc . A_Space . "Char:" . Char . "|" . "`n"
@@ -679,16 +717,15 @@ F_OKU(ih, VK, SC)	;On Key Up
 	global	;assume-global mode of operation
 	Critical, On
 	local	WhatWasUp := GetKeyName(Format("vk{:x}sc{:x}", VK, SC))
-	static	WasResetMemory := 0
 	
 	; OutputDebug, % A_ThisFunc . A_Space . "B" . "`n"
 	; OutputDebug, % A_ThisFunc . A_Space . "WhatWasUp:" . WhatWasUp . "|" . A_Space . "v_Char:" . v_Char . "|" . "`n"
 	; OutputDebug, % "WWUb:" . WhatWasUp . "|" . A_Space "v_Char:" . v_Char . A_Space . "f_SDCD:" . f_SDCD . A_Space . "f_ASDCD:" . f_ASDCD . "`n"
 	; "C:" . f_Char . A_Space . "S:" . f_SPA . A_Space . "C:" . f_ControlPressed . A_Space . "A:" . f_AltPressed . A_Space . "W:" . f_WinPressed . "`n"
 
-	; OutputDebug, % "WasResetMemoryB:" . WasResetMemory . "`n"
 	if (f_WasReset)
 	{
+		OutputDebug, % "f_WasReset:" . f_WasReset . "`n"
 		v_CLCounter 	:= c_CLReset
 	,	f_WasReset 	:= false
 		SoundPlay, *16	;future: add option to choose behavior (play sound or not, how long to play sound, what sound) and to define time to wait for reset scenario
@@ -744,12 +781,12 @@ F_OKU(ih, VK, SC)	;On Key Up
 	if (WhatWasUp = "LShift") 
 	{
 		f_LShift := false
-		OutputDebug, % "LShift Up" . "`n"
+		; OutputDebug, % "LShift Up" . "`n"
 	}	
 	if (WhatWasUp = "RShift")
 	{
 		f_RShift := false
-		OutputDebug, % "RShift Up" . "`n"
+		; OutputDebug, % "RShift Up" . "`n"
 	}
 
 	Critical, Off
@@ -814,7 +851,7 @@ F_CapsLock(WhatWasUp, ByRef f_SPA)
 	local	CLLimit 	:= 3
 		,	CapsLockState := false
 
-	if ((WhatWasUp = "LShift") or (WhatWasUp = "RShift")) and (f_SPA)
+	if (WhatWasUp = "LShift") or (WhatWasUp = "RShift")
 		v_CLCounter++
 	else
 	{
@@ -824,16 +861,10 @@ F_CapsLock(WhatWasUp, ByRef f_SPA)
 	; OutputDebug, % "CLCounter:" . A_Space . v_CLCounter . "`n"
 	if (v_CLCounter = CLLimit)
 	{
-		CapsLockState	:= GetKeyState("CapsLock", "T")
-		; Sleep, 30		;sleep is required by function GetKeyState to correctly update: "Systems with unusual keyboard drivers might be slow to update the state of their keys".
-		SetCapsLockState, % !CapsLockState
-		; SetCapsLockState, % !GetKeyState("CapsLock", "T")
-		; Sleep, 30		;sleep is required by function GetKeyState to correctly update: "Systems with unusual keyboard drivers might be slow to update the state of their keys".
-		; OutputDebug, % "GetKeyState(CapsLock, T):" . A_Space . GetKeyState("CapsLock", "T") . "`n"
-		; if (GetKeyState("CapsLock", "T"))
+		SetCapsLockState, % !GetKeyState("CapsLock", "T")
+		Sleep, 30		;sleep is required by function GetKeyState to correctly update: "Systems with unusual keyboard drivers might be slow to update the state of their keys".
 		SoundPlay, *48		;standard system sound, exclamation
-		; else
-			; SoundPlay, *16		;standard system sound, hand (stop/error)
+		OutputDebug, % A_ThisFunc . A_Space . "`n"
 		v_CLCounter	:= c_CLReset
 	,	f_SPA 		:= false	;Shift Pressed Alone
 	,	f_RShift 		:= false
