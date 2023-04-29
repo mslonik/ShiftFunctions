@@ -561,6 +561,7 @@ F_CheckIf100ms()
 			SetTimer, F_100msTimeout, Off
 			f_100msRun 	:= false
 		,	f_WasReset	:= true
+		,	v_Char		:= ""
 			; OutputDebug, % "concurrent" . "`n"
 		}
 	else
@@ -762,7 +763,7 @@ F_OKU(ih, VK, SC)	;On Key Up
 	; OutputDebug, % "WWU :" . WhatWasUp . A_Space "v_Char:" . v_Char . "C:" . f_Char . A_Space . "S:" . f_SPA . A_Space . "A:" . f_AOK_Down . "`n"
 	if (f_Capital) 
 		and (f_Char)	;without this line LShift D, LShift U, LCtrl D, LCtrl U used to send Backspace
-		and (f_SPA)
+		and (f_SPA)	;SPA = Shift Pressed Alone
 		and (WhatWasUp != "LShift") and (WhatWasUp != "RShift")
 			F_Capital(v_Char)
 
@@ -804,8 +805,7 @@ F_OKU(ih, VK, SC)	;On Key Up
 F_FlagReset()
 {
 	global	;assume-global mode of operation
-	v_Char 			:= ""
-,	f_Char			:= false
+	f_Char			:= false
 ,	f_ControlPressed 	:= false
 ,	f_SPA			:= false
 ,	f_RShift 			:= false
@@ -813,7 +813,7 @@ F_FlagReset()
 ,	f_WinPressed 		:= false
 ,	f_AltPressed 		:= false
 ,	f_AOK_Down		:= false
-	}
+}
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 F_ShiftUndo(WhatWasUp, ByRef f_SPA)	;future: undo of previous action (Diacritics or CapsLock)
 {
