@@ -25,7 +25,7 @@ StringCaseSense, 		On				;for Switch in F_OKU()
 ;Testing: Alt+Tab, , asdf Shift+Home
 
 ; - - - - - - - - - - - - - - - - Executable section, beginning - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-AppVersion			:= "1.3.8"
+AppVersion			:= "1.3.9"
 ;@Ahk2Exe-Let vAppVersion=%A_PriorLine~U)^(.+"){1}(.+)".*$~$2% ; Keep these lines together
 ;Overrides the custom EXE icon used for compilation
 ;@Ahk2Exe-SetCopyright GNU GPL 3.x
@@ -405,12 +405,8 @@ F_Capital(ByRef v_Char)
 			Send, % "{BS}" . v_Char
 	}
 	SendLevel, % c_NominalSL
-	f_SPA 		:= false
-,	f_RShift 		:= false
-,	f_LShift 		:= false
-,	f_Char		:= false
-,	f_AOK_Down	:= false
-,	v_CLCounter 	:= c_CLReset
+	F_FlagReset()
+	v_CLCounter 	:= c_CLReset
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 F_MenuTray()
@@ -534,7 +530,7 @@ F_InitiateInputHook()	;why InputHook: to process triggerstring tips.
 	global	;assume-global mode of operation
 
 	; OutputDebug, % "c_InputSL:" . c_InputSL . "`n"
-	v_InputH 				:= InputHook("V L0")	;I3 to not feed back this script; V to show pressed keys; L0 as only last char is analysed
+	v_InputH 				:= InputHook("V L0 E")	;I3 to not feed back this script; V to show pressed keys; L0 as only last char is analysed
 ,	v_InputH.MinSendLevel 	:= c_InputSL
 ,	v_InputH.OnChar 		:= Func("F_OCD")
 ,	v_InputH.OnKeyDown		:= Func("F_OKD")
@@ -564,7 +560,7 @@ F_CheckIf100ms()
 			F_FlagReset()
 			SetTimer, F_100msTimeout, Off
 			f_100msRun 	:= false
-			f_WasReset	:= true
+		,	f_WasReset	:= true
 			; OutputDebug, % "concurrent" . "`n"
 		}
 	else
@@ -579,13 +575,20 @@ F_OKD(ih, VK, SC)	;On Key Down
 	global		;assume-global mode of operation
 	Critical, On	;This function starts as the first one (prior to "On Character Down"), but unfortunately can be interrupted by it. To prevent it Critical command is applied.
 	; OutputDebug, % A_ThisFunc . A_Space . "B" . "`n"
-	; local		f_Phys		:= false
 
 	v_WhatWasDown 	:= GetKeyName(Format("vk{:x}sc{:x}", VK, SC)) 
-	; OutputDebug, % A_ThisFunc . A_Space . "WhatWasDown:" . v_WhatWasDown . A_Space . "B" . "`n"
-	; Sleep, 30		;sleep is required by function GetKeyState to correctly update: "Systems with unusual keyboard drivers might be slow to update the state of their keys".
-	; f_Phys 		:= GetKeyState(v_WhatWasDown, "P")	;if character comes from keyboard hook, another script e.g. Hotstrings (is artificial) or is physically pressed by user. There is library of Hotstrings "FirstCapital.csv" which sends back if set with S2 attribute artificial Shifts.
-	; OutputDebug, % "WhatWasDown:" . v_WhatWasDown . A_Space . "f_Phys:" . f_Phys . "`n"
+	; OutputDebug, % A_ThisFunc . A_Space . "WhatWasDown:" . v_WhatWasDown . A_Space
+		; . "f_LShift:" . f_LShift . A_Space . "f_RShift:" . f_RShift . A_Space
+		; . "A_PriorKey:" . A_PriorKey . "|" . A_Space
+		; . "GetKeyState(l):" . GetKeyState("L", "p") . A_Space . "GetKeyState(LWin):" . GetKeyState("LWin", "p") . "`n"
+		; . "`n"
+
+	if (f_WinPressed) and (A_PriorKey = "l")	;This condition is valid only after unlocking of Windows (# + L to lock). There is phenomena that after unlocking F_OCD is inactive untill mouse is clicked or # key is pressed. Don't know why it is so, but this conditions solves the issue.
+	{
+		v_Char 		:= v_WhatWasDown		;OutputDebug, % "Exception!" . "`n"
+	,	f_AOK_Down 	:= false				;AOK = Any Other Key
+	}	
+
 	Switch v_WhatWasDown
 	{
 		Case "LShift":
@@ -617,7 +620,7 @@ F_OKD(ih, VK, SC)	;On Key Down
 			f_Char 	:= true
 	}
 	; OutputDebug, % A_ThisFunc . A_Space . "WWD:" . A_Space . v_WhatWasDown . "|" . A_Space 
-	; 	. "f_Phys:" . f_Phys . A_Space . "f_Char:" . f_Char . A_Space . "f_AChar:" . f_AChar . A_Space
+		; . "f_Char:" . f_Char . "`n"
 		; . "PS:" . f_LShift . f_RShift
 	; 	. A_Space 
 	; 	. "AS:" . f_ALShift . f_ARShift 
@@ -627,13 +630,13 @@ F_OKD(ih, VK, SC)	;On Key Down
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 F_OCD(ih, Char)	;On Character Down; this function can interrupt "On Key Down"
-{	;This function detects only "characters" according to AutoHotkey rules, what means: not modifiers (Shifts, Controls, Alts, Windows), function keys, Backspace ; yes: Esc, Space, Enter, Tab and all other main keys.
+{	;This function detects only "characters" according to AutoHotkey rules, no: modifiers (Shifts, Controls, Alts, Windows), function keys, Backspace ; yes: Esc, Space, Enter, Tab and all other main keys.
 	global	;assume-global mode of operation
 	; OutputDebug, % A_ThisFunc . A_Space . "B" . "`n"
-	; OutputDebug, % A_ThisFunc . A_Space . "Char:" . Char . "|" . A_Space . "B" . "`n"
 	v_Char 	:= Char
 ,	f_DUndo 	:= false
 	SendLevel, 	% c_OutputSL
+	; OutputDebug, % A_ThisFunc . A_Space . "v_Char:" . v_Char . "|" . A_Space . "B" . "`n"
 	Switch Char
 	{
 		Case "{", "}", "^", "!", "+", "#":
@@ -664,40 +667,42 @@ F_OCD(ih, Char)	;On Character Down; this function can interrupt "On Key Down"
 			if (GetKeyState("CapsLock", "T"))
 			{
 				SetStoreCapslockMode, Off	;This is the only way which I know to get rid of blinking CapsLock
+				Sleep, 1		;sleep is required by function GetKeyState to correctly update: "Systems with unusual keyboard drivers might be slow to update the state of their keys". Surprisingly 1 ms seems to be ok.
 				Switch Char				;This is the only way which I know to get rid of blinking CapsLock
 				{
-					Case "A":	Send, {U+0041}
-					Case "B":	Send, {U+0042}
-					Case "C":	Send, {U+0043}
-					Case "D":	Send, {U+0044}
-					Case "E":	Send, {U+0045}
-					Case "F":	Send, {U+0046}
-					Case "G":	Send, {U+0047}
-					Case "H":	Send, {U+0048}
-					Case "I":	Send, {U+0049}
-					Case "J":	Send, {U+004a}
-					Case "K":	Send, {U+004b}
-					Case "L":	Send, {U+004c}
-					Case "M":	Send, {U+004d}
-					Case "N":	Send, {U+004e}
-					Case "O":	Send, {U+004f}
-					Case "P":	Send, {U+0050}
-					Case "Q":	Send, {U+0051}
-					Case "R":	Send, {U+0052}
-					Case "S":	Send, {U+0053}
-					Case "T":	Send, {U+0054}
-					Case "U":	Send, {U+0055}
-					Case "V":	Send, {U+0056}
-					Case "W":	Send, {U+0057}
-					Case "X":	Send, {U+0058}
-					Case "Y":	Send, {U+0059}
-					Case "Z":	Send, {U+005a}
+					Case "A":	Send, {U+0041}	;A
+					Case "B":	Send, {U+0042}	;B
+					Case "C":	Send, {U+0043}	;C
+					Case "D":	Send, {U+0044}	;D
+					Case "E":	Send, {U+0045}	;E
+					Case "F":	Send, {U+0046}	;F
+					Case "G":	Send, {U+0047}	;G
+					Case "H":	Send, {U+0048}	;H
+					Case "I":	Send, {U+0049}	;I
+					Case "J":	Send, {U+004a}	;J
+					Case "K":	Send, {U+004b}	;K
+					Case "L":	Send, {U+004c}	;L
+					Case "M":	Send, {U+004d}	;M
+					Case "N":	Send, {U+004e}	;N
+					Case "O":	Send, {U+004f}	;O
+					Case "P":	Send, {U+0050}	;P
+					Case "Q":	Send, {U+0051}	;Q
+					Case "R":	Send, {U+0052}	;R
+					Case "S":	Send, {U+0053}	;S
+					Case "T":	Send, {U+0054}	;T
+					Case "U":	Send, {U+0055}	;U
+					Case "V":	Send, {U+0056}	;V
+					Case "W":	Send, {U+0057}	;W
+					Case "X":	Send, {U+0058}	;X
+					Case "Y":	Send, {U+0059}	;Y
+					Case "Z":	Send, {U+005a}	;Z
 					Default: 	Send, % Char
 				}
 			}	
 			else
 			{
 				SetStoreCapslockMode, On
+				Sleep, 1	;sleep is required by function GetKeyState to correctly update: "Systems with unusual keyboard drivers might be slow to update the state of their keys". Surprisingly 1 ms seems to be ok.
 				Send, % Char
 			}	
 			; OutputDebug, % "A_StoreCapsLockMode:" . A_StoreCapsLockMode . "`n"
@@ -715,13 +720,14 @@ F_OCD(ih, Char)	;On Character Down; this function can interrupt "On Key Down"
 F_OKU(ih, VK, SC)	;On Key Up
 {
 	global	;assume-global mode of operation
-	Critical, On
+	; Critical, On
 	local	WhatWasUp := GetKeyName(Format("vk{:x}sc{:x}", VK, SC))
 	
 	; OutputDebug, % A_ThisFunc . A_Space . "B" . "`n"
 	; OutputDebug, % A_ThisFunc . A_Space . "WhatWasUp:" . WhatWasUp . "|" . A_Space . "v_Char:" . v_Char . "|" . "`n"
-	; OutputDebug, % "WWUb:" . WhatWasUp . "|" . A_Space "v_Char:" . v_Char . A_Space . "f_SDCD:" . f_SDCD . A_Space . "f_ASDCD:" . f_ASDCD . "`n"
-	; "C:" . f_Char . A_Space . "S:" . f_SPA . A_Space . "C:" . f_ControlPressed . A_Space . "A:" . f_AltPressed . A_Space . "W:" . f_WinPressed . "`n"
+	; OutputDebug, % "WWUb:" . WhatWasUp . "|" . A_Space "v_Char:" . v_Char . A_Space . "f_SDCD:" . f_SDCD . "`n"
+	; . "C:" . f_Char . A_Space . "S:" . f_SPA . A_Space . "C:" . f_ControlPressed . A_Space . "A:" . f_AltPressed . A_Space . "W:" . f_WinPressed . "`n"
+	; . "v_WhatWasDown:" . v_WhatWasDown . A_Space . "f_AOK_Down:" . f_AOK_Down "`n`n"
 
 	if (f_WasReset)
 	{
@@ -734,7 +740,7 @@ F_OKU(ih, VK, SC)	;On Key Up
 
 	if ((WhatWasUp = "LShift") or (WhatWasUp = "RShift"))
 		and (WhatWasUp = v_WhatWasDown)
-		and (!f_AOK_Down)
+		and (!f_AOK_Down)	;Any Other Key
 	{
 		f_SPA 	:= true	;Shift key (left or right) was Pressed Alone.
 		; OutputDebug, % "f_SPA:" . f_SPA . "`n"
@@ -789,7 +795,7 @@ F_OKU(ih, VK, SC)	;On Key Up
 		; OutputDebug, % "RShift Up" . "`n"
 	}
 
-	Critical, Off
+	; Critical, Off
 	; OutputDebug, % "WWUe:" . WhatWasUp . A_Space "v_Char:" . v_Char . "C:" . f_Char . A_Space . "S:" . f_SPA . A_Space . "A:" . f_AOK_Down . "`n"
 	; OutputDebug, % "WWUe:" . WhatWasUp . A_Space "v_Char:" . v_Char . "C:" . f_Char . A_Space . "S:" . f_SPA . A_Space . "C:" . f_ControlPressed . A_Space . "A:" . f_AltPressed . A_Space . "W:" . f_WinPressed . "`n"
 	; OutputDebug, % A_ThisFunc . A_Space . "E" . "`n"
@@ -861,8 +867,8 @@ F_CapsLock(WhatWasUp, ByRef f_SPA)
 	; OutputDebug, % "CLCounter:" . A_Space . v_CLCounter . "`n"
 	if (v_CLCounter = CLLimit)
 	{
-		SetCapsLockState, % !GetKeyState("CapsLock", "T")
-		Sleep, 30		;sleep is required by function GetKeyState to correctly update: "Systems with unusual keyboard drivers might be slow to update the state of their keys".
+		SetCapsLockState, % !GetKeyState("CapsLock", "T") 
+		Sleep, 1		;sleep is required by function GetKeyState to correctly update: "Systems with unusual keyboard drivers might be slow to update the state of their keys". Surprisingly 1 ms seems to be ok.
 		SoundPlay, *48		;standard system sound, exclamation
 		OutputDebug, % A_ThisFunc . A_Space . "`n"
 		v_CLCounter	:= c_CLReset
@@ -897,12 +903,7 @@ F_DiacriticOutput(Diacritic)
 	SendLevel, 	% c_OutputSL
 	Send,		% "{BS}" . Diacritic
 	SendLevel, 	% c_NominalSL
-	f_SPA 		:= false	;Shift Pressed Alone
-,	f_RShift 		:= false
-,	f_LShift 		:= false
-,	f_Char 		:= false
-,	v_Char		:= ""
-,	f_AOK_Down	:= false
+	F_FlagReset()
 	; OutputDebug, % A_ThisFunc . A_Space . "E" . "`n"
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
