@@ -25,7 +25,7 @@ StringCaseSense, 		On				;for Switch in F_OKU()
 ;Testing: Alt+Tab, , asdf Shift+Home
 
 ; - - - - - - - - - - - - - - - - Executable section, beginning - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-AppVersion			:= "1.3.9"
+AppVersion			:= "1.3.10"
 ;@Ahk2Exe-Let vAppVersion=%A_PriorLine~U)^(.+"){1}(.+)".*$~$2% ; Keep these lines together
 ;Overrides the custom EXE icon used for compilation
 ;@Ahk2Exe-SetCopyright GNU GPL 3.x
@@ -332,7 +332,6 @@ F_Toggle()
 F_Capital(ByRef v_Char)
 {
 	global	;assume-global mode of operation
-
 	SendLevel, % c_OutputSL
 	Switch v_Char
 	{
@@ -378,25 +377,6 @@ F_Capital(ByRef v_Char)
 			Send, {BS}>
 		Case "/":
 			Send, {BS}?
-		Case "!":		;when other AutoHotkey script (e.g. Hotstrings) sends out any special character where Shift is applied (e.g. # = Shift + 3), it have to be also send out, but without bouncing.
-			SendLevel, % c_NominalSL
-			Send, {!}
-		Case "{":		;when other AutoHotkey script (e.g. Hotstrings) sends out any special character where Shift is applied (e.g. # = Shift + 3), it have to be also send out, but without bouncing.
-			SendLevel, % c_NominalSL
-			Send, {{}
-		Case "}":		;when other AutoHotkey script (e.g. Hotstrings) sends out any special character where Shift is applied (e.g. # = Shift + 3), it have to be also send out, but without bouncing.
-			SendLevel, % c_NominalSL
-			Send, {}}
-		Case "#":		;when other AutoHotkey script (e.g. Hotstrings) sends out any special character where Shift is applied (e.g. # = Shift + 3), it have to be also send out, but without bouncing.
-			SendLevel, % c_NominalSL
-			Send, {#}
-		Case "^":		;when other AutoHotkey script (e.g. Hotstrings) sends out any special character where Shift is applied (e.g. # = Shift + 3), it have to be also send out, but without bouncing.
-			SendLevel, % c_NominalSL
-			Send, {^}	;when other AutoHotkey script (e.g. Hotstrings) sends out any special character where Shift is applied (e.g. # = Shift + 3), it have to be also send out, but without bouncing.
-			OutputDebug, % "Tu jestem" . "`n"
-		Case "+":
-			SendLevel, % c_NominalSL
-			Send, {+}	;when other AutoHotkey script (e.g. Hotstrings) sends out any special character where Shift is applied (e.g. # = Shift + 3), it have to be also send out, but without bouncing.
 		Case "`t":	;by try and error method
 		Case "`n":
 		Default:
@@ -407,6 +387,7 @@ F_Capital(ByRef v_Char)
 	SendLevel, % c_NominalSL
 	F_FlagReset()
 	v_CLCounter 	:= c_CLReset
+	; OutputDebug, % A_ThisFunc . "`n"
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 F_MenuTray()
@@ -535,7 +516,7 @@ F_InitiateInputHook()	;why InputHook: to process triggerstring tips.
 ,	v_InputH.OnChar 		:= Func("F_OCD")
 ,	v_InputH.OnKeyDown		:= Func("F_OKD")
 ,	v_InputH.OnKeyUp 		:= Func("F_OKU")
-,	v_InputH.VisibleText 	:= false				;By default whatever user presses it is automatically visible. Now it is not. So now are visible only those characters which are send by this script. This trick is essential in order to not get interrupted sequences send by this script by user input. As now all user input is invisible, only this script controls what and when will be printed out.
+,	v_InputH.VisibleText 	:= false				;By default whatever user presses a key it is by default visible. Now it is not. So now are visible only those characters which are send by this script. This trick is essential in order to not get interrupted sequences send by this script by user input. As now all user input is invisible, only this script controls what and when will be printed out.
 ,	v_InputH.BackspaceIsUndo := false				;By trial and error I've found this flag must be set.
 	v_InputH.KeyOpt("{All}", "N")
 	if (f_ShiftFunctions)
@@ -709,11 +690,6 @@ F_OCD(ih, Char)	;On Character Down; this function can interrupt "On Key Down"
 			; OutputDebug, % "A_StoreCapsLockMode:" . A_StoreCapsLockMode . "`n"
 	}
 	SendLevel, 	% c_NominalSL
-	; OutputDebug, 	% A_ThisFunc . A_Space . "Char:" . Char . "|" . "`n"
-	; 	. "f_Char:" 	. f_Char 	. A_Space . "PS:" . f_LShift . f_RShift 	. A_Space . "f_SDCD:" 	. f_SDCD 	
-	; 	. A_Space 
-	; 	. "f_AChar:" 	. f_AChar . A_Space . "AS:" . f_ALShift . f_ARShift 	. A_Space . "f_ASDCD:" 	. f_ASDCD 
-	; 	. "`n"
 	; OutputDebug, % A_ThisFunc . A_Space . "Char:" . Char . "|" . A_Space . "f_SPA:" . f_SPA . "`n"
 	; OutputDebug, % A_ThisFunc . A_Space . "E" . "`n"
 }
@@ -721,14 +697,10 @@ F_OCD(ih, Char)	;On Character Down; this function can interrupt "On Key Down"
 F_OKU(ih, VK, SC)	;On Key Up
 {
 	global	;assume-global mode of operation
-	; Critical, On
 	local	WhatWasUp := GetKeyName(Format("vk{:x}sc{:x}", VK, SC))
 	
 	; OutputDebug, % A_ThisFunc . A_Space . "B" . "`n"
 	; OutputDebug, % A_ThisFunc . A_Space . "WhatWasUp:" . WhatWasUp . "|" . A_Space . "v_Char:" . v_Char . "|" . "`n"
-	; OutputDebug, % "WWUb:" . WhatWasUp . "|" . A_Space "v_Char:" . v_Char . A_Space . "f_SDCD:" . f_SDCD . "`n"
-	; . "C:" . f_Char . A_Space . "S:" . f_SPA . A_Space . "C:" . f_ControlPressed . A_Space . "A:" . f_AltPressed . A_Space . "W:" . f_WinPressed . "`n"
-	; . "v_WhatWasDown:" . v_WhatWasDown . A_Space . "f_AOK_Down:" . f_AOK_Down "`n`n"
 
 	if (f_WasReset)
 	{
@@ -759,8 +731,7 @@ F_OKU(ih, VK, SC)	;On Key Up
 	,	v_Char		:= ""
 	,	v_CLCounter 	:= c_CLReset
 	}		
-	; OutputDebug, % A_ThisFunc . A_Space . "f_SPA:" . f_SPA . A_Space . "WhatWasUp:" . WhatWasUp . A_Space . "f_SDCD:" . f_SDCD . A_Space . "f_ASDCD:" . f_ASDCD . "`n"
-	; OutputDebug, % "WWU :" . WhatWasUp . A_Space "v_Char:" . v_Char . "C:" . f_Char . A_Space . "S:" . f_SPA . A_Space . "A:" . f_AOK_Down . "`n"
+	; OutputDebug, % "f_Char:" . f_Char . A_Space . "f_SPA:" . f_SPA . A_Space . "WhatWasUp:" . WhatWasUp . "`n"
 	if (f_Capital) 
 		and (f_Char)	;without this line LShift D, LShift U, LCtrl D, LCtrl U used to send Backspace
 		and (f_SPA)	;SPA = Shift Pressed Alone
@@ -769,12 +740,11 @@ F_OKU(ih, VK, SC)	;On Key Up
 
 	; OutputDebug, % "WWU :" . WhatWasUp . A_Space . "v_Char:" . v_Char . "C:" . f_Char . A_Space . "S:" . f_SPA . A_Space . "C:" . f_ControlPressed . A_Space . "A:" . f_AltPressed . A_Space . "W:" . f_WinPressed . "`n"
 	if (f_Diacritics)
-		; and (f_Char)	
 		and (f_SPA)
 		and ((WhatWasUp = "LShift") or (WhatWasUp = "RShift"))
 			F_Diacritics(v_Char)
 
-	F_ShiftUndo(WhatWasUp, f_SPA)
+	; F_ShiftUndo(WhatWasUp, f_SPA) this function is no longer necessary
 
 	if (f_CapsLock)
 		and (f_SPA)
@@ -796,9 +766,7 @@ F_OKU(ih, VK, SC)	;On Key Up
 		; OutputDebug, % "RShift Up" . "`n"
 	}
 
-	; Critical, Off
 	; OutputDebug, % "WWUe:" . WhatWasUp . A_Space "v_Char:" . v_Char . "C:" . f_Char . A_Space . "S:" . f_SPA . A_Space . "A:" . f_AOK_Down . "`n"
-	; OutputDebug, % "WWUe:" . WhatWasUp . A_Space "v_Char:" . v_Char . "C:" . f_Char . A_Space . "S:" . f_SPA . A_Space . "C:" . f_ControlPressed . A_Space . "A:" . f_AltPressed . A_Space . "W:" . f_WinPressed . "`n"
 	; OutputDebug, % A_ThisFunc . A_Space . "E" . "`n"
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -815,25 +783,22 @@ F_FlagReset()
 ,	f_AOK_Down		:= false
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-F_ShiftUndo(WhatWasUp, ByRef f_SPA)	;future: undo of previous action (Diacritics or CapsLock)
+F_ShiftUndo(WhatWasUp, ByRef f_SPA)	;undo of previous action (Diacritics or CapsLock)
 {
 	global	;assume-global mode of operation
-	static	SRCounter	:= 0
-	local	SRLimit	:= 2
-		,	SRReset	:= 0	
+	static	SUCounter	:= 0		;Shift Undo Counter
+	local	SULimit	:= 2		;Shift Undo Limit = when this limit is reached, undo action takes place. This value should be higher than 2, as 1 = diacritic
+		,	SUReset	:= 0		;Shift Undo Reset = when undo action takes place, this value is written into SUCounter	
 
 	if ((WhatWasUp = "LShift") or (WhatWasUp = "RShift")) and (f_SPA)
-		SRCounter++
+		SUCounter++
 	else
-	{
-		SRCounter := SRReset
-		; return
-	}
+		SUCounter := SUReset
 	
-	; OutputDebug, % "SRCounter:" . A_Space . SRCounter . "`n"
-	if (SRCounter = SRLimit)
+	; OutputDebug, % "SUCounter:" . A_Space . SUCounter . "`n"
+	if (SUCounter = SULimit)
 	{
-		SRCounter		:= SRReset
+		SUCounter		:= SUReset
 		if (f_DUndo)
 			{
 				SendLevel, % c_OutputSL
@@ -845,7 +810,6 @@ F_ShiftUndo(WhatWasUp, ByRef f_SPA)	;future: undo of previous action (Diacritics
 			,	f_SPA 		:= false
 			,	f_RShift 		:= false
 			,	f_LShift 		:= false
-
 			}
 		; OutputDebug, % "Undo" . "`n"
 	}
@@ -856,7 +820,7 @@ F_CapsLock(WhatWasUp, ByRef f_SPA)
 	global	;assume-global mode of operation
 	local	CLLimit 	:= 3
 		,	CapsLockState := false
-
+	; OutputDebug, % A_ThisFunc .  "`n"
 	if (WhatWasUp = "LShift") or (WhatWasUp = "RShift")
 		v_CLCounter++
 	else
@@ -870,7 +834,6 @@ F_CapsLock(WhatWasUp, ByRef f_SPA)
 		SetCapsLockState, % !GetKeyState("CapsLock", "T") 
 		Sleep, 1		;sleep is required by function GetKeyState to correctly update: "Systems with unusual keyboard drivers might be slow to update the state of their keys". Surprisingly 1 ms seems to be ok.
 		SoundPlay, *48		;standard system sound, exclamation
-		OutputDebug, % A_ThisFunc . A_Space . "`n"
 		v_CLCounter	:= c_CLReset
 	,	f_SPA 		:= false	;Shift Pressed Alone
 	,	f_RShift 		:= false
@@ -878,10 +841,10 @@ F_CapsLock(WhatWasUp, ByRef f_SPA)
 	}
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-F_Diacritics(v_Char)
+F_Diacritics(ByRef v_Char)
 {
 	global	;assume-global mode of operation
-	; OutputDebug, % A_ThisFunc . A_Space . "B" . "`n"
+	; OutputDebug, % A_ThisFunc . A_Space . "v_Char:" . v_Char . A_Space . "B" . "`n"
 	local	index := % c_NominalSL
 		,	value := ""
 
@@ -890,9 +853,14 @@ F_Diacritics(v_Char)
 		{
 			F_DiacriticOutput(a_Diacritic[index])
 			v_Undo := v_Char
-,			f_DUndo := true
+		,	f_DUndo := true
+		,	f_SPA := false	;Shift Pressed Alone
+		,	v_Char := ""
 			; OutputDebug, % "f_DUndo:" . A_Space . f_DUndo . A_Space . "v_Undo:" . v_Undo . "`n"
 		}
+	f_RShift 			:= false
+,	f_LShift 			:= false
+			
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 F_DiacriticOutput(Diacritic)
@@ -903,7 +871,6 @@ F_DiacriticOutput(Diacritic)
 	SendLevel, 	% c_OutputSL
 	Send,		% "{BS}" . Diacritic
 	SendLevel, 	% c_NominalSL
-	F_FlagReset()
 	; OutputDebug, % A_ThisFunc . A_Space . "E" . "`n"
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
