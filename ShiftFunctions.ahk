@@ -76,7 +76,7 @@ FileInstall, README.md, 			README.md,		true
 ,	f_SDCD			:= false	;global flag: Shift (S) is down (D) and Character (C) is down (D)
 ,	v_WhatWasDown		:= ""	;global variable, name of key which was pressed down
 ,	f_WasReset		:= false	;global flag: Shift key memory reset (to reset v_CLCounter)
-,	f_100msRun		:= false	;global flag: timer is running
+,	f_ShiftTimeout		:= false	;global flag: timer is running
 
 F_InputArguments()
 F_InitiateInputHook()
@@ -525,31 +525,33 @@ F_InitiateInputHook()	;why InputHook: to process triggerstring tips.
 		v_InputH.Stop()
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-F_100msTimeout()
+F_ShiftTimeout()
 {
 	global		;assume-global mode of operation
 
-	f_100msRun 	:= false
+	f_ShiftTimeout 	:= false
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-F_CheckIf100ms()
+F_CheckIfTimeElapsed(TtElapse)	;argument in miliseconds
 {
 	global		;assume-global mode of operation
 
-	if (f_100msRun)
-		{
-			F_FlagReset()
-			SetTimer, F_100msTimeout, Off
-			f_100msRun 	:= false
-		,	f_WasReset	:= true
-		,	v_Char		:= ""
-			; OutputDebug, % "concurrent" . "`n"
-		}
+	if (f_ShiftTimeout)
+	{
+		F_FlagReset()
+		SetTimer, F_ShiftTimeout, Off
+		f_ShiftTimeout := false
+	,	f_WasReset	:= true
+	,	v_Char		:= ""
+	OutputDebug, % "concurrent" . "`n"
+	}
 	else
-		{
-			SetTimer, F_100msTimeout, -100	;100 ms one time only
-			f_100msRun 	:= true
-		}
+	{
+		OutputDebug, % "Before SetTimer" . "`n"
+		SetTimer, F_ShiftTimeout, % "-" . TtElapse	;one time only
+		f_ShiftTimeout 	:= true
+		OutputDebug, % "After SetTimer" . A_Space . "f_ShiftTimeout:" . f_ShiftTimeout . "`n"
+	}
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 F_OKD(ih, VK, SC)	;On Key Down
@@ -559,11 +561,6 @@ F_OKD(ih, VK, SC)	;On Key Down
 	; OutputDebug, % A_ThisFunc . A_Space . "B" . "`n"
 
 	v_WhatWasDown 	:= GetKeyName(Format("vk{:x}sc{:x}", VK, SC)) 
-	; OutputDebug, % A_ThisFunc . A_Space . "WhatWasDown:" . v_WhatWasDown . A_Space
-		; . "f_LShift:" . f_LShift . A_Space . "f_RShift:" . f_RShift . A_Space
-		; . "A_PriorKey:" . A_PriorKey . "|" . A_Space
-		; . "GetKeyState(l):" . GetKeyState("L", "p") . A_Space . "GetKeyState(LWin):" . GetKeyState("LWin", "p") . "`n"
-		; . "`n"
 
 	if (f_WinPressed) and (A_PriorKey = "l")	;This condition is valid only after unlocking of Windows (# + L to lock). There is phenomena that after unlocking F_OCD is inactive untill mouse is clicked or # key is pressed. Don't know why it is so, but this conditions solves the issue.
 	{
@@ -574,20 +571,24 @@ F_OKD(ih, VK, SC)	;On Key Down
 	Switch v_WhatWasDown
 	{
 		Case "LShift":
+			OutputDebug, % "f_LShift:" . f_LShift . "`n"
 			if (f_LShift)	;protection against "auto-repeat", function of operating system
 				return
 			else
 			{
 				f_LShift		:= true
-				F_CheckIf100ms()
+				F_CheckIfTimeElapsed(100)	;100 ms
+				OutputDebug, % "f_LShift:" . f_LShift . "`n"
 			}	
 		Case "RShift":
+			OutputDebug, % "f_RShift:" . f_RShift . "`n"
 			if (f_RShift)
 				return
 			else
 			{
 				f_RShift		:= true
-				F_CheckIf100ms()
+				F_CheckIfTimeElapsed(100)	;100 ms
+				OutputDebug, % "f_RShift:" . f_RShift . "`n"
 			}	
 		Case "LControl", "RControl":
 			f_ControlPressed 	:= true
@@ -599,7 +600,9 @@ F_OKD(ih, VK, SC)	;On Key Down
 			f_WinPressed 		:= true
 		,	f_AOK_Down		:= true	;Any Other Key
 		Default:
-			f_Char 	:= true
+			f_Char 		:= true
+		,	f_ShiftDown 	:= false
+		,	F_ShiftUp		:= false	
 	}
 	; OutputDebug, % A_ThisFunc . A_Space . "WWD:" . A_Space . v_WhatWasDown . "|" . A_Space 
 		; . "f_Char:" . f_Char . "`n"
@@ -690,8 +693,6 @@ F_OCD(ih, Char)	;On Character Down; this function can interrupt "On Key Down"
 			; OutputDebug, % "A_StoreCapsLockMode:" . A_StoreCapsLockMode . "`n"
 	}
 	SendLevel, 	% c_NominalSL
-	; OutputDebug, % A_ThisFunc . A_Space . "Char:" . Char . "|" . A_Space . "f_SPA:" . f_SPA . "`n"
-	; OutputDebug, % A_ThisFunc . A_Space . "E" . "`n"
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 F_OKU(ih, VK, SC)	;On Key Up
@@ -716,7 +717,7 @@ F_OKU(ih, VK, SC)	;On Key Up
 		and (!f_AOK_Down)	;Any Other Key
 	{
 		f_SPA 	:= true	;Shift key (left or right) was Pressed Alone.
-		; OutputDebug, % "f_SPA:" . f_SPA . "`n"
+		OutputDebug, % "f_SPA:" . f_SPA . "`n"
 	}
 	if (WhatWasUp != v_Char)
 		f_Char := false
@@ -755,17 +756,6 @@ F_OKU(ih, VK, SC)	;On Key Up
 		or (WhatWasUp = "LWin") or (WhatWasUp = "RWin")
 			f_AOK_Down		:= false	;Any Other Key
 
-	if (WhatWasUp = "LShift") 
-	{
-		f_LShift := false
-		; OutputDebug, % "LShift Up" . "`n"
-	}	
-	if (WhatWasUp = "RShift")
-	{
-		f_RShift := false
-		; OutputDebug, % "RShift Up" . "`n"
-	}
-
 	; OutputDebug, % "WWUe:" . WhatWasUp . A_Space "v_Char:" . v_Char . "C:" . f_Char . A_Space . "S:" . f_SPA . A_Space . "A:" . f_AOK_Down . "`n"
 	; OutputDebug, % A_ThisFunc . A_Space . "E" . "`n"
 }
@@ -783,7 +773,7 @@ F_FlagReset()
 ,	f_AOK_Down		:= false
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-F_ShiftUndo(WhatWasUp, ByRef f_SPA)	;undo of previous action (Diacritics or CapsLock)
+F_ShiftUndo(WhatWasUp, ByRef f_SPA)	;undo of previous action (Diacritics); this function is no longer used since 2023-05-06. There is no more reason to undo previous diacritic as it is faster to Backspace it.
 {
 	global	;assume-global mode of operation
 	static	SUCounter	:= 0		;Shift Undo Counter
@@ -857,9 +847,9 @@ F_Diacritics(ByRef v_Char)
 		,	f_SPA := false	;Shift Pressed Alone
 		,	v_Char := ""
 			; OutputDebug, % "f_DUndo:" . A_Space . f_DUndo . A_Space . "v_Undo:" . v_Undo . "`n"
+		,	f_RShift 			:= false
+		,	f_LShift 			:= false
 		}
-	f_RShift 			:= false
-,	f_LShift 			:= false
 			
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
