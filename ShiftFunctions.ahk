@@ -25,7 +25,7 @@ StringCaseSense, 		On				;for Switch in F_OKU()
 ;Testing: Alt+Tab, , asdf Shift+Home
 
 ; - - - - - - - - - - - - - - - - Executable section, beginning - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-AppVersion			:= "1.3.10"
+AppVersion			:= "1.3.11"
 ;@Ahk2Exe-Let vAppVersion=%A_PriorLine~U)^(.+"){1}(.+)".*$~$2% ; Keep these lines together
 ;Overrides the custom EXE icon used for compilation
 ;@Ahk2Exe-SetCopyright GNU GPL 3.x
@@ -77,6 +77,7 @@ FileInstall, README.md, 			README.md,		true
 ,	v_WhatWasDown		:= ""	;global variable, name of key which was pressed down
 ,	f_WasReset		:= false	;global flag: Shift key memory reset (to reset v_CLCounter)
 ,	f_ShiftTimeout		:= false	;global flag: timer is running
+,	c_Buffer			:= {}	;global character object buffer
 
 F_InputArguments()
 F_InitiateInputHook()
@@ -382,7 +383,8 @@ F_Capital(ByRef v_Char)
 		Default:
 			; OutputDebug, % "v_Char:" . v_Char . "|" . "`n"
 			v_Char := Format("{:U}", v_Char)
-			Send, % "{BS}" . v_Char
+			Send, % v_Char
+			; Send, % "{BS}" . v_Char
 	}
 	SendLevel, % c_NominalSL
 	F_FlagReset()
@@ -543,14 +545,14 @@ F_CheckIfTimeElapsed(TtElapse)	;argument in miliseconds
 		f_ShiftTimeout := false
 	,	f_WasReset	:= true
 	,	v_Char		:= ""
-	OutputDebug, % "concurrent" . "`n"
+	; OutputDebug, % "concurrent" . "`n"
 	}
 	else
 	{
-		OutputDebug, % "Before SetTimer" . "`n"
+		; OutputDebug, % "Before SetTimer" . "`n"
 		SetTimer, F_ShiftTimeout, % "-" . TtElapse	;one time only
 		f_ShiftTimeout 	:= true
-		OutputDebug, % "After SetTimer" . A_Space . "f_ShiftTimeout:" . f_ShiftTimeout . "`n"
+		; OutputDebug, % "After SetTimer" . A_Space . "f_ShiftTimeout:" . f_ShiftTimeout . "`n"
 	}
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -558,11 +560,11 @@ F_OKD(ih, VK, SC)	;On Key Down
 {
 	global		;assume-global mode of operation
 	Critical, On	;This function starts as the first one (prior to "On Character Down"), but unfortunately can be interrupted by it. To prevent it Critical command is applied.
-	; OutputDebug, % A_ThisFunc . A_Space . "B" . "`n"
-
+	
 	v_WhatWasDown 	:= GetKeyName(Format("vk{:x}sc{:x}", VK, SC)) 
+	; OutputDebug, % A_ThisFunc . A_Space . "v_WhatWasDown:" . v_WhatWasDown . "|" . A_Space . "B" . "`n"
 
-	if (f_WinPressed) and (A_PriorKey = "l")	;This condition is valid only after unlocking of Windows (# + L to lock). There is phenomena that after unlocking F_OCD is inactive untill mouse is clicked or # key is pressed. Don't know why it is so, but this conditions solves the issue.
+	if (f_WinPressed) and (A_PriorKey = "l")	;This condition is valid only after unlocking of Windows (# + L to lock). There is phenomena that after unlocking F_OCD is inactive untill mouse is clicked or Windows key is pressed. Don't know why it is so, but this conditions solves the issue.
 	{
 		v_Char 		:= v_WhatWasDown		;OutputDebug, % "Exception!" . "`n"
 	,	f_AOK_Down 	:= false				;AOK = Any Other Key
@@ -571,24 +573,24 @@ F_OKD(ih, VK, SC)	;On Key Down
 	Switch v_WhatWasDown
 	{
 		Case "LShift":
-			OutputDebug, % "f_LShift:" . f_LShift . "`n"
+			; OutputDebug, % "f_LShift:" . f_LShift . "`n"
 			if (f_LShift)	;protection against "auto-repeat", function of operating system
 				return
 			else
 			{
 				f_LShift		:= true
 				F_CheckIfTimeElapsed(100)	;100 ms
-				OutputDebug, % "f_LShift:" . f_LShift . "`n"
+				; OutputDebug, % "f_LShift:" . f_LShift . "`n"
 			}	
 		Case "RShift":
-			OutputDebug, % "f_RShift:" . f_RShift . "`n"
+			; OutputDebug, % "f_RShift:" . f_RShift . "`n"
 			if (f_RShift)
 				return
 			else
 			{
 				f_RShift		:= true
 				F_CheckIfTimeElapsed(100)	;100 ms
-				OutputDebug, % "f_RShift:" . f_RShift . "`n"
+				; OutputDebug, % "f_RShift:" . f_RShift . "`n"
 			}	
 		Case "LControl", "RControl":
 			f_ControlPressed 	:= true
@@ -602,22 +604,15 @@ F_OKD(ih, VK, SC)	;On Key Down
 		Default:
 			f_Char 		:= true
 		,	f_ShiftDown 	:= false
-		,	F_ShiftUp		:= false	
+		,	f_ShiftUp		:= false	
 	}
-	; OutputDebug, % A_ThisFunc . A_Space . "WWD:" . A_Space . v_WhatWasDown . "|" . A_Space 
-		; . "f_Char:" . f_Char . "`n"
-		; . "PS:" . f_LShift . f_RShift
-	; 	. A_Space 
-	; 	. "AS:" . f_ALShift . f_ARShift 
-		; . "`n"
-	; OutputDebug, % A_ThisFunc . A_Space . "E" . "`n"
 	Critical, Off
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 F_OCD(ih, Char)	;On Character Down; this function can interrupt "On Key Down"
 {	;This function detects only "characters" according to AutoHotkey rules, no: modifiers (Shifts, Controls, Alts, Windows), function keys, Backspace ; yes: Esc, Space, Enter, Tab and all other main keys.
 	global	;assume-global mode of operation
-	; OutputDebug, % A_ThisFunc . A_Space . "B" . "`n"
+	; OutputDebug, % A_ThisFunc . A_Space . "Char:" . Char . "|" . A_Space . "B" . "`n"
 	v_Char 	:= Char
 ,	f_DUndo 	:= false
 	SendLevel, 	% c_OutputSL
@@ -688,7 +683,12 @@ F_OCD(ih, Char)	;On Character Down; this function can interrupt "On Key Down"
 			{
 				SetStoreCapslockMode, On
 				Sleep, 1	;sleep is required by function GetKeyState to correctly update: "Systems with unusual keyboard drivers might be slow to update the state of their keys". Surprisingly 1 ms seems to be ok.
-				Send, % Char
+				if (f_Capital) 
+					and (f_Char)	;without this line LShift D, LShift U, LCtrl D, LCtrl U used to send Backspace
+					and (f_SPA)	;SPA = Shift Pressed Alone
+						F_Capital(v_Char)
+				else			
+					Send, % v_Char
 			}	
 			; OutputDebug, % "A_StoreCapsLockMode:" . A_StoreCapsLockMode . "`n"
 	}
@@ -705,7 +705,7 @@ F_OKU(ih, VK, SC)	;On Key Up
 
 	if (f_WasReset)
 	{
-		OutputDebug, % "f_WasReset:" . f_WasReset . "`n"
+		; OutputDebug, % "f_WasReset:" . f_WasReset . "`n"
 		v_CLCounter 	:= c_CLReset
 	,	f_WasReset 	:= false
 		SoundPlay, *16	;future: add option to choose behavior (play sound or not, how long to play sound, what sound) and to define time to wait for reset scenario
@@ -717,10 +717,8 @@ F_OKU(ih, VK, SC)	;On Key Up
 		and (!f_AOK_Down)	;Any Other Key
 	{
 		f_SPA 	:= true	;Shift key (left or right) was Pressed Alone.
-		OutputDebug, % "f_SPA:" . f_SPA . "`n"
+		; OutputDebug, % "f_SPA:" . f_SPA . "`n"
 	}
-	if (WhatWasUp != v_Char)
-		f_Char := false
 
 	if (WhatWasUp = "Backspace") or (WhatWasUp = "Esc")
 		or  (WhatWasUp = "Space") or (WhatWasUp = "Enter")
@@ -732,20 +730,11 @@ F_OKU(ih, VK, SC)	;On Key Up
 	,	v_Char		:= ""
 	,	v_CLCounter 	:= c_CLReset
 	}		
-	; OutputDebug, % "f_Char:" . f_Char . A_Space . "f_SPA:" . f_SPA . A_Space . "WhatWasUp:" . WhatWasUp . "`n"
-	if (f_Capital) 
-		and (f_Char)	;without this line LShift D, LShift U, LCtrl D, LCtrl U used to send Backspace
-		and (f_SPA)	;SPA = Shift Pressed Alone
-		and (WhatWasUp != "LShift") and (WhatWasUp != "RShift")
-			F_Capital(v_Char)
 
-	; OutputDebug, % "WWU :" . WhatWasUp . A_Space . "v_Char:" . v_Char . "C:" . f_Char . A_Space . "S:" . f_SPA . A_Space . "C:" . f_ControlPressed . A_Space . "A:" . f_AltPressed . A_Space . "W:" . f_WinPressed . "`n"
 	if (f_Diacritics)
 		and (f_SPA)
 		and ((WhatWasUp = "LShift") or (WhatWasUp = "RShift"))
 			F_Diacritics(v_Char)
-
-	; F_ShiftUndo(WhatWasUp, f_SPA) this function is no longer necessary
 
 	if (f_CapsLock)
 		and (f_SPA)
@@ -771,38 +760,6 @@ F_FlagReset()
 ,	f_WinPressed 		:= false
 ,	f_AltPressed 		:= false
 ,	f_AOK_Down		:= false
-}
-; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-F_ShiftUndo(WhatWasUp, ByRef f_SPA)	;undo of previous action (Diacritics); this function is no longer used since 2023-05-06. There is no more reason to undo previous diacritic as it is faster to Backspace it.
-{
-	global	;assume-global mode of operation
-	static	SUCounter	:= 0		;Shift Undo Counter
-	local	SULimit	:= 2		;Shift Undo Limit = when this limit is reached, undo action takes place. This value should be higher than 2, as 1 = diacritic
-		,	SUReset	:= 0		;Shift Undo Reset = when undo action takes place, this value is written into SUCounter	
-
-	if ((WhatWasUp = "LShift") or (WhatWasUp = "RShift")) and (f_SPA)
-		SUCounter++
-	else
-		SUCounter := SUReset
-	
-	; OutputDebug, % "SUCounter:" . A_Space . SUCounter . "`n"
-	if (SUCounter = SULimit)
-	{
-		SUCounter		:= SUReset
-		if (f_DUndo)
-			{
-				SendLevel, % c_OutputSL
-				Send, % "{BS}" . v_Undo
-				SendLevel, % c_NominalSL
-				v_Undo 		:= ""
-			,	f_DUndo 		:= false
-			,	v_CLCounter 	:= c_CLReset
-			,	f_SPA 		:= false
-			,	f_RShift 		:= false
-			,	f_LShift 		:= false
-			}
-		; OutputDebug, % "Undo" . "`n"
-	}
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 F_CapsLock(WhatWasUp, ByRef f_SPA)
@@ -850,7 +807,6 @@ F_Diacritics(ByRef v_Char)
 		,	f_RShift 			:= false
 		,	f_LShift 			:= false
 		}
-			
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 F_DiacriticOutput(Diacritic)
@@ -881,53 +837,53 @@ F_InputArguments()
 			f_CapsLock := false
 	}
 	if (!InStr(param, ".ini", false))
-		{
-			if (FileExist("*.ini"))
-				Loop, Files, *.ini
-				{
-					Counter++
-					if (Counter = 1)
-						FileTemp := A_LoopFileName
-				}
-			if (Counter = 0)
+	{
+		if (FileExist("*.ini"))
+			Loop, Files, *.ini
 			{
-				MsgBox, % c_IconAsteriskInfo, % A_ScriptName, % "No .ini file is specified and no .ini files are found within application directory."
-					. "`n`n"
-					. "Exiting with error code 1 (no .ini file specified or found)."
+				Counter++
+				if (Counter = 1)
+					FileTemp := A_LoopFileName
+			}
+		if (Counter = 0)
+		{
+			MsgBox, % c_IconAsteriskInfo, % A_ScriptName, % "No .ini file is specified and no .ini files are found within application directory."
+				. "`n`n"
+				. "Exiting with error code 1 (no .ini file specified or found)."
+			TrayTip, % A_ScriptName, % "exits with code" . A_Space . "1", 5, 1
+			ExitApp, 1
+		}
+		if (Counter = 1)
+		{
+			v_ConfigIni := FileTemp
+			MsgBox, % c_IconAsteriskInfo, % A_ScriptName, % "Only one .ini file was found and application will read in configuration from that file:"
+			. "`n`n"
+			. v_ConfigIni
+			F_ReadIni(v_ConfigIni)
+			return
+		}
+		if (Counter > 1)
+		{
+			MsgBox, % c_IconAsteriskInfo + 4, % A_ScriptName, % "More than one .ini file was found in the following folder:"
+				. "`n`n"
+				. A_ScriptDir
+				. "`n`n"
+				. "Would you like to choose one of the .ini files manually now?"
+			IfMsgBox, No
+			{
+				MsgBox, % c_IconAsteriskInfo, % A_ScriptName, % "Exiting with error code 1 (no .ini file specified or found)."
 				TrayTip, % A_ScriptName, % "exits with code" . A_Space . "1", 5, 1
 				ExitApp, 1
 			}
-			if (Counter = 1)
-			{
-				v_ConfigIni := FileTemp
-				MsgBox, % c_IconAsteriskInfo, % A_ScriptName, % "Only one .ini file was found and application will read in configuration from that file:"
-				. "`n`n"
-				. v_ConfigIni
-				F_ReadIni(v_ConfigIni)
-				return
-			}
-			if (Counter > 1)
-			{
-				MsgBox, % c_IconAsteriskInfo + 4, % A_ScriptName, % "More than one .ini file was found in the following folder:"
-					. "`n`n"
-					. A_ScriptDir
-					. "`n`n"
-					. "Would you like to choose one of the .ini files manually now?"
-				IfMsgBox, No
-				{
-					MsgBox, % c_IconAsteriskInfo, % A_ScriptName, % "Exiting with error code 1 (no .ini file specified or found)."
-					TrayTip, % A_ScriptName, % "exits with code" . A_Space . "1", 5, 1
-					ExitApp, 1
-				}
-				IfMsgBox, Yes
-					F_SelectConfig()
-			}
-		}	
-	else
-		{
-			v_ConfigIni := param
-			F_ReadIni(v_ConfigIni)
+			IfMsgBox, Yes
+				F_SelectConfig()
 		}
+	}	
+	else
+	{
+		v_ConfigIni := param
+		F_ReadIni(v_ConfigIni)
+	}
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 F_ReadIni(param)
