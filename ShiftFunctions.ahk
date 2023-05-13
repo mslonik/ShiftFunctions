@@ -22,7 +22,7 @@ SetBatchLines, 		-1				; -1 = never sleep (i.e. have the script run at maximum s
 SendMode,				Input			; Recommended for new scripts due to its superior speed and reliability.
 SetWorkingDir, 		%A_ScriptDir%		; Ensures a consistent starting directory.
 StringCaseSense, 		On				;for Switch in F_OKU()
-;Testing: Alt+Tab, , asdf Shift+Home
+;Testing: Alt+Tab, , asdf Shift+Home, Ąsi
 
 ; - - - - - - - - - - - - - - - - Executable section, beginning - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 AppVersion			:= "1.3.11"
@@ -333,58 +333,56 @@ F_Toggle()
 F_Capital(ByRef v_Char)
 {
 	global	;assume-global mode of operation
+	OutputDebug, % A_ThisFunc . A_Space . "B" . "`n"
 	SendLevel, % c_OutputSL
 	Switch v_Char
 	{
 		Case "``":
-			Send, {BS}~
+			Send, ~
 		Case "1":
-			Send, {BS}{!}
+			Send, {!}
 		Case "2":
-			Send, {BS}@
+			Send, @
 		Case "3":
-			Send, {BS}{#}
+			Send, {#}
 		Case "4":
-			Send, {BS}$
+			Send, $
 		Case "5":
-			Send, {BS}`%
+			Send, `%
 		Case "6":
-			Send, {BS}{^}
+			Send, {^}
 		Case "7":
-			Send, {BS}&
+			Send, &
 		Case "8":
-			Send, {BS}*
+			Send, *
 		Case "9":
-			Send, {BS}(
+			Send, (
 		Case "0":
-			Send, {BS})
+			Send, )
 		Case "-":
-			Send, {BS}_
+			Send, _
 		Case "=":
-			Send, {BS}{+}
+			Send, {+}
 		Case "[":
-			Send, {BS}{{}	;alternative: SendRaw, `b{
+			Send, {{}	;alternative: SendRaw, `b{
 		Case "]":
-			Send, {BS}{}}	;alternative: SendRaw, `b}
+			Send, {}}	;alternative: SendRaw, `b}
 		Case "\":
-			Send, {BS}|
+			Send, |
 		Case ";":
-			Send, {BS}:
+			Send, :
 		Case "'":
-			Send, {BS}"
+			Send, "
 		Case ",":
-			Send, {BS}<
+			Send, <
 		Case ".":
-			Send, {BS}>
+			Send, >
 		Case "/":
-			Send, {BS}?
-		Case "`t":	;by try and error method
-		Case "`n":
+			Send, ?
 		Default:
 			; OutputDebug, % "v_Char:" . v_Char . "|" . "`n"
 			v_Char := Format("{:U}", v_Char)
 			Send, % v_Char
-			; Send, % "{BS}" . v_Char
 	}
 	SendLevel, % c_NominalSL
 	F_FlagReset()
@@ -615,6 +613,7 @@ F_OCD(ih, Char)	;On Character Down; this function can interrupt "On Key Down"
 	; OutputDebug, % A_ThisFunc . A_Space . "Char:" . Char . "|" . A_Space . "B" . "`n"
 	v_Char 	:= Char
 ,	f_DUndo 	:= false
+,	f_IfShiftDown := GetKeyState("Shift")
 	SendLevel, 	% c_OutputSL
 	; OutputDebug, % A_ThisFunc . A_Space . "v_Char:" . v_Char . "|" . A_Space . "B" . "`n"
 	Switch Char
@@ -622,26 +621,44 @@ F_OCD(ih, Char)	;On Character Down; this function can interrupt "On Key Down"
 		Case "{", "}", "^", "!", "+", "#":
 			Send, % "{" . Char . "}"
 		Case "`n":
-			if (f_RShift) or (f_LShift)	;This is exception to me. I don't know why this is necessary, but seems it does.
+			; if (GetKeyState("Shift"))
+			if (f_IfShiftDown)
 			{
 				; OutputDebug, % "Shift+Enter" . "`n"
 				Send, +{Enter}
+				v_CLCounter 	:= c_CLReset
 			}	
-			else
+			if (!f_IfShiftDown) and (!f_SPA)
 			{
 				; OutputDebug, % "Enter" . "`n"
 				Send, {Enter}
+				v_CLCounter 	:= c_CLReset
 			}
-		Case "`t":
-			if (f_RShift) or (f_LShift)
+			if (!f_IfShiftDown) and (f_SPA)
 			{
-				; OutputDebug, % "Shift+Tab" . "`n"
+				Send, +{Enter}
+				f_SPA := false
+			,	v_CLCounter 	:= c_CLReset
+			}	
+		Case "`t":	;jeszcze dodać sztuczkę z CapsLock
+			if (f_IfShiftDown)
+			{
+				OutputDebug, % "Shift+Tab" . "`n"
 				Send, +{Tab}
+				v_CLCounter 	:= c_CLReset
 			}
-			else
+			if (!f_IfShiftDown) and (!f_SPA)
 			{
-				; OutputDebug, % "Tab" . "`n"
+				OutputDebug, % "Tab" . "`n"
 				Send, {Tab}
+				v_CLCounter 	:= c_CLReset
+			}
+			if (!f_IfShiftDown) and (f_SPA)
+			{
+				OutputDebug, % "druga" . "`n"
+				Send, +{Tab}
+				f_SPA := false
+			,	v_CLCounter 	:= c_CLReset
 			}	
 		Default:
 			if (GetKeyState("CapsLock", "T"))
@@ -690,7 +707,7 @@ F_OCD(ih, Char)	;On Character Down; this function can interrupt "On Key Down"
 				else			
 					Send, % v_Char
 			}	
-			; OutputDebug, % "A_StoreCapsLockMode:" . A_StoreCapsLockMode . "`n"
+				; OutputDebug, % "A_StoreCapsLockMode:" . A_StoreCapsLockMode . "`n"
 	}
 	SendLevel, 	% c_NominalSL
 }
