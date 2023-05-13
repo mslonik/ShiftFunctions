@@ -333,7 +333,7 @@ F_Toggle()
 F_Capital(ByRef v_Char)
 {
 	global	;assume-global mode of operation
-	OutputDebug, % A_ThisFunc . A_Space . "B" . "`n"
+	; OutputDebug, % A_ThisFunc . A_Space . "B" . "`n"
 	SendLevel, % c_OutputSL
 	Switch v_Char
 	{
@@ -608,63 +608,23 @@ F_OKD(ih, VK, SC)	;On Key Down
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 F_OCD(ih, Char)	;On Character Down; this function can interrupt "On Key Down"
-{	;This function detects only "characters" according to AutoHotkey rules, no: modifiers (Shifts, Controls, Alts, Windows), function keys, Backspace ; yes: Esc, Space, Enter, Tab and all other main keys.
+{	;This function detects only "characters" according to AutoHotkey rules, no: modifiers (Shifts, Controls, Alts, Windows), function keys, Backspace, PgUp, PgDn, Ins, Home, Del, End ; yes: Esc, Space, Enter, Tab and all aphanumeric keys. How keyboard works: some keys have two layer meaning, where Shift is used to call another character from another layer. Example: basic layer 3, shift layer #. Another example: Ins and Shift+Ins do not produce character, but act differently; Shift + Ins must be preserved.
 	global	;assume-global mode of operation
 	; OutputDebug, % A_ThisFunc . A_Space . "Char:" . Char . "|" . A_Space . "B" . "`n"
 	v_Char 	:= Char
 ,	f_DUndo 	:= false
-,	f_IfShiftDown := GetKeyState("Shift")
+,	f_IfShiftDown 		:= GetKeyState("Shift")
 	SendLevel, 	% c_OutputSL
 	; OutputDebug, % A_ThisFunc . A_Space . "v_Char:" . v_Char . "|" . A_Space . "B" . "`n"
 	Switch Char
 	{
 		Case "{", "}", "^", "!", "+", "#":
 			Send, % "{" . Char . "}"
-		Case "`n":
-			; if (GetKeyState("Shift"))
-			if (f_IfShiftDown)
-			{
-				; OutputDebug, % "Shift+Enter" . "`n"
-				Send, +{Enter}
-				v_CLCounter 	:= c_CLReset
-			}	
-			if (!f_IfShiftDown) and (!f_SPA)
-			{
-				; OutputDebug, % "Enter" . "`n"
-				Send, {Enter}
-				v_CLCounter 	:= c_CLReset
-			}
-			if (!f_IfShiftDown) and (f_SPA)
-			{
-				Send, +{Enter}
-				f_SPA := false
-			,	v_CLCounter 	:= c_CLReset
-			}	
-		Case "`t":	;jeszcze dodać sztuczkę z CapsLock
-			if (f_IfShiftDown)
-			{
-				OutputDebug, % "Shift+Tab" . "`n"
-				Send, +{Tab}
-				v_CLCounter 	:= c_CLReset
-			}
-			if (!f_IfShiftDown) and (!f_SPA)
-			{
-				OutputDebug, % "Tab" . "`n"
-				Send, {Tab}
-				v_CLCounter 	:= c_CLReset
-			}
-			if (!f_IfShiftDown) and (f_SPA)
-			{
-				OutputDebug, % "druga" . "`n"
-				Send, +{Tab}
-				f_SPA := false
-			,	v_CLCounter 	:= c_CLReset
-			}	
 		Default:
 			if (GetKeyState("CapsLock", "T"))
 			{
 				SetStoreCapslockMode, Off	;This is the only way which I know to get rid of blinking CapsLock
-				Sleep, 1		;sleep is required by function GetKeyState to correctly update: "Systems with unusual keyboard drivers might be slow to update the state of their keys". Surprisingly 1 ms seems to be ok.
+				Sleep, 1		;sleep is required by function SetStoreCapslockMode to correctly update. Surprisingly 1 ms seems to be ok.seems to be ok.
 				Switch Char				;This is the only way which I know to get rid of blinking CapsLock
 				{
 					Case "A":	Send, {U+0041}	;A
@@ -693,19 +653,54 @@ F_OCD(ih, Char)	;On Character Down; this function can interrupt "On Key Down"
 					Case "X":	Send, {U+0058}	;X
 					Case "Y":	Send, {U+0059}	;Y
 					Case "Z":	Send, {U+005a}	;Z
-					Default: 	Send, % Char
+					Default:
+						if (f_IfShiftDown)
+						{
+							Send, % "+" . v_Char
+							v_CLCounter 	:= c_CLReset
+						}
+						if (!f_IfShiftDown) and (!f_SPA)
+						{
+							Send, % v_Char
+						}
+						if (!f_IfShiftDown) and (f_SPA)
+						{
+							Send, % "+" . v_Char
+							f_SPA := false
+						,	v_CLCounter 	:= c_CLReset
+						}	
 				}
 			}	
 			else
 			{
 				SetStoreCapslockMode, On
-				Sleep, 1	;sleep is required by function GetKeyState to correctly update: "Systems with unusual keyboard drivers might be slow to update the state of their keys". Surprisingly 1 ms seems to be ok.
-				if (f_Capital) 
-					and (f_Char)	;without this line LShift D, LShift U, LCtrl D, LCtrl U used to send Backspace
-					and (f_SPA)	;SPA = Shift Pressed Alone
+				Sleep, 1	;sleep is required by function SetStoreCapslockMode to correctly update. Surprisingly 1 ms seems to be ok.
+				if (Char = "a") or (Char = "b") or (Char = "c") or (Char = "d") or (Char = "e") or (Char = "f") or (Char = "g") or (Char = "h") or (Char = "i") or (Char = "j") or (Char = "k") or (Char = "l") or (Char = "m") or (Char = "n") or (Char = "o") or (Char = "p") or (Char = "r") or (Char = "s") or (Char = "t") or (Char = "u") or (Char = "v") or (Char = "w") or (Char = "x") or (Char = "y") or (Char = "z")
+				{
+					if (f_Capital) 
+						and (f_SPA)	;SPA = Shift Pressed Alone
 						F_Capital(v_Char)
-				else			
-					Send, % v_Char
+					else
+						Send, % v_Char
+				}
+				else
+				{
+					if (f_IfShiftDown)
+					{
+						Send, % "+" . v_Char
+						v_CLCounter 	:= c_CLReset
+					}
+					if (!f_IfShiftDown) and (!f_SPA)
+					{
+						Send, % v_Char
+					}
+					if (!f_IfShiftDown) and (f_SPA)
+					{
+						Send, % "+" . v_Char
+						f_SPA := false
+					,	v_CLCounter 	:= c_CLReset
+					}	
+				}
 			}	
 				; OutputDebug, % "A_StoreCapsLockMode:" . A_StoreCapsLockMode . "`n"
 	}
