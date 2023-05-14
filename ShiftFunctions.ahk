@@ -573,7 +573,10 @@ F_OKD(ih, VK, SC)	;On Key Down
 		Case "LShift":
 			; OutputDebug, % "f_LShift:" . f_LShift . "`n"
 			if (f_LShift)	;protection against "auto-repeat", function of operating system
+			{
+				Critical, Off
 				return
+			}
 			else
 			{
 				f_LShift		:= true
@@ -583,7 +586,10 @@ F_OKD(ih, VK, SC)	;On Key Down
 		Case "RShift":
 			; OutputDebug, % "f_RShift:" . f_RShift . "`n"
 			if (f_RShift)
+			{
+				Critical, Off
 				return
+			}
 			else
 			{
 				f_RShift		:= true
@@ -610,6 +616,7 @@ F_OKD(ih, VK, SC)	;On Key Down
 F_OCD(ih, Char)	;On Character Down; this function can interrupt "On Key Down"
 {	;This function detects only "characters" according to AutoHotkey rules, no: modifiers (Shifts, Controls, Alts, Windows), function keys, Backspace, PgUp, PgDn, Ins, Home, Del, End ; yes: Esc, Space, Enter, Tab and all aphanumeric keys. How keyboard works: some keys have two layer meaning, where Shift is used to call another character from another layer. Example: basic layer 3, shift layer #. Another example: Ins and Shift+Ins do not produce character, but act differently; Shift + Ins must be preserved.
 	global	;assume-global mode of operation
+	Critical, On
 	; OutputDebug, % A_ThisFunc . A_Space . "Char:" . Char . "|" . A_Space . "B" . "`n"
 	v_Char 	:= Char
 ,	f_DUndo 	:= false
@@ -705,6 +712,7 @@ F_OCD(ih, Char)	;On Character Down; this function can interrupt "On Key Down"
 				; OutputDebug, % "A_StoreCapsLockMode:" . A_StoreCapsLockMode . "`n"
 	}
 	SendLevel, 	% c_NominalSL
+	Critical, Off
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 F_OKU(ih, VK, SC)	;On Key Up
