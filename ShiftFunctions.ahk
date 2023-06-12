@@ -25,7 +25,7 @@ StringCaseSense, 		On				;for Switch in F_OKU()
 ;Testing: Alt+Tab, , asdf Shift+Home, Ąsi
 
 ; - - - - - - - - - - - - - - - - Executable section, beginning - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-AppVersion			:= "1.3.11"
+AppVersion			:= "1.3.12"
 ;@Ahk2Exe-Let vAppVersion=%A_PriorLine~U)^(.+"){1}(.+)".*$~$2% ; Keep these lines together
 ;Overrides the custom EXE icon used for compilation
 ;@Ahk2Exe-SetCopyright GNU GPL 3.x
@@ -628,7 +628,7 @@ F_OCD(ih, Char)	;On Character Down; this function can interrupt "On Key Down"
 		Case "{", "}", "^", "!", "+", "#":
 			Send, % "{" . Char . "}"
 		Default:
-			if (GetKeyState("CapsLock", "T"))
+			if (GetKeyState("CapsLock", "T"))	;if CapsLock is "on"
 			{
 				SetStoreCapslockMode, Off	;This is the only way which I know to get rid of blinking CapsLock
 				Sleep, 1		;sleep is required by function SetStoreCapslockMode to correctly update. Surprisingly 1 ms seems to be ok.seems to be ok.
@@ -678,10 +678,10 @@ F_OCD(ih, Char)	;On Character Down; this function can interrupt "On Key Down"
 						}	
 				}
 			}	
-			else
+			else	;CapsLock is not "on" = "off"
 			{
-				SetStoreCapslockMode, On
-				Sleep, 1	;sleep is required by function SetStoreCapslockMode to correctly update. Surprisingly 1 ms seems to be ok.
+				; SetStoreCapslockMode, On	;CapsLock will be restored to its former value if Send needed to change it temporarily for its operation.
+				; Sleep, 1	;sleep is required by function SetStoreCapslockMode to correctly update. Surprisingly 1 ms seems to be ok.
 				if (Char = "a") or (Char = "b") or (Char = "c") or (Char = "d") or (Char = "e") or (Char = "f") or (Char = "g") or (Char = "h") or (Char = "i") or (Char = "j") or (Char = "k") or (Char = "l") or (Char = "m") or (Char = "n") or (Char = "o") or (Char = "p") or (Char = "r") or (Char = "s") or (Char = "t") or (Char = "u") or (Char = "v") or (Char = "w") or (Char = "x") or (Char = "y") or (Char = "z")
 				{
 					if (f_Capital) 
@@ -732,11 +732,16 @@ F_OKU(ih, VK, SC)	;On Key Up
 		return
 	}
 
+	; OutputDebug, % "f_L:" . f_LShift . A_Space . "f_R:" . f_RShift . "`n"
 	if ((WhatWasUp = "LShift") or (WhatWasUp = "RShift"))
 		and (WhatWasUp = v_WhatWasDown)
 		and (!f_AOK_Down)	;Any Other Key
 	{
-		f_SPA 	:= true	;Shift key (left or right) was Pressed Alone.
+		f_SPA 	:= true	;Shift key (left or right) was Pressed Alone. When set, can be used together with next key press. Therefore it cannot be cleared before next key is pressed.
+		if (WhatWasUp = "LShift")
+			f_LShift := false
+		if (WhatWasUp = "RShift")
+			f_RShift := false
 		; OutputDebug, % "f_SPA:" . f_SPA . "`n"
 	}
 
@@ -757,7 +762,7 @@ F_OKU(ih, VK, SC)	;On Key Up
 			F_Diacritics(v_Char)
 
 	if (f_CapsLock)
-		and (f_SPA)
+		and (f_SPA)	;Shift key (left or right) was Pressed Alone.
 			F_CapsLock(WhatWasUp, f_SPA)
 
 	if (WhatWasUp = "LControl") or (WhatWasUp =  "RControl")
@@ -789,13 +794,19 @@ F_CapsLock(WhatWasUp, ByRef f_SPA)
 		,	CapsLockState := false
 	; OutputDebug, % A_ThisFunc .  "`n"
 	if (WhatWasUp = "LShift") or (WhatWasUp = "RShift")
+	{
+		if (WhatWasUp = "LShift") and (f_RShift)	;concurrent pressing of both shifts is not recorder as single shift press
+			return
+		if (WhatWasUp = "RShift") and (f_LShift)
+			return
 		v_CLCounter++
+	}
 	else
 	{
 		v_CLCounter := c_CLReset
 		return
 	}
-	; OutputDebug, % "CLCounter:" . A_Space . v_CLCounter . "`n"
+	OutputDebug, % "CLCounter:" . A_Space . v_CLCounter . "`n"
 	if (v_CLCounter = CLLimit)
 	{
 		SetCapsLockState, % !GetKeyState("CapsLock", "T") 
@@ -803,8 +814,6 @@ F_CapsLock(WhatWasUp, ByRef f_SPA)
 		SoundPlay, *48		;standard system sound, exclamation
 		v_CLCounter	:= c_CLReset
 	,	f_SPA 		:= false	;Shift Pressed Alone
-	,	f_RShift 		:= false
-	,	f_LShift 		:= false
 	}
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -824,8 +833,6 @@ F_Diacritics(ByRef v_Char)
 		,	f_SPA := false	;Shift Pressed Alone
 		,	v_Char := ""
 			; OutputDebug, % "f_DUndo:" . A_Space . f_DUndo . A_Space . "v_Undo:" . v_Undo . "`n"
-		,	f_RShift 			:= false
-		,	f_LShift 			:= false
 		}
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
