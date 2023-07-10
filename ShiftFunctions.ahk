@@ -25,7 +25,7 @@ StringCaseSense, 		On				;for Switch in F_OKU()
 ;Testing: Alt+Tab, , asdf Shift+Home, Ąsi
 
 ; - - - - - - - - - - - - - - - - Executable section, beginning - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-AppVersion			:= "1.3.12"
+AppVersion			:= "1.3.13"
 ;@Ahk2Exe-Let vAppVersion=%A_PriorLine~U)^(.+"){1}(.+)".*$~$2% ; Keep these lines together
 ;Overrides the custom EXE icon used for compilation
 ;@Ahk2Exe-SetCopyright GNU GPL 3.x
@@ -620,18 +620,24 @@ F_OCD(ih, Char)	;On Character Down; this function can interrupt "On Key Down"
 	; OutputDebug, % A_ThisFunc . A_Space . "Char:" . Char . "|" . A_Space . "B" . "`n"
 	v_Char 	:= Char
 ,	f_DUndo 	:= false
-,	f_IfShiftDown 		:= GetKeyState("Shift")
+
+	local 	f_IfShiftDown 		:= GetKeyState("Shift", "P")
+		,    IsAlpha 			:= false
+
+	if v_Char is Alpha
+		IsAlpha := true
+	else
+		IsAlpha := false
+
 	SendLevel, 	% c_OutputSL
 	; OutputDebug, % A_ThisFunc . A_Space . "v_Char:" . v_Char . "|" . A_Space . "B" . "`n"
-	Switch Char
+
+	if (GetKeyState("CapsLock", "T"))	;if CapsLock is "on"
 	{
-		Case "{", "}", "^", "!", "+", "#":
-			Send, % "{" . Char . "}"
-		Default:
-			if (GetKeyState("CapsLock", "T"))	;if CapsLock is "on"
-			{
-				SetStoreCapslockMode, Off	;This is the only way which I know to get rid of blinking CapsLock
-				Sleep, 1		;sleep is required by function SetStoreCapslockMode to correctly update. Surprisingly 1 ms seems to be ok.seems to be ok.
+		SetStoreCapslockMode, Off	;This is the only way which I know to get rid of blinking CapsLock. From now the v_Char value is ignored by Send and treated as small letters
+		if v_Char is Alpha	;alphabetic character
+		{
+			if (!f_IfShiftDown) and (!f_SPA)	;SPA = Shift Pressed Alone
 				Switch Char				;This is the only way which I know to get rid of blinking CapsLock
 				{
 					Case "A":	Send, {U+0041}	;A
@@ -660,63 +666,67 @@ F_OCD(ih, Char)	;On Character Down; this function can interrupt "On Key Down"
 					Case "X":	Send, {U+0058}	;X
 					Case "Y":	Send, {U+0059}	;Y
 					Case "Z":	Send, {U+005a}	;Z
-					Default:
-						if (f_IfShiftDown)
-						{
-							Send, % "+" . v_Char
-							v_CLCounter 	:= c_CLReset
-						}
-						if (!f_IfShiftDown) and (!f_SPA)
-						{
-							Send, % v_Char
-						}
-						if (!f_IfShiftDown) and (f_SPA)
-						{
-							Send, % "+" . v_Char
-							f_SPA := false
-						,	v_CLCounter 	:= c_CLReset
-						}	
 				}
-			}	
-			else	;CapsLock is not "on" = "off"
+
+			; OutputDebug, % "CapsLock is on" . A_Space . "f_SPA:" . f_SPA . A_Space . "f_IfShiftDown:" . f_IfShiftDown . "`n"
+			if (f_IfShiftDown)	;logic must be reversed if Shift key is pressed.
+				Send, % "+" . v_Char
+
+			if (f_Capital) 
+				and (f_SPA)	;SPA = Shift Pressed Alone
 			{
-				; SetStoreCapslockMode, On	;CapsLock will be restored to its former value if Send needed to change it temporarily for its operation.
-				; Sleep, 1	;sleep is required by function SetStoreCapslockMode to correctly update. Surprisingly 1 ms seems to be ok.
-				if (Char = "a") or (Char = "b") or (Char = "c") or (Char = "d") or (Char = "e") or (Char = "f") or (Char = "g") or (Char = "h") or (Char = "i") or (Char = "j") or (Char = "k") or (Char = "l") or (Char = "m") or (Char = "n") or (Char = "o") or (Char = "p") or (Char = "r") or (Char = "s") or (Char = "t") or (Char = "u") or (Char = "v") or (Char = "w") or (Char = "x") or (Char = "y") or (Char = "z")
-				{
-					if (f_Capital) 
-						and (f_SPA)	;SPA = Shift Pressed Alone
-						F_Capital(v_Char)
-					else
-						Send, % v_Char
-				}
-				else
-				{
-					if (f_IfShiftDown)
-					{
-						Send, % "+" . v_Char
-						v_CLCounter 	:= c_CLReset
-					}
-					if (!f_IfShiftDown) and (!f_SPA)
-					{
-						Send, % v_Char
-					}
-					if (!f_IfShiftDown) and (f_SPA)
-					{
-						Send, % "+" . v_Char
-						f_SPA := false
-					,	v_CLCounter 	:= c_CLReset
-					}	
-				}
+				Send, % v_Char
+				f_SPA := false	
 			}	
-				; OutputDebug, % "A_StoreCapsLockMode:" . A_StoreCapsLockMode . "`n"
+		}
+		else	;not alphabetic character
+			F_SendNotAlphaChar(f_IfShiftDown, v_Char, f_SPA)
+		
+		SetStoreCapslockMode, On	;for whatever reason 
 	}
+	else	;CapsLock is off
+	{
+		; OutputDebug, % "CapsLock is off" . "`n"
+		if (!f_IfShiftDown) and (IsAlpha)
+		{
+			if (f_Capital) 
+				and (f_SPA)	;SPA = Shift Pressed Alone
+				F_Capital(v_Char)
+			else
+				Send, % v_Char
+		}
+		else    ;not alphabetic character
+			F_SendNotAlphaChar(f_IfShiftDown, v_Char, f_SPA)
+	}
+
+	; OutputDebug, % "A_StoreCapsLockMode:" . A_StoreCapsLockMode . "`n"
 	SendLevel, 	% c_NominalSL
 	Critical, Off
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+F_SendNotAlphaChar(f_IfShiftDown, v_Char, ByRef f_SPA)
+{ 
+	global	;assume-global mode of operation
+
+	if (f_IfShiftDown)
+	{
+		Send, % "+" . v_Char
+		v_CLCounter 	:= c_CLReset
+	}
+	if (!f_IfShiftDown) and (!f_SPA)
+		Send, % v_Char
+
+	if (!f_IfShiftDown) and (f_SPA)
+	{
+		Send, % "+" . v_Char
+		f_SPA := false
+	,	v_CLCounter 	:= c_CLReset
+	}	
+}
+; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 F_OKU(ih, VK, SC)	;On Key Up
 {
+
 	global	;assume-global mode of operation
 	local	WhatWasUp := GetKeyName(Format("vk{:x}sc{:x}", VK, SC))
 	
