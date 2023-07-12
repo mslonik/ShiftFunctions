@@ -621,9 +621,13 @@ F_OCD(ih, Char)	;On Character Down; this function can interrupt "On Key Down"
 	v_Char 	:= Char
 ,	f_DUndo 	:= false
 
-	local 	f_IfShiftDown 		:= GetKeyState("Shift", "P")
+	local 	f_IfShiftDown 		:= GetKeyState("Shift", "P")	;if <shift> is down physically
+			f_IfShiftDownL		:= GetKeyState("Shift")		;if <shift> is down only logically
 		,    IsAlpha 			:= false
 
+	if (f_IfShiftDownL) and (!f_IfShiftDown)	;if <shift> is down logically but is not down physically, reset the flag. This condition is here to get rid of bug related to stuck <shift> in down position.
+		f_IfShiftDown := false
+		
 	if v_Char is Alpha
 		IsAlpha := true
 	else
