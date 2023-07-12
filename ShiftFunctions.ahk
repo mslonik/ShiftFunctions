@@ -710,7 +710,10 @@ F_SendNotAlphaChar(f_IfShiftDown, v_Char, ByRef f_SPA)
 
 	if (f_IfShiftDown)
 	{
-		Send, % "+" . v_Char
+		if (v_Char = "{") or (v_Char = "}") or (v_Char = "^") or (v_Char = "!") or (v_Char = "+") or (v_Char = "#")
+			Send, % "{" . v_Char . "}"
+		else
+			Send, % "+" . v_Char
 		v_CLCounter 	:= c_CLReset
 	}
 	if (!f_IfShiftDown) and (!f_SPA)
