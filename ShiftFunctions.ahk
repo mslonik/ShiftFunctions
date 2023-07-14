@@ -626,7 +626,12 @@ F_OCD(ih, Char)	;On Character Down; this function can interrupt "On Key Down"
 		,    IsAlpha 			:= false
 
 	if (f_IfShiftDownL) and (!f_IfShiftDown)	;if <shift> is down logically but is not down physically, reset the flag. This condition is here to get rid of bug related to stuck <shift> in down position.
+	{
 		f_IfShiftDown := false
+		Send, {Shift Up}	; This line is here to get rid of bug related to stuck <shift> in down position.
+		OutputDebug, % "Shift must be lifted up!" . A_Space . "v_Char:" . v_Char . "`n"
+		FileAppend, % A_Now . "Shift must be lifted up!" . A_Space . "v_Char:" . v_Char . "`n", ErrorLog.txt, UTF-8 ;Logging of errors
+	}		
 		
 	if v_Char is Alpha
 		IsAlpha := true
