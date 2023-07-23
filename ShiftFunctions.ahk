@@ -565,7 +565,7 @@ F_OKD(ih, VK, SC)	;On Key Down
 	if (f_WinPressed) and (A_PriorKey = "l")	;This condition is valid only after unlocking of Windows (# + L to lock). There is phenomena that after unlocking F_OCD is inactive untill mouse is clicked or Windows key is pressed. Don't know why it is so, but this conditions solves the issue.
 	{
 		v_Char 		:= v_WhatWasDown		;OutputDebug, % "Exception!" . "`n"
-	,	f_AOK_Down 	:= false				;AOK = Any Other Key
+		F_FlagReset()
 	}	
 
 	Switch v_WhatWasDown
@@ -621,16 +621,15 @@ F_OCD(ih, Char)	;On Character Down; this function can interrupt "On Key Down"
 	v_Char 	:= Char
 ,	f_DUndo 	:= false
 
-	local 	f_IfShiftDown 		:= GetKeyState("Shift", "P")	;if <shift> is down physically
-			f_IfShiftDownL		:= GetKeyState("Shift")		;if <shift> is down only logically
+	local 	f_IfShiftDownP		:= GetKeyState("Shift", "P")	;if <shift> is down physically; remember, it takes time to switch and read physical state
+			f_IfShiftDown		:= GetKeyState("Shift")		;if <shift> is down only logically
 		,    IsAlpha 			:= false
 
-	if (f_IfShiftDownL) and (!f_IfShiftDown)	;if <shift> is down logically but is not down physically, reset the flag. This condition is here to get rid of bug related to stuck <shift> in down position.
+	if (f_IfShiftDown) and (!f_IfShiftDownP)	;if <shift> is down logically but is not down physically, reset the flag. This condition is here to get rid of bug related to stuck <shift> in down position.
 	{
 		f_IfShiftDown := false
 		Send, {Blind}{Shift Up}	; This line is here to get rid of bug related to stuck <shift> in down position.
-		KeyHistory			; Displays the history info in a window.
-		ListLines				; Displays the script lines most recently executed.
+		; KeyHistory			; Displays the history info in a window.
 		OutputDebug, % "Shift must be lifted up!" . A_Space . "v_Char:" . v_Char . "`n"
 		FileAppend, % A_YYYY . "-" . A_MM . "-" . A_DD . A_Space . A_Hour . ":" . A_Min . ":" . A_Sec . A_Space . "Shift must be lifted up!" . A_Space . "v_Char:" . v_Char . "`n", ErrorLog.txt, UTF-8 ;Logging of errors
 	}		
@@ -742,6 +741,7 @@ F_OKU(ih, VK, SC)	;On Key Up
 {
 
 	global	;assume-global mode of operation
+	Critical, On	;in order to protect against situation when after diacritic capital letter is entered from nowhere.
 	local	WhatWasUp := GetKeyName(Format("vk{:x}sc{:x}", VK, SC))
 	
 	; OutputDebug, % A_ThisFunc . A_Space . "B" . "`n"
@@ -794,6 +794,7 @@ F_OKU(ih, VK, SC)	;On Key Up
 		or (WhatWasUp = "LWin") or (WhatWasUp = "RWin")
 			f_AOK_Down		:= false	;Any Other Key
 
+	Critical, Off		
 	; OutputDebug, % "WWUe:" . WhatWasUp . A_Space "v_Char:" . v_Char . "C:" . f_Char . A_Space . "S:" . f_SPA . A_Space . "A:" . f_AOK_Down . "`n"
 	; OutputDebug, % A_ThisFunc . A_Space . "E" . "`n"
 }
