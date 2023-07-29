@@ -543,7 +543,8 @@ F_CheckIfTimeElapsed(TtElapse)	;argument in miliseconds
 		f_ShiftTimeout := false
 	,	f_WasReset	:= true
 	,	v_Char		:= ""
-	; OutputDebug, % "concurrent" . "`n"
+		SoundPlay, *16	;future: add option to choose behavior (play sound or not, how long to play sound, what sound) and to define time to wait for reset scenario
+		; OutputDebug, % "concurrent" . "`n"
 	}
 	else
 	{
@@ -558,6 +559,7 @@ F_OKD(ih, VK, SC)	;On Key Down
 {
 	global		;assume-global mode of operation
 	Critical, On	;This function starts as the first one (prior to "On Character Down"), but unfortunately can be interrupted by it. To prevent it Critical command is applied.
+	; OutputDebug, % A_ThisFunc . A_Space . "B" . "`n"
 	
 	v_WhatWasDown 	:= GetKeyName(Format("vk{:x}sc{:x}", VK, SC)) 
 	; OutputDebug, % A_ThisFunc . A_Space . "v_WhatWasDown:" . v_WhatWasDown . "|" . A_Space . "B" . "`n"
@@ -610,6 +612,7 @@ F_OKD(ih, VK, SC)	;On Key Down
 		,	f_ShiftDown 	:= false
 		,	f_ShiftUp		:= false	
 	}
+	; OutputDebug, % A_ThisFunc . A_Space . "E" . "`n"
 	Critical, Off
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -617,6 +620,7 @@ F_OCD(ih, Char)	;On Character Down; this function can interrupt "On Key Down"
 {	;This function detects only "characters" according to AutoHotkey rules, no: modifiers (Shifts, Controls, Alts, Windows), function keys, Backspace, PgUp, PgDn, Ins, Home, Del, End ; yes: Esc, Space, Enter, Tab and all aphanumeric keys. How keyboard works: some keys have two layer meaning, where Shift is used to call another character from another layer. Example: basic layer 3, shift layer #. Another example: Ins and Shift+Ins do not produce character, but act differently; Shift + Ins must be preserved.
 	global	;assume-global mode of operation
 	Critical, On
+	; OutputDebug, % A_ThisFunc . A_Space . "B" . "`n"
 	; OutputDebug, % A_ThisFunc . A_Space . "Char:" . Char . "|" . A_Space . "B" . "`n"
 	v_Char 	:= Char
 ,	f_DUndo 	:= false
@@ -711,6 +715,7 @@ F_OCD(ih, Char)	;On Character Down; this function can interrupt "On Key Down"
 
 	; OutputDebug, % "A_StoreCapsLockMode:" . A_StoreCapsLockMode . "`n"
 	SendLevel, 	% c_NominalSL
+	; OutputDebug, % A_ThisFunc . A_Space . "E" . "`n"
 	Critical, Off
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -742,21 +747,19 @@ F_OKU(ih, VK, SC)	;On Key Up
 
 	global	;assume-global mode of operation
 	Critical, On	;in order to protect against situation when after diacritic capital letter is entered from nowhere.
+	; OutputDebug, % A_ThisFunc . A_Space . "B" . "`n"
 	local	WhatWasUp := GetKeyName(Format("vk{:x}sc{:x}", VK, SC))
 	
-	; OutputDebug, % A_ThisFunc . A_Space . "B" . "`n"
-	; OutputDebug, % A_ThisFunc . A_Space . "WhatWasUp:" . WhatWasUp . "|" . A_Space . "v_Char:" . v_Char . "|" . "`n"
-
 	if (f_WasReset)
 	{
 		; OutputDebug, % "f_WasReset:" . f_WasReset . "`n"
+		if (WhatWasUp = "LShift") or (WhatWasUp = "RShift")	;Wait till both LShift and RShift are up. Assumption: if both were down one after another, then both should be up one after another too.
+			return
 		v_CLCounter 	:= c_CLReset
 	,	f_WasReset 	:= false
-		SoundPlay, *16	;future: add option to choose behavior (play sound or not, how long to play sound, what sound) and to define time to wait for reset scenario
-		return
 	}
 
-	; OutputDebug, % "f_L:" . f_LShift . A_Space . "f_R:" . f_RShift . "`n"
+	; OutputDebug, % A_ThisFunc . A_Space . "WhatWasUp:" . WhatWasUp . A_Space . "v_WhatWasDown:" . v_WhatWasDown .  "`n"
 	if ((WhatWasUp = "LShift") or (WhatWasUp = "RShift"))
 		and (WhatWasUp = v_WhatWasDown)
 		and (!f_AOK_Down)	;Any Other Key
@@ -794,9 +797,9 @@ F_OKU(ih, VK, SC)	;On Key Up
 		or (WhatWasUp = "LWin") or (WhatWasUp = "RWin")
 			f_AOK_Down		:= false	;Any Other Key
 
+	; OutputDebug, % A_ThisFunc . A_Space . "E" . "`n"
 	Critical, Off		
 	; OutputDebug, % "WWUe:" . WhatWasUp . A_Space "v_Char:" . v_Char . "C:" . f_Char . A_Space . "S:" . f_SPA . A_Space . "A:" . f_AOK_Down . "`n"
-	; OutputDebug, % A_ThisFunc . A_Space . "E" . "`n"
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 F_FlagReset()

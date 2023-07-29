@@ -1,5 +1,7 @@
+.gitignore
 *.lnk
 *.ini
 .vscode/*.*
 Polish.ini
-Polish.ini
+ErrorLog.txt
+.gitignore
