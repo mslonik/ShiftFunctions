@@ -633,7 +633,7 @@ F_OCD(ih, Char)	;On Character Down; this function can interrupt "On Key Down"
 	{
 		f_IfShiftDown := false
 		Send, {Blind}{Shift Up}	; This line is here to get rid of bug related to stuck <shift> in down position.
-		Send, {BS} . v_Char		
+		Send, % "{BS}" . v_Char		
 		OutputDebug, % "Shift must be lifted up!" . A_Space . "v_Char:" . v_Char . "`n"
 		FileAppend, % A_YYYY . "-" . A_MM . "-" . A_DD . A_Space . A_Hour . ":" . A_Min . ":" . A_Sec . A_Space . "Shift must be lifted up!" . A_Space . "v_Char:" . v_Char . "`n", ErrorLog.txt, UTF-8 ;Logging of errors
 	}		
@@ -754,8 +754,8 @@ F_OKU(ih, VK, SC)	;On Key Up
 	{
 		if (WhatWasUp = "LShift") or (WhatWasUp = "RShift")
 		{
-			v_WhatWasDown := ""	
-			f_WasReset 	:= false
+			v_WhatWasDown 	:= ""	
+		,	f_WasReset 	:= false
 		}
 	}
 
