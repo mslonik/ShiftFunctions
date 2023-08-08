@@ -25,7 +25,7 @@ StringCaseSense, 		On				;for Switch in F_OKU()
 ;Testing: Alt+Tab, , asdf Shift+Home, Ąsi
 
 ; - - - - - - - - - - - - - - - - Executable section, beginning - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-AppVersion			:= "1.3.13"
+AppVersion			:= "1.3.14"
 ;@Ahk2Exe-Let vAppVersion=%A_PriorLine~U)^(.+"){1}(.+)".*$~$2% ; Keep these lines together
 ;Overrides the custom EXE icon used for compilation
 ;@Ahk2Exe-SetCopyright GNU GPL 3.x
@@ -165,6 +165,7 @@ return
 ~RButton::
 ~MButton::
 	F_FlagReset()
+	v_Char := ""	;necessary for the scenario: user's text string is finished with potential diacritic letter, user clicks somewhere and then <shift d><shift u> produces diacritic. It should not.
 return
 ; - - - - - - - - - - - - - - GLOBAL HOTKEYS: END- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -632,8 +633,8 @@ F_OCD(ih, Char)	;On Character Down; this function can interrupt "On Key Down"
 	if (f_IfShiftDown) and (!f_IfShiftDownP)	;if <shift> is down logically but is not down physically, reset the flag. This condition is here to get rid of bug related to stuck <shift> in down position.
 	{
 		f_IfShiftDown := false
-		Send, {Blind}{Shift Up}	; This line is here to get rid of bug related to stuck <shift> in down position.
-		v_Char := ""
+	,	v_Char := ""
+		Send, {LShift Down}{LShift Up}{RShift Down}{RShift Up}	; This line is here to get rid of bug related to stuck <shift> in down position.
 		OutputDebug, % "Shift must be lifted up!" . A_Space . "v_Char:" . v_Char . "`n"
 		FileAppend, % A_YYYY . "-" . A_MM . "-" . A_DD . A_Space . A_Hour . ":" . A_Min . ":" . A_Sec . A_Space . "Shift must be lifted up!" . A_Space . "v_Char:" . v_Char . "`n", ErrorLog.txt, UTF-8 ;Logging of errors
 	}		
@@ -799,7 +800,6 @@ F_OKU(ih, VK, SC)	;On Key Up
 
 	; OutputDebug, % A_ThisFunc . A_Space . "E" . "`n"
 	Critical, Off		
-	; OutputDebug, % "WWUe:" . WhatWasUp . A_Space "v_Char:" . v_Char . "C:" . f_Char . A_Space . "S:" . f_SPA . A_Space . "A:" . f_AOK_Down . "`n"
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 F_FlagReset()
