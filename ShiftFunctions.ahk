@@ -167,6 +167,11 @@ return
 	F_FlagReset()
 	v_Char := ""	;necessary for the scenario: user's text string is finished with potential diacritic letter, user clicks somewhere and then <shift d><shift u> produces diacritic. It should not.
 return
+
+~+WheelUp::	;scrolling with shift pressed down, e.g. in draw.io application; unfortunatelly I don't know how to make it possible with touchpad and "two fingers" scrolling on ThinkPad laptops.
+~+WheelDown::
+	v_CLCounter := -1	;it will be incremented by +1 to 0 by function F_CapsLock
+return
 ; - - - - - - - - - - - - - - GLOBAL HOTKEYS: END- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 ; - - - - - - - - - - - - - - DEFINITIONS OF FUNCTIONS: BEGINNING- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
