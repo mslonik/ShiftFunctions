@@ -6,22 +6,22 @@
 				Shift: Capital, when Shift is pressed and released before character, that character is replaced with capital character.
 				Shift: CapsLock, when Shift is pressed and release twice, CapsLock is toggled.
  	License:     	GNU GPL v.3
-	Notes:		Run this script as the first one, before any Hotstring definition (static or dynamic).
+	Notes:		Run this script as the first one, before any Hotstring definition (static or dynamic). Thanks to that the on InputHook stack the `ShiftFunction` will be the last one which processes any characters entered by user.
 				Save this file as UTF-8 with BOM.
-				To cancel Shift behaviour press either Control, Esc or even Backspace.
+				To cancel Shift behaviour press either Control, Esc, Backspace or both Shift keys at once.
 */
 #SingleInstance, 	force			; Only one instance of this script may run at a time!
 #NoEnv  							; Recommended for performance and compatibility with future AutoHotkey releases.
 #Warn  	     					; Enable warnings to assist with detecting common errors.
-#Requires, AutoHotkey v1.1.34+ 		; Displays an error and quits if a version requirement is not met.
+#Requires, 		AutoHotkey v1.1.34+ ; Displays an error and quits if a version requirement is not met.
 #KeyHistory, 		150				; For debugging purposes.
 #LTrim							; Omits spaces and tabs at the beginning of each line. This is primarily used to allow the continuation section to be indented. Also, this option may be turned on for multiple continuation sections by specifying #LTrim on a line by itself. #LTrim is positional: it affects all continuation sections physically beneath it.
 
-FileEncoding, 			UTF-8			; Sets the default encoding for FileRead, FileReadLine, Loop Read, FileAppend, and FileOpen(). Unicode UTF-16, little endian byte order (BMP of ISO 10646). Useful for .ini files which by default are coded as UTF-16. https://docs.microsoft.com/pl-pl/windows/win32/intl/code-page-identifiers?redirectedfrom=MSDN
-SetBatchLines, 		-1				; -1 = never sleep (i.e. have the script run at maximum speed).
-SendMode,				Input			; Recommended for new scripts due to its superior speed and reliability.
-SetWorkingDir, 		%A_ScriptDir%		; Ensures a consistent starting directory.
-StringCaseSense, 		On				;for Switch in F_OKU()
+FileEncoding, 		UTF-8			; Sets the default encoding for FileRead, FileReadLine, Loop Read, FileAppend, and FileOpen(). Unicode UTF-16, little endian byte order (BMP of ISO 10646). Useful for .ini files which by default are coded as UTF-16. https://docs.microsoft.com/pl-pl/windows/win32/intl/code-page-identifiers?redirectedfrom=MSDN
+SetBatchLines, 	-1				; -1 = never sleep (i.e. have the script run at maximum speed).
+SendMode,			Input			; Recommended for new scripts due to its superior speed and reliability.
+SetWorkingDir, 	%A_ScriptDir%		; Ensures a consistent starting directory.
+StringCaseSense, 	On				;for Switch in F_OKU()
 ;Testing: Alt+Tab, , asdf Shift+Home, Ąsi
 
 ; - - - - - - - - - - - - - - - - Executable section, beginning - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -82,7 +82,7 @@ FileInstall, README.md, 			README.md,		true
 F_InputArguments()
 F_InitiateInputHook()
 F_MenuTray()
-;end initialization section
+;end of initialization section
 
 ; - - - - - - - - - - - - - - GLOBAL HOTSTRINGS: BEGINNING- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 :*:sfhelp/::		;stands for: Shift functions help
@@ -339,8 +339,9 @@ F_Toggle()
 F_Capital(ByRef v_Char)
 {
 	global	;assume-global mode of operation
-	; OutputDebug, % A_ThisFunc . A_Space . "B" . "`n"
+	; OutputDebug, % A_ThisFunc . A_Space . "B" . A_Space . "IC:" . A_IsCritical . "`n"
 	SendLevel, % c_OutputSL
+	Send, {BS}
 	Switch v_Char
 	{
 		Case "``":
@@ -517,13 +518,14 @@ F_InitiateInputHook()	;why InputHook: to process triggerstring tips.
 	global	;assume-global mode of operation
 
 	; OutputDebug, % "c_InputSL:" . c_InputSL . "`n"
-	v_InputH 				:= InputHook("V L0 E")	;I3 to not feed back this script; V to show pressed keys; L0 as only last char is analysed
+	v_InputH 				:= InputHook("L0 E")	;I3 to not feed back this script; V to show pressed keys; L0 as only last char is analysed
 ,	v_InputH.MinSendLevel 	:= c_InputSL
 ,	v_InputH.OnChar 		:= Func("F_OCD")
 ,	v_InputH.OnKeyDown		:= Func("F_OKD")
 ,	v_InputH.OnKeyUp 		:= Func("F_OKU")
-,	v_InputH.VisibleText 	:= false				;By default whatever user presses a key it is by default visible. Now it is not. So now are visible only those characters which are send by this script. This trick is essential in order to not get interrupted sequences send by this script by user input. As now all user input is invisible, only this script controls what and when will be printed out.
-,	v_InputH.BackspaceIsUndo := false				;By trial and error I've found this flag must be set.
+,	v_InputH.VisibleText 	:= true				;all 3x parameters: VisibleText (true), VisibleNonText (true), BackspaceIsUndo(true) are equal to InputHook("V"); it means there is no suppression at all
+,	v_InputH.VisibleNonText	:= true				;VisibleNonText is passed on to the active window
+,	v_InputH.BackspaceIsUndo	:= true				;by default it is true
 	v_InputH.KeyOpt("{All}", "N")
 	if (f_ShiftFunctions)
 		v_InputH.Start()
@@ -639,7 +641,10 @@ F_OCD(ih, Char)	;On Character Down; this function can interrupt "On Key Down"
 	{
 		f_IfShiftDown := false
 	,	v_Char := ""
+		SendLevel, 	% c_OutputSL
 		Send, {LShift Down}{LShift Up}{RShift Down}{RShift Up}	; This line is here to get rid of bug related to stuck <shift> in down position.
+		SendLevel, 	% c_NominalSL
+		SendLevel,	% A_Space . "Capitalization error!" . A_Space
 		OutputDebug, % "Shift must be lifted up!" . A_Space . "v_Char:" . v_Char . "`n"
 		FileAppend, % A_YYYY . "-" . A_MM . "-" . A_DD . A_Space . A_Hour . ":" . A_Min . ":" . A_Sec . A_Space . "Shift must be lifted up!" . A_Space . "v_Char:" . v_Char . "`n", ErrorLog.txt, UTF-8 ;Logging of errors
 	}		
@@ -657,6 +662,7 @@ F_OCD(ih, Char)	;On Character Down; this function can interrupt "On Key Down"
 		SetStoreCapslockMode, Off	;This is the only way which I know to get rid of blinking CapsLock. From now the v_Char value is ignored by Send and treated as small letters
 		if v_Char is Alpha	;alphabetic character
 		{
+			Send, {BS}					;this line is required only if there is no suppress (all parameters are visible)
 			if (!f_IfShiftDown) and (!f_SPA)	;SPA = Shift Pressed Alone
 				Switch Char				;This is the only way which I know to get rid of blinking CapsLock
 				{
@@ -706,17 +712,9 @@ F_OCD(ih, Char)	;On Character Down; this function can interrupt "On Key Down"
 	}
 	else	;CapsLock is off
 	{
-		; OutputDebug, % "CapsLock is off" . "`n"
-		if (!f_IfShiftDown) and (IsAlpha)
-		{
-			if (f_Capital) 
-				and (f_SPA)	;SPA = Shift Pressed Alone
-				F_Capital(v_Char)
-			else
-				Send, % v_Char
-		}
-		else    ;not alphabetic character
-			F_SendNotAlphaChar(f_IfShiftDown, v_Char, f_SPA)
+		if (f_Capital) 
+			and (f_SPA)	;SPA = Shift Pressed Alone
+			F_Capital(v_Char)
 	}
 
 	; OutputDebug, % "A_StoreCapsLockMode:" . A_StoreCapsLockMode . "`n"
@@ -737,8 +735,6 @@ F_SendNotAlphaChar(f_IfShiftDown, v_Char, ByRef f_SPA)
 			Send, % "+" . v_Char
 		v_CLCounter 	:= c_CLReset
 	}
-	if (!f_IfShiftDown) and (!f_SPA)
-		Send, % v_Char
 
 	if (!f_IfShiftDown) and (f_SPA)
 	{
@@ -839,7 +835,7 @@ F_CapsLock(WhatWasUp, ByRef f_SPA)
 		v_CLCounter := c_CLReset
 		return
 	}
-	OutputDebug, % "CLCounter:" . A_Space . v_CLCounter . "`n"
+	; OutputDebug, % "CLCounter:" . A_Space . v_CLCounter . "`n"
 	if (v_CLCounter = CLLimit)
 	{
 		SetCapsLockState, % !GetKeyState("CapsLock", "T") 
