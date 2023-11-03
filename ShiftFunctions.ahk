@@ -6,7 +6,7 @@
 				Shift: Capital, when Shift is pressed and released before character, that character is replaced with capital character.
 				Shift: CapsLock, when Shift is pressed and release twice, CapsLock is toggled.
  	License:     	GNU GPL v.3
-	Notes:		Run this script as the first one, before any Hotstring definition (static or dynamic). Thanks to that the on InputHook stack the `ShiftFunction` will be the last one which processes any characters entered by user.
+	Notes:		Run this script as the last one (1. Hotstrings. 2. Hotstrings2. 3. ShiftFunctions). 
 				Save this file as UTF-8 with BOM.
 				To cancel Shift behaviour press either Control, Esc, Backspace or both Shift keys at once.
 */
@@ -25,7 +25,7 @@ StringCaseSense, 	On				;for Switch in F_OKU()
 ;Testing: Alt+Tab, , asdf Shift+Home, Ąsi
 
 ; - - - - - - - - - - - - - - - - Executable section, beginning - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-AppVersion			:= "1.3.14"
+AppVersion			:= "1.3.15"
 ;@Ahk2Exe-Let vAppVersion=%A_PriorLine~U)^(.+"){1}(.+)".*$~$2% ; Keep these lines together
 ;Overrides the custom EXE icon used for compilation
 ;@Ahk2Exe-SetCopyright GNU GPL 3.x
@@ -341,6 +341,7 @@ F_Capital(ByRef v_Char)
 	global	;assume-global mode of operation
 	; OutputDebug, % A_ThisFunc . A_Space . "B" . A_Space . "IC:" . A_IsCritical . "`n"
 	SendLevel, % c_OutputSL
+	Sleep, 1			;by try and error; if ShiftFunctions is run as the last one (after Hotstrings and Hotstrings2). 
 	Send, {BS}
 	Switch v_Char
 	{
@@ -394,7 +395,7 @@ F_Capital(ByRef v_Char)
 	SendLevel, % c_NominalSL
 	F_FlagReset()
 	v_CLCounter 	:= c_CLReset
-	; OutputDebug, % A_ThisFunc . "`n"
+	; OutputDebug, % A_ThisFunc .  A_Space . "E" . "`n"
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 F_MenuTray()
