@@ -656,6 +656,7 @@ F_OCD(ih, Char)	;On Character Down; this function can interrupt "On Key Down"
 		IsAlpha := false
 
 	SendLevel, 	% c_OutputSL
+	Sleep,		1		;added by try and error method if ShiftFunctions is run as the third script.
 	; OutputDebug, % A_ThisFunc . A_Space . "v_Char:" . v_Char . "|" . A_Space . "B" . "`n"
 
 	if (GetKeyState("CapsLock", "T"))	;if CapsLock is "on"
@@ -663,47 +664,20 @@ F_OCD(ih, Char)	;On Character Down; this function can interrupt "On Key Down"
 		SetStoreCapslockMode, Off	;This is the only way which I know to get rid of blinking CapsLock. From now the v_Char value is ignored by Send and treated as small letters
 		if v_Char is Alpha	;alphabetic character
 		{
-			Send, {BS}					;this line is required only if there is no suppress (all parameters are visible)
-			if (!f_IfShiftDown) and (!f_SPA)	;SPA = Shift Pressed Alone
-				Switch Char				;This is the only way which I know to get rid of blinking CapsLock
-				{
-					Case "A":	Send, {U+0041}	;A
-					Case "B":	Send, {U+0042}	;B
-					Case "C":	Send, {U+0043}	;C
-					Case "D":	Send, {U+0044}	;D
-					Case "E":	Send, {U+0045}	;E
-					Case "F":	Send, {U+0046}	;F
-					Case "G":	Send, {U+0047}	;G
-					Case "H":	Send, {U+0048}	;H
-					Case "I":	Send, {U+0049}	;I
-					Case "J":	Send, {U+004a}	;J
-					Case "K":	Send, {U+004b}	;K
-					Case "L":	Send, {U+004c}	;L
-					Case "M":	Send, {U+004d}	;M
-					Case "N":	Send, {U+004e}	;N
-					Case "O":	Send, {U+004f}	;O
-					Case "P":	Send, {U+0050}	;P
-					Case "Q":	Send, {U+0051}	;Q
-					Case "R":	Send, {U+0052}	;R
-					Case "S":	Send, {U+0053}	;S
-					Case "T":	Send, {U+0054}	;T
-					Case "U":	Send, {U+0055}	;U
-					Case "V":	Send, {U+0056}	;V
-					Case "W":	Send, {U+0057}	;W
-					Case "X":	Send, {U+0058}	;X
-					Case "Y":	Send, {U+0059}	;Y
-					Case "Z":	Send, {U+005a}	;Z
-				}
-
 			; OutputDebug, % "CapsLock is on" . A_Space . "f_SPA:" . f_SPA . A_Space . "f_IfShiftDown:" . f_IfShiftDown . "`n"
 			if (f_IfShiftDown)	;logic must be reversed if Shift key is pressed.
+			{
+				Send, {BS}
 				Send, % "+" . v_Char
+			}	
 
 			if (f_Capital) 
 				and (f_SPA)	;SPA = Shift Pressed Alone
 			{
+				Send, {BS}
 				Send, % v_Char
-				f_SPA := false	
+				f_SPA 		:= false	
+			,	v_CLCounter 	:= c_CLReset
 			}	
 		}
 		else	;not alphabetic character
