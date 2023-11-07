@@ -661,7 +661,6 @@ F_OCD(ih, Char)	;On Character Down; this function can interrupt "On Key Down"
 
 	if (GetKeyState("CapsLock", "T"))	;if CapsLock is "on"
 	{
-		SetStoreCapslockMode, Off	;This is the only way which I know to get rid of blinking CapsLock. From now the v_Char value is ignored by Send and treated as small letters
 		if v_Char is Alpha	;alphabetic character
 		{
 			; OutputDebug, % "CapsLock is on" . A_Space . "f_SPA:" . f_SPA . A_Space . "f_IfShiftDown:" . f_IfShiftDown . "`n"
@@ -675,6 +674,7 @@ F_OCD(ih, Char)	;On Character Down; this function can interrupt "On Key Down"
 				and (f_SPA)	;SPA = Shift Pressed Alone
 			{
 				Send, {BS}
+				v_Char := Format("{:L}", v_Char)
 				Send, % v_Char
 				f_SPA 		:= false	
 			,	v_CLCounter 	:= c_CLReset
@@ -682,8 +682,6 @@ F_OCD(ih, Char)	;On Character Down; this function can interrupt "On Key Down"
 		}
 		else	;not alphabetic character
 			F_SendNotAlphaChar(f_IfShiftDown, v_Char, f_SPA)
-		
-		SetStoreCapslockMode, On	;for whatever reason 
 	}
 	else	;CapsLock is off
 	{
@@ -704,15 +702,16 @@ F_SendNotAlphaChar(f_IfShiftDown, v_Char, ByRef f_SPA)
 
 	if (f_IfShiftDown)
 	{
+		Send, {BS}
 		if (v_Char = "{") or (v_Char = "}") or (v_Char = "^") or (v_Char = "!") or (v_Char = "+") or (v_Char = "#")
 			Send, % "{" . v_Char . "}"
 		else
 			Send, % "+" . v_Char
-		v_CLCounter 	:= c_CLReset
 	}
 
 	if (!f_IfShiftDown) and (f_SPA)
 	{
+		Send, {BS}
 		Send, % "+" . v_Char
 		f_SPA := false
 	,	v_CLCounter 	:= c_CLReset
@@ -762,7 +761,7 @@ F_OKU(ih, VK, SC)	;On Key Up
 
 	if (f_Diacritics)
 		and (f_SPA)
-		and ((WhatWasUp = "LShift") or (WhatWasUp = "RShift"))
+		and ((WhatWasUp != "LShift") or (WhatWasUp != "RShift"))
 			F_Diacritics(v_Char)
 
 	if (f_CapsLock)
@@ -824,7 +823,7 @@ F_CapsLock(WhatWasUp, ByRef f_SPA)
 F_Diacritics(ByRef v_Char)
 {
 	global	;assume-global mode of operation
-	; OutputDebug, % A_ThisFunc . A_Space . "v_Char:" . v_Char . A_Space . "B" . "`n"
+	; OutputDebug, % A_ThisFunc . A_Space . "v_Char:" . v_Char . "|" . A_Space . "B" . "`n"
 	local	index := % c_NominalSL
 		,	value := ""
 
