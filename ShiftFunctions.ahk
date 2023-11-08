@@ -341,7 +341,7 @@ F_Capital(ByRef v_Char)
 	global	;assume-global mode of operation
 	; OutputDebug, % A_ThisFunc . A_Space . "B" . A_Space . "IC:" . A_IsCritical . "`n"
 	SendLevel, % c_OutputSL
-	Sleep, 1			;by try and error; if ShiftFunctions is run as the last one (after Hotstrings and Hotstrings2). 
+	; Sleep, 1			;by try and error; if ShiftFunctions is run as the last one (after Hotstrings and Hotstrings2). 
 	Send, {BS}
 	Switch v_Char
 	{
@@ -636,7 +636,6 @@ F_OCD(ih, Char)	;On Character Down; this function can interrupt "On Key Down"
 
 	local 	f_IfShiftDownP		:= GetKeyState("Shift", "P")	;if <shift> is down physically; remember, it takes time to switch and read physical state
 			f_IfShiftDown		:= GetKeyState("Shift")		;if <shift> is down only logically
-		,    IsAlpha 			:= false
 
 	if (f_IfShiftDown) and (!f_IfShiftDownP)	;if <shift> is down logically but is not down physically, reset the flag. This condition is here to get rid of bug related to stuck <shift> in down position.
 	{
@@ -645,16 +644,11 @@ F_OCD(ih, Char)	;On Character Down; this function can interrupt "On Key Down"
 		SendLevel, 	% c_OutputSL
 		Send, {LShift Down}{LShift Up}{RShift Down}{RShift Up}	; This line is here to get rid of bug related to stuck <shift> in down position.
 		SendLevel, 	% c_NominalSL
-		SendLevel,	% A_Space . "Capitalization error!" . A_Space
+		Send,		% A_Space . "Capitalization error!" . A_Space
 		OutputDebug, % "Shift must be lifted up!" . A_Space . "v_Char:" . v_Char . "`n"
 		FileAppend, % A_YYYY . "-" . A_MM . "-" . A_DD . A_Space . A_Hour . ":" . A_Min . ":" . A_Sec . A_Space . "Shift must be lifted up!" . A_Space . "v_Char:" . v_Char . "`n", ErrorLog.txt, UTF-8 ;Logging of errors
 	}		
 		
-	if v_Char is Alpha
-		IsAlpha := true
-	else
-		IsAlpha := false
-
 	SendLevel, 	% c_OutputSL
 	Sleep,		1		;added by try and error method if ShiftFunctions is run as the third script.
 	; OutputDebug, % A_ThisFunc . A_Space . "v_Char:" . v_Char . "|" . A_Space . "B" . "`n"
@@ -681,10 +675,26 @@ F_OCD(ih, Char)	;On Character Down; this function can interrupt "On Key Down"
 			}	
 		}
 		else	;not alphabetic character
+		{
+			if (v_Char = "`t") or (v_Char = "`n")
+			{
+				SendLevel, 	% c_NominalSL
+				v_Char := ""
+				Critical, Off
+				return
+			}	
 			F_SendNotAlphaChar(f_IfShiftDown, v_Char, f_SPA)
+		}	
 	}
 	else	;CapsLock is off
 	{
+		if (v_Char = "`t") or (v_Char = "`n")
+		{
+			SendLevel, 	% c_NominalSL
+			v_Char := ""
+			Critical, Off
+			return
+		}	
 		if (f_Capital) 
 			and (f_SPA)	;SPA = Shift Pressed Alone
 			F_Capital(v_Char)
@@ -723,8 +733,8 @@ F_OKU(ih, VK, SC)	;On Key Up
 
 	global	;assume-global mode of operation
 	Critical, On	;in order to protect against situation when after diacritic capital letter is entered from nowhere.
-	; OutputDebug, % A_ThisFunc . A_Space . "B" . "`n"
 	local	WhatWasUp := GetKeyName(Format("vk{:x}sc{:x}", VK, SC))
+	; OutputDebug, % A_ThisFunc . A_Space . "B" . A_Space . "WhatWasUp:" . WhatWasUp . "`n"
 	
 	if (f_WasReset)
 	{
@@ -753,6 +763,7 @@ F_OKU(ih, VK, SC)	;On Key Up
 		or (WhatWasUp = "Left") or (WhatWasUp = "Right") or (WhatWasUp = "Up") or (WhatWasUp = "Down")
 		or (WhatWasUp = "Delete") or (WhatWasUp = "Insert") or (WhatWasUp = "Home") or (WhatWasUp = "End") or (WhatWasUp = "PgUp") or (WhatWasUp = "PgDn")
 		or (WhatWasUp = "F1") or (WhatWasUp = "F2") or (WhatWasUp = "F3") or (WhatWasUp = "F4") or (WhatWasUp = "F5") or (WhatWasUp = "F6") or (WhatWasUp = "F7") or (WhatWasUp = "F8") or (WhatWasUp = "F9") or (WhatWasUp = "F10") or (WhatWasUp = "F11") or (WhatWasUp = "F12") or (WhatWasUp = "F13") or (WhatWasUp = "F14") or (WhatWasUp = "F15") or (WhatWasUp = "F16") or (WhatWasUp = "F17") or (WhatWasUp = "F18") or (WhatWasUp = "F19") or (WhatWasUp = "F20") or (WhatWasUp = "F21") or (WhatWasUp = "F22") or (WhatWasUp = "F23") or (WhatWasUp = "F24")
+		or (WhatWasUp = "Tab")
 	{
 		f_SPA 		:= false
 	,	v_Char		:= ""
@@ -761,7 +772,7 @@ F_OKU(ih, VK, SC)	;On Key Up
 
 	if (f_Diacritics)
 		and (f_SPA)
-		and ((WhatWasUp != "LShift") or (WhatWasUp != "RShift"))
+		and (v_Char)
 			F_Diacritics(v_Char)
 
 	if (f_CapsLock)
