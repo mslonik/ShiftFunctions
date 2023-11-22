@@ -779,6 +779,7 @@ F_OKU(ih, VK, SC)	;On Key Up
 		f_SPA 		:= false
 	,	v_Char		:= ""
 	,	v_CLCounter 	:= c_CLReset
+		return
 	}		
 
 	if (f_Diacritics)
