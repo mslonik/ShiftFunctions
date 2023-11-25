@@ -36,16 +36,16 @@ AppVersion				:= "1.3.15"
 ;@Ahk2Exe-SetVersion 		%U_AppVersion%
 ;@Ahk2Exe-SetMainIcon		imageres_122.ico 		;c:\Windows\System32\imageres.dll 
 
-FileInstall, LICENSE, 			LICENSE, 			true
-FileInstall, ShiftFunctions.ahk, 	ShiftFunctions.ahk, true
-FileInstall, Czech.ini, 			Czech.ini,		true
-FileInstall, German1.ini, 		German1.ini,		true
-FileInstall, German2.ini, 		German2.ini,		true
-FileInstall, Norwegian.ini,		Norwegian.ini,		true
-FileInstall, Polish.ini, 		Polish.ini, 		true
-FileInstall, Slovakian1.ini,		Slovakian1.ini,	true
-FileInstall, Slovakian2.ini,		Slovakian2.ini,	true
-FileInstall, README.md, 			README.md,		true
+FileInstall, LICENSE, 			LICENSE, 			false
+FileInstall, ShiftFunctions.ahk, 	ShiftFunctions.ahk, false
+FileInstall, Czech.ini, 			Czech.ini,		false
+FileInstall, German1.ini, 		German1.ini,		false
+FileInstall, German2.ini, 		German2.ini,		false
+FileInstall, Norwegian.ini,		Norwegian.ini,		false
+FileInstall, Polish.ini, 		Polish.ini, 		false
+FileInstall, Slovakian1.ini,		Slovakian1.ini,	false
+FileInstall, Slovakian2.ini,		Slovakian2.ini,	false
+FileInstall, README.md, 			README.md,		false
 ; - - - - - - - - - - - - - - - - Executable section, end - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 	v_Char 			:= ""	;global variable, character pressed (main area of keyboard)
@@ -64,7 +64,7 @@ FileInstall, README.md, 			README.md,		true
 ,	c_IconAsteriskInfo	:= 64	;global constant: used for MessageBox functions to show Info icon with single sound
 ,	a_BaseKey 		:= []	;global array: ordinary letters and capital ordinary letters
 ,	a_Diacritic		:= []	;global array: diacritic letters and capital diacritic letters
-,	v_ConfigIni		:= ""	;global variable, stores filename of current Config.ini.
+,	v_ConfigIni		:= ""	;global variable, stores filename of current Config.ini, e.g. Polish.ini.
 ,	v_Undo			:= ""	;global variable, stores last character pressed by user before F_Diacritic or F_Capital were in action
 ,	f_DUndo			:= false	;global variable, set if F_Diacritics or F_Capital were in action
 ,	v_CLCounter 		:= 0		;global variable, CapsLock counter
@@ -73,7 +73,7 @@ FileInstall, README.md, 			README.md,		true
 ,	c_NominalSL		:= 0		;global constant: nominal / default value for SendLevel
 ,	f_LShift			:= false	;global flag, set when Left Shift is pressed down
 ,	f_RShift			:= false	;global flag, set when Right Shift is pressed down
-,	c_InputSL			:= 2		;global constant: default value for InputHook (MinSendLevel)
+,	c_InputSL			:= 1		;global constant: default value for InputHook (MinSendLevel)
 ,	f_SDCD			:= false	;global flag: Shift (S) is down (D) and Character (C) is down (D)
 ,	v_WhatWasDown		:= ""	;global variable, name of key which was pressed down
 ,	f_WasReset		:= false	;global flag: Shift key memory reset (to reset v_CLCounter)
@@ -473,7 +473,7 @@ F_SetMinSendLevel()
 			Menu, MinSendLevelSubm, Check, 	% A_Index - 1
 			c_InputSL 			:= A_Index - 1
 		,	v_InputH.MinSendLevel 	:= c_InputSL
-			IniWrite, % c_InputSL - 1, 	% A_ScriptDir . "\" . v_ConfigIni, Global, MinSendLevel
+			IniWrite, % c_InputSL, 	% A_ScriptDir . "\" . v_ConfigIni, Global, MinSendLevel
 		}
 		else
 			Menu, MinSendLevelSubm, UnCheck, 	% A_Index - 1
@@ -935,143 +935,137 @@ F_InputArguments()
 	else
 	{
 		v_ConfigIni := param
-		F_ReadIni(v_ConfigIni)
+		F_ReadIni(param)
 	}
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-F_ReadIni(param)
+F_CheckIniParValidity(Temp, Param, IniFile, DefParamValue, IfExit)
+{
+	global	;assume-global mode of operation
+	local	ErrorString			:= "ERROR"
+
+	if (Temp = ErrorString)
+	{
+		MsgBox, % c_IconAsteriskInfo, % A_ScriptName, % "Problem with reading parameter" . A_Space . Param . A_Space . "from the file" . "`n"
+			. A_ScriptDir . "\" . IniFile . "`n`n"
+			. "Default value will be applied now:" . "`n"
+			. DefParamValue . "."
+		if (IfExit)
+		{
+			MsgBox, % c_IconAsteriskInfo, % A_ScriptName, % "Exiting with error code 3 (no recognized parameter)."
+			TrayTip, % A_ScriptName, % "exits with code" . A_Space . "3", 5, 1
+			ExitApp, 3
+		}	
+		else
+			Temp := DefParamValue
+	}
+	if (Temp = "")
+	{
+		MsgBox, % c_IconAsteriskInfo, % A_ScriptName, % "Problem with reading parameter" . A_Space . Param . A_Space . "from the file" . "`n"
+			. A_ScriptDir . "\" . IniFile . "`n`n"
+			. "Parameter was read empty." . "`n"
+			. "Default value will be applied now:" . A_Space
+			. DefParamValue . "."
+		Temp := DefParamValue
+	}
+	return Temp
+}
+; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+F_ReadIni(IniFile)
 {
 	global	;assume-global mode of operation
 	local 	DiacriticSectionCounter 	:= 0
+		,	ErrorString			:= "ERROR"
 		,	Temp 				:= ""
-		,	ErrorString			:= "Error"
+		
+	IniRead, Temp, 	% IniFile, Global, OverallStatus, 	% ErrorString
+	f_ShiftFunctions := F_CheckIniParValidity(Temp
+						,	Param := "OverallStatus"
+						, 	IniFile
+						, 	DefParamValue := f_ShiftFunctions
+						, 	IfExit := false)
 
-	IniRead, c_OutputSL,			% v_ConfigIni, Global, SendLevel,		% ErrorString
-	if (c_OutputSL = ErrorString)
-	{
-		c_OutputSL := 1	;default value
-		MsgBox, % c_IconAsteriskInfo, % A_ScriptName, % "Problem with reading parameter" . A_Space . "SendLevel" . A_Space . "from the file" . "`n"
-			. A_ScriptDir . "\" . v_ConfigIni . "`n`n"
-			. "Default value will be applied now:" . "`n"
-			. c_OutputSL . "."
-	}
+	IniRead, Temp,		% IniFile, Global, ShiftCapital,	% ErrorString
+	f_Capital := 		F_CheckIniParValidity(Temp
+						, 	Param := "ShiftCapital"
+						, 	IniFile
+						, 	DefParamValue := f_Capital
+						, 	IfExit := false)
 
-	IniRead, c_InputSL,			% v_ConfigIni, Global, MinSendLevel,		% ErrorString
-	if (c_InputSL = ErrorString)
-	{
-		c_InputSL := 2		;default value
-		MsgBox, % c_IconAsteriskInfo, % A_ScriptName, % "Problem with reading parameter" . A_Space . "MinSendLevel" . A_Space . "from the file" . "`n"
-			. A_ScriptDir . "\" . v_ConfigIni . "`n`n"
-			. "Default value will be applied now:" . "`n"
-			. c_InputSL . "."
-	}
+	IniRead, Temp,		% IniFile, Global, ShiftDiacritics,	% ErrorString
+	f_Diacritics := 	F_CheckIniParValidity(Temp
+						, 	Param := "ShiftDiacritics"
+						, 	IniFile
+						, 	DefParamValue := f_Diacritics
+						, 	IfExit := false)
 
-	IniRead, f_ShiftFunctions, 	% v_ConfigIni, Global, OverallStatus, 	% ErrorString
-	if (f_ShiftFunctions = ErrorString)
-	{
-		f_ShiftFunctions := true	;default value
-		MsgBox, % c_IconAsteriskInfo, % A_ScriptName, % "Problem with reading parameter" . A_Space . "overall status" . A_Space . "from the file" . "`n"
-			. A_ScriptDir . "\" . v_ConfigIni . "`n`n"
-			. "Default value will be applied now:" . "`n"
-			. "ENABLE" . "."
-	}
+	IniRead, Temp,		% IniFile, Global, ShiftCapsLock,	% ErrorString
+	f_CapsLock := 		F_CheckIniParValidity(Temp
+						, 	Param := "ShiftCapsLock"
+						, 	IniFile
+						, 	DefParamValue := f_CapsLock
+						, 	IfExit := false)
 
-	IniRead, f_Capital, 		% v_ConfigIni, Global, ShiftCapital,	% ErrorString
-	if (f_Capital = ErrorString)
-	{
-		f_Capital := true	;default value
-		MsgBox, % c_IconAsteriskInfo, % A_ScriptName, % "Problem with reading parameter" . A_Space . "Shift capital" . A_Space . "from the file" . "`n"
-			. A_ScriptDir . "\" . v_ConfigIni . "`n`n"
-			. "Default value will be applied now:" . "`n"
-			. "ENABLE" . "."
-	}
+	IniRead, Temp,		% IniFile, Global, SendLevel,			% ErrorString
+	c_OutputSL := 		F_CheckIniParValidity(Temp
+						, 	Param := "SendLevel"
+						, 	IniFile
+						, 	DefParamValue := c_OutputSL
+						, 	IfExit := false)
 
-	IniRead, f_Diacritics, 		% v_ConfigIni, Global, ShiftDiacritics,	% ErrorString
-	if (f_Diacritics = ErrorString)
-	{
-		f_Diacritics := true	;default value
-		MsgBox, % c_IconAsteriskInfo, % A_ScriptName, % "Problem with reading parameter" . A_Space . "Shift diacritics" . A_Space . "from the file" . "`n"
-			. A_ScriptDir . "\" . v_ConfigIni . "`n`n"
-			. "Default value will be applied now:" . "`n"
-			. "ENABLE" . "."
-	}
-	
-	IniRead, f_CapsLock, 		% v_ConfigIni, Global, ShiftCapsLock,	% ErrorString
-	if (f_CapsLock = ErrorString)
-	{
-		f_CapsLock := true	;default value
-		MsgBox, % c_IconAsteriskInfo, % A_ScriptName, % "Problem with reading parameter" . A_Space . "Shift capslock" . A_Space . "from the file" . "`n"
-			. A_ScriptDir . "\" . v_ConfigIni . "`n`n"
-			. "Default value will be applied now:" . "`n"
-			. "ENABLE" . "."
-	}
+	IniRead, Temp,		% IniFile, Global, MinSendLevel,		% ErrorString
+	c_InputSL := 		F_CheckIniParValidity(Temp
+						, 	Param := "MinSendLevel"
+						, 	IniFile
+						, 	DefParamValue := c_InputSL
+						, 	IfExit := false)
 
-	Loop, Read, % param
+	Loop, Read, % IniFile
 	    if (InStr(A_LoopReadLine, "[Diacritic"))
 	        DiacriticSectionCounter++
 	
 	if (DiacriticSectionCounter = 0)
 	{
-		MsgBox, % c_IconAsteriskInfo, % A_ScriptName, % "The" . A_Space . param . A_Space . "do not contain any valid section. Exiting with error code 2 (no recognized .ini file section)."
+		MsgBox, % c_IconAsteriskInfo, % A_ScriptName, % "The" . A_Space . IniFile . A_Space . "do not contain any valid section. Exiting with error code 2 (no recognized .ini file section)."
 		TrayTip, % A_ScriptName, % "exits with code" . A_Space . "2", 5, 1
 		ExitApp, 2
 	}
 	
 	Loop, %DiacriticSectionCounter%
     	{
-		IniRead,  Temp,          	% param, % "Diacritic"	. A_Index, BaseKey,			Error
-		if (Temp != "Error")
-			a_BaseKey.Push(Temp)
-		else
-		{
-			MsgBox, % c_IconAsteriskInfo, % A_ScriptName, % "The" . A_Space . param . A_Space . "section:" . A_Space . "`n`n"
-			. "[Diacritic" . A_Index . "]" . A_Space . "do not contain valid parameter" . "`n"
-			. "BaseKey" . "`n`n"
-			. "Exiting with error code 3 (no recognized parameter)."
-			TrayTip, % A_ScriptName, % "exits with code" . A_Space . "3", 5, 1
-			ExitApp, 3
-		}
+		IniRead, Temp,		% IniFile, % "Diacritic"	. A_Index, BaseKey,		% ErrorString
+		Temp := 			F_CheckIniParValidity(Temp
+							,	Param := "BaseKey" . A_Index
+							,	IniFile
+							, 	DefParamValue := ""
+							,	IfExit := true)
+		a_BaseKey.Push(Temp)
  
-    		IniRead,  Temp,     		% param, % "Diacritic"	. A_Index, Diacritic,		Error
-		if (Temp != "Error")
-			a_Diacritic.Push(Temp)
-		else
-		{
-			MsgBox, % c_IconAsteriskInfo, % A_ScriptName, % "The" . A_Space . param . A_Space . "section:" . A_Space . "`n`n"
-			. "[Diacritic" . A_Index . "]" . A_Space . "do not contain valid parameter" . "`n"
-			. "Diacritic" . "`n`n"
-			. "Exiting with error code 3 (no recognized parameter)."
-			TrayTip, % A_ScriptName, % "exits with code" . A_Space . "3", 5, 1
-			ExitApp, 3
-		}
+		IniRead, Temp,		% IniFile, % "Diacritic"	. A_Index, Diacritic,		% ErrorString
+		Temp := 			F_CheckIniParValidity(Temp
+							,	Param := "Diacritic" . A_Index
+							,	IniFile
+							,	DefParamValue := ""
+							, 	IfExit := true)
+		a_Diacritic.Push(Temp)
 
-		IniRead, Temp, 			% param, % "Diacritic"	. A_Index, ShiftBaseKey, 	Error
-		if (Temp != "Error")
-			a_BaseKey.Push(Temp)
-		else
-		{
-			MsgBox, % c_IconAsteriskInfo, % A_ScriptName, % "The" . A_Space . param . A_Space . "section:" . A_Space . "`n`n"
-			. "[Diacritic" . A_Index . "]" . A_Space . "do not contain valid parameter" . "`n"
-			. "ShiftBaseKey" . "`n`n"
-			. "Exiting with error code 3 (no recognized parameter)."
-			TrayTip, % A_ScriptName, % "exits with code" . A_Space . "3", 5, 1
-			ExitApp, 3
-		}
+		IniRead, Temp,		% IniFile, % "Diacritic"	. A_Index, ShiftBaseKey,		% ErrorString
+		Temp := 			F_CheckIniParValidity(Temp
+							,	Param := "ShiftBaseKey" . A_Index
+							,	IniFile
+							,	DefParamValue := ""
+							,	IfExit := true)
+		a_BaseKey.Push(Temp)
 
-		IniRead, Temp, 			% param, % "Diacritic"	. A_Index, ShiftDiacritic, 	Error
-		if (Temp != "Error")
-			a_Diacritic.Push(Temp)
-		else
-		{
-			MsgBox, % c_IconAsteriskInfo, % A_ScriptName, % "The" . A_Space . param . A_Space . "section:" . A_Space . "`n`n"
-			. "[Diacritic" . A_Index . "]" . A_Space . "do not contain valid parameter" . "`n"
-			. "ShiftDiacritic" . "`n`n"
-			. "Exiting with error code 3 (no recognized parameter)."
-			TrayTip, % A_ScriptName, % "exits with code" . A_Space . "3", 5, 1
-			ExitApp, 3
-		}
+		IniRead, Temp,		% IniFile, % "Diacritic"	. A_Index, ShiftDiacritic,		% ErrorString
+		Temp := 			F_CheckIniParValidity(Temp
+							,	Param := "ShiftDiacritic" . A_Index
+							,	IniFile
+							,	DefParamValue := ""
+							, IfExit := true)
+		a_Diacritic.Push(Temp)
 	}
 	F_FlagReset()
-	SplitPath, v_ConfigIni, Temp
+	SplitPath, IniFile, Temp
 	TrayTip, % A_ScriptName, % "is starting with" . A_Space . Temp, 5, 1
 }
