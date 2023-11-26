@@ -61,8 +61,9 @@ FileInstall, README.md, 			README.md,		false	;false = not overwrite if already e
 ,	f_Capital			:= true	;global flag: enable / disable function Shift Capital
 ,	f_Diacritics		:= true	;global flag: enable / disable function Shift Diacritics
 ,	f_CapsLock		:= true	;global flag: enable / disable function Shift CapsLock
-,	c_MB_IconAsteriskInfo	:= 64	;global constant: used for MessageBox functions to show Info icon with single sound
-,	c_MB_B_YesNo		:= 4		;global constant: MessageBox button, Yes / No
+,	c_MB_I_AsteriskInfo	:= 64	;global constant: used for MessageBox functions to show Info icon with single sound
+,	c_MB_I_Exclamation	:= 48	;global constant: MsgBox icon
+,	c_MB_B_YesNo		:= 4		;global constant: MsgBox button, Yes / No
 ,	a_BaseKey 		:= []	;global array: ordinary letters and capital ordinary letters
 ,	a_Diacritic		:= []	;global array: diacritic letters and capital diacritic letters
 ,	v_ConfigIni		:= ""	;global variable, stores filename of current Config.ini, e.g. Polish.ini.
@@ -97,7 +98,7 @@ return
 
 :*:sfreload/::		;stands for: Shift functions reload (synonym of restart)
 :*:sfrestart/::     ;stands for: Shift functions restart (synonym of reload)
-	MsgBox, % c_MB_IconAsteriskInfo, % A_ScriptName, % A_ScriptName . A_Space . "will be restarted!"
+	MsgBox, % c_MB_I_AsteriskInfo, % A_ScriptName, % A_ScriptName . A_Space . "will be restarted!"
 	Reload
 return
 
@@ -184,22 +185,22 @@ F_Save()
 	; OutputDebug, % "v_ConfigIni:" . A_Space . v_ConfigIni . A_Space . "f_ShiftFunctions:" . A_Space . f_ShiftFunctions .  "`n"
 	IniWrite, % f_ShiftFunctions, 	% A_ScriptDir . "\" . v_ConfigIni, Global, OverallStatus
 	if (ErrorLevel)
-		MsgBox, % c_MB_IconAsteriskInfo, % A_ScriptName, % "Problem with saving parameter" . A_Space . "overall status" . A_Space . "to the file" . "`n"
+		MsgBox, % c_MB_I_AsteriskInfo, % A_ScriptName, % "Problem with saving parameter" . A_Space . "overall status" . A_Space . "to the file" . "`n"
 			. A_ScriptDir . "\" . v_ConfigIni
 	IniWrite, % f_Capital, 			% A_ScriptDir . "\" . v_ConfigIni, Global, ShiftCapital
 	if (ErrorLevel)
-		MsgBox, % c_MB_IconAsteriskInfo, % A_ScriptName, % "Problem with saving parameter" . A_Space . "shift capital" . A_Space . "to the file" . "`n"
+		MsgBox, % c_MB_I_AsteriskInfo, % A_ScriptName, % "Problem with saving parameter" . A_Space . "shift capital" . A_Space . "to the file" . "`n"
 			. A_ScriptDir . "\" . v_ConfigIni
 	IniWrite, % f_Diacritics, 		% A_ScriptDir . "\" . v_ConfigIni, Global, ShiftDiacritics
 	if (ErrorLevel)
-		MsgBox, % c_MB_IconAsteriskInfo, % A_ScriptName, % "Problem with saving parameter" . A_Space . "shift diacritics" . A_Space . "to the file" . "`n"
+		MsgBox, % c_MB_I_AsteriskInfo, % A_ScriptName, % "Problem with saving parameter" . A_Space . "shift diacritics" . A_Space . "to the file" . "`n"
 			. A_ScriptDir . "\" . v_ConfigIni
 	IniWrite, % f_CapsLock, 			% A_ScriptDir . "\" . v_ConfigIni, Global, ShiftCapsLock
 	if (ErrorLevel)
-		MsgBox, % c_MB_IconAsteriskInfo, % A_ScriptName, % "Problem with saving parameter" . A_Space . "shift capslock" . A_Space . "to the file" . "`n"
+		MsgBox, % c_MB_I_AsteriskInfo, % A_ScriptName, % "Problem with saving parameter" . A_Space . "shift capslock" . A_Space . "to the file" . "`n"
 			. A_ScriptDir . "\" . v_ConfigIni
 
-	MsgBox, % c_MB_IconAsteriskInfo, % A_ScriptName, % "Your settings is saved to" . "`n`n"
+	MsgBox, % c_MB_I_AsteriskInfo, % A_ScriptName, % "Your settings is saved to" . "`n`n"
 		. A_ScriptDir . "\" . v_ConfigIni . "`n`n"
 		. "Overall status:"		. A_Tab . (f_ShiftFunctions 	? "enabled" : "disabled") . "`n"
 		. "Shift Capital:"		. A_Tab . (f_Capital		? "enabled" : "disabled") . "`n"
@@ -210,7 +211,7 @@ F_Save()
 F_Help()
 {
 	global	;assume-globa mode of operation
-	MsgBox, % c_MB_IconAsteriskInfo, % SubStr(A_ScriptName, 1, -4) . ":" . A_Space . "information", % "Application hotstrings" . "." . A_Space . "All of them are ""immediate execute"" (*)" . "`n"
+	MsgBox, % c_MB_I_AsteriskInfo, % SubStr(A_ScriptName, 1, -4) . ":" . A_Space . "information", % "Application hotstrings" . "." . A_Space . "All of them are ""immediate execute"" (*)" . "`n"
 		. "and active anywhere in operating system (any window)"						. "`n"
 		. "`n`n"
 		. "sfhelp/" . A_Tab . A_Tab . 	"shows this message"					 	. "`n"
@@ -248,7 +249,7 @@ F_sfendis(WhatToDo)
 	else
 		v_InputH.Stop()
 
-	MsgBox, % c_MB_IconAsteriskInfo, % A_ScriptName, % A_ScriptName . A_Space . "is" . A_Space . (WhatToDo ? "ENABLED" : "DISABLED") . "."
+	MsgBox, % c_MB_I_AsteriskInfo, % A_ScriptName, % A_ScriptName . A_Space . "is" . A_Space . (WhatToDo ? "ENABLED" : "DISABLED") . "."
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 F_sfparamToggle(ItemName, ItemPos, MenuName)
@@ -260,15 +261,15 @@ F_sfparamToggle(ItemName, ItemPos, MenuName)
 		Case 3:
 			f_Capital := !f_Capital
 			Menu, Tray, Rename, % A_ThisMenuItem, % "function Shift" . A_Space . "Capital" . ":"  . A_Tab . (f_Capital ? "ENABLED" : "DISABLED")
-			MsgBox, % c_MB_IconAsteriskInfo, % A_ScriptName, % "function Shift" . A_Space . "Capital" . ":"  . A_Tab . (f_Capital ? "ENABLED" : "DISABLED")
+			MsgBox, % c_MB_I_AsteriskInfo, % A_ScriptName, % "function Shift" . A_Space . "Capital" . ":"  . A_Tab . (f_Capital ? "ENABLED" : "DISABLED")
 		Case 4:
 			f_Diacritics := !f_Diacritics
 			Menu, Tray, Rename, % A_ThisMenuItem, % "function Shift" . A_Space . "Diacritics" . ":"  . A_Tab . (f_Diacritics ? "ENABLED" : "DISABLED")
-			MsgBox, % c_MB_IconAsteriskInfo, % A_ScriptName, % "function Shift" . A_Space . "Diacritics" . ":"  . A_Tab . (f_Diacritics ? "ENABLED" : "DISABLED")
+			MsgBox, % c_MB_I_AsteriskInfo, % A_ScriptName, % "function Shift" . A_Space . "Diacritics" . ":"  . A_Tab . (f_Diacritics ? "ENABLED" : "DISABLED")
 		Case 5:
 			f_CapsLock := !f_CapsLock
 			Menu, Tray, Rename, % A_ThisMenuItem, % "function Shift" . A_Space . "CapsLock" . ":"  . A_Tab . (f_CapsLock ? "ENABLED" : "DISABLED")
-			MsgBox, % c_MB_IconAsteriskInfo, % A_ScriptName, % "function Shift" . A_Space . "CapsLock" . ":"  . A_Tab . (f_CapsLock ? "ENABLED" : "DISABLED")
+			MsgBox, % c_MB_I_AsteriskInfo, % A_ScriptName, % "function Shift" . A_Space . "CapsLock" . ":"  . A_Tab . (f_CapsLock ? "ENABLED" : "DISABLED")
 	}
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -279,7 +280,7 @@ F_sfparamToggleH(WhichVariable, FunctionName)
 
 	%WhichVariable% := !OldValue
 	Menu, Tray, Rename, % "function Shift" . A_Space . FunctionName . ":" . A_Tab . (OldValue ? "ENABLED" : "DISABLED"), % "function Shift" . A_Space . FunctionName . ":"  . A_Tab . (%WhichVariable% ? "ENABLED" : "DISABLED")
-	MsgBox, % c_MB_IconAsteriskInfo, % A_ScriptName, % FunctionName . A_Space . "is" . A_Space . (%WhichVariable% ? "ENABLED" : "DISABLED")
+	MsgBox, % c_MB_I_AsteriskInfo, % A_ScriptName, % FunctionName . A_Space . "is" . A_Space . (%WhichVariable% ? "ENABLED" : "DISABLED")
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 F_sfparamendis(WhatNext, WhichVariable, FunctionName)
@@ -289,7 +290,7 @@ F_sfparamendis(WhatNext, WhichVariable, FunctionName)
 
 	%WhichVariable% := WhatNext
 	Menu, Tray, Rename, % "function Shift" . A_Space . FunctionName . ":" . A_Tab . (OldValue ? "ENABLED" : "DISABLED"), % "function Shift" . A_Space . FunctionName . ":"  . A_Tab . (WhichVariable ? "ENABLED" : "DISABLED")
-	MsgBox, % c_MB_IconAsteriskInfo, % A_ScriptName, % FunctionName . A_Space . "is" . A_Space . (%WhichVariable% ? "ENABLED" : "DISABLED")
+	MsgBox, % c_MB_I_AsteriskInfo, % A_ScriptName, % FunctionName . A_Space . "is" . A_Space . (%WhichVariable% ? "ENABLED" : "DISABLED")
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 F_Status()
@@ -297,7 +298,7 @@ F_Status()
 	global	;assume-globa mode of operation
 	local 	OldStatus := f_ShiftFunctions
 	Menu, Tray, Rename, % A_ScriptName . A_Space . "status:" . A_Tab . (OldStatus ? "ENABLED" : "DISABLED"), % A_ScriptName . A_Space . "status:" . A_Tab . (f_ShiftFunctions ? "ENABLED" : "DISABLED")
-	MsgBox, % c_MB_IconAsteriskInfo, % A_ScriptName, % "Current status is" . A_Space . (v_InputH.InProgress ? "ENABLED" : "DISABLED")
+	MsgBox, % c_MB_I_AsteriskInfo, % A_ScriptName, % "Current status is" . A_Space . (v_InputH.InProgress ? "ENABLED" : "DISABLED")
 		. "`n`n"
 		. "function Shift Capital:" . A_Tab . 		(f_Capital ? "ENABLED" : "DISABLED") 		. "`n"
 		. "function Shift Diacritics:" . A_Tab . 	(f_Diacritics ? "ENABLED" : "DISABLED") 	. "`n"
@@ -323,7 +324,7 @@ F_Toggle()
 		Menu, Tray, Rename, % "function Shift Capital:" . A_Tab . 		(OldCapital ? "ENABLED" : "DISABLED"),		% "function Shift Capital:" . A_Tab . 		(f_Capital ? "ENABLED" : "DISABLED")
 		Menu, Tray, Rename, % "function Shift Diacritics:" . A_Tab . 	(OldDiacritics ? "ENABLED" : "DISABLED"),	% "function Shift Diacritics:" . A_Tab . 	(f_Diacritics ? "ENABLED" : "DISABLED")
 		Menu, Tray, Rename, % "function Shift CapsLock:" . A_Tab . 		(OldCapslock ? "ENABLED" : "DISABLED"),		% "function Shift CapsLock:" . A_Tab . 		(f_CapsLock ? "ENABLED" : "DISABLED")
-		MsgBox, % c_MB_IconAsteriskInfo, % A_ScriptName, % A_ScriptName . A_Space . "is ENABLED."
+		MsgBox, % c_MB_I_AsteriskInfo, % A_ScriptName, % A_ScriptName . A_Space . "is ENABLED."
 	}
 	else
 	{
@@ -334,7 +335,7 @@ F_Toggle()
 		Menu, Tray, Rename, % "function Shift Capital:" . A_Tab . 		(OldCapital ? "ENABLED" : "DISABLED"),		% "function Shift Capital:" . A_Tab . 		(f_Capital ? "ENABLED" : "DISABLED")
 		Menu, Tray, Rename, % "function Shift Diacritics:" . A_Tab . 	(OldDiacritics ? "ENABLED" : "DISABLED"),	% "function Shift Diacritics:" . A_Tab . 	(f_Diacritics ? "ENABLED" : "DISABLED")
 		Menu, Tray, Rename, % "function Shift CapsLock:" . A_Tab . 		(OldCapslock ? "ENABLED" : "DISABLED"),		% "function Shift CapsLock:" . A_Tab . 		(f_CapsLock ? "ENABLED" : "DISABLED")
-		MsgBox, % c_MB_IconAsteriskInfo, % A_ScriptName, % A_ScriptName . A_Space . "is DISABLED."
+		MsgBox, % c_MB_I_AsteriskInfo, % A_ScriptName, % A_ScriptName . A_Space . "is DISABLED."
 	}
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -490,7 +491,7 @@ F_SelectConfig()
 	FileSelectFile, v_ConfigIni, , % A_ScriptDir, % A_ScriptName . A_Space . "Select one *.ini file:", *.ini
 	if (v_ConfigIni = "")
 		{
-			MsgBox, % c_MB_IconAsteriskInfo, % A_ScriptName, % "Exiting with error code 1 (no .ini file specified or found)."
+			MsgBox, % c_MB_I_AsteriskInfo, % A_ScriptName, % "Exiting with error code 1 (no .ini file specified or found)."
 			TrayTip, % A_ScriptName, % "exits with code" . A_Space . "1", 5, 1
 			ExitApp, 1
 		}
@@ -500,7 +501,7 @@ F_SelectConfig()
 F_About()
 {
 	global	;assume-global mode of operation
-	MsgBox, % c_MB_IconAsteriskInfo, % A_ScriptName
+	MsgBox, % c_MB_I_AsteriskInfo, % A_ScriptName
 		, % "`n`n"
 		. "
 	( RTrim0 ; Turns off the omission of spaces and tabs from the end of each line.
@@ -901,7 +902,7 @@ F_InputArguments()
 			}
 		if (Counter = 0)
 		{
-			MsgBox, % c_MB_IconAsteriskInfo, % A_ScriptName, % "No .ini file is specified and no .ini files are found within application directory."
+			MsgBox, % c_MB_I_AsteriskInfo, % A_ScriptName, % "No .ini file is specified and no .ini files are found within application directory."
 				. "`n`n"
 				. "Exiting with error code 1 (no .ini file specified or found)."
 			TrayTip, % A_ScriptName, % "exits with code" . A_Space . "1", 5, 1
@@ -910,7 +911,7 @@ F_InputArguments()
 		if (Counter = 1)
 		{
 			v_ConfigIni := FileTemp
-			MsgBox, % c_MB_IconAsteriskInfo, % A_ScriptName, % "Only one .ini file was found and application will read in configuration from that file:"
+			MsgBox, % c_MB_I_AsteriskInfo, % A_ScriptName, % "Only one .ini file was found and application will read in configuration from that file:"
 			. "`n`n"
 			. v_ConfigIni
 			F_ReadIni(v_ConfigIni)
@@ -918,14 +919,14 @@ F_InputArguments()
 		}
 		if (Counter > 1)
 		{
-			MsgBox, % c_MB_IconAsteriskInfo + 4, % A_ScriptName, % "More than one .ini file was found in the following folder:"
+			MsgBox, % c_MB_I_AsteriskInfo + 4, % A_ScriptName, % "More than one .ini file was found in the following folder:"
 				. "`n`n"
 				. A_ScriptDir
 				. "`n`n"
 				. "Would you like to choose one of the .ini files manually now?"
 			IfMsgBox, No
 			{
-				MsgBox, % c_MB_IconAsteriskInfo, % A_ScriptName, % "Exiting with error code 1 (no .ini file specified or found)."
+				MsgBox, % c_MB_I_AsteriskInfo, % A_ScriptName, % "Exiting with error code 1 (no .ini file specified or found)."
 				TrayTip, % A_ScriptName, % "exits with code" . A_Space . "1", 5, 1
 				ExitApp, 1
 			}
@@ -950,16 +951,16 @@ F_CheckIniParValidity(Temp, Key, Section, IniFile, DefKey, IfExit)	;IfExit = {"E
 		Switch IfExit
 		{
 			Case "Exit":
-				MsgBox, % c_MB_IconAsteriskInfo, % A_ScriptName
+				MsgBox, % c_MB_I_Exclamation, % A_ScriptName
 					, % "Problem with reading parameter" . A_Space . Key . A_Space . "from the file" . "`n"
 					. A_ScriptDir . "\" . IniFile . "`n`n"
 					. "Parameter is missing within the file or file is corrupted."
-					. "Exiting with error code 3 (no recognized parameter)."
+					. "Exiting with error code 3 (impossible to read .ini file)."
 				TrayTip, % A_ScriptName, % "exits with code" . A_Space . "3", 5, 1
 				ExitApp, 3
 
 			Case "SaveDefault":
-				MsgBox, % c_MB_IconAsteriskInfo, % A_ScriptName
+				MsgBox, % c_MB_I_Exclamation, % A_ScriptName
 					, % "Problem with reading parameter" . A_Space . Key . A_Space . "from the file" . "`n"
 					. A_ScriptDir . "\" . IniFile . "`n`n"
 					. "Parameter is missing within the file or file is corrupted."
@@ -967,11 +968,22 @@ F_CheckIniParValidity(Temp, Key, Section, IniFile, DefKey, IfExit)	;IfExit = {"E
 					. DefKey . A_Space
 					. "will be saved to" . A_Space
 					. IniFile . "."
+					. "and application will continue to run."
 				IniWrite, % DefKey, % A_ScriptDir . "\" . IniFile, % Section, % Key
+				if (ErrorLevel)
+				{
+					MsgBox, % c_MB_I_Exclamation, % A_ScriptName
+						,  % "Problem with writing parameter" . A_Space . Key . A_Space . "to the file" . "`n"
+						. A_ScriptDir . "\" . IniFile . "`n`n"
+						. "Non-existing or corrupted file."
+						. "Exiting with error code 4 (impossible to write .ini file)."
+					TrayTip, % A_ScriptName, % "exits with code" . A_Space . "4", 5, 1
+					ExitApp, 4
+				}	
 				return DefKey
 			
 			Case "LetDecide":
-				MsgBox, % c_MB_IconAsteriskInfo + c_MB_B_YesNo, % A_ScriptName
+				MsgBox, % c_MB_I_AsteriskInfo + c_MB_B_YesNo, % A_ScriptName
 					, % "Problem with reading parameter" . A_Space . Key . A_Space . "from the file" . "`n"
 					. A_ScriptDir . "\" . IniFile . "`n"
 					. "Parameter is missing within the file or file is corrupted." . "`n`n"
@@ -979,10 +991,27 @@ F_CheckIniParValidity(Temp, Key, Section, IniFile, DefKey, IfExit)	;IfExit = {"E
 					. "If you answer ""No"", the default value" . A_Space . DefKey . A_Space . "will be applied only until you restart application." . "`n"
 					. "If you anwer ""Yes"", the default vaule will be saved to" . A_Space . IniFile . "."
 				IfMsgBox, Yes
+				{
+					IniWrite, % DefKey, % A_ScriptDir . "\" . IniFile, % Section, % Key
+					if (ErrorLevel)
 					{
-						IniWrite, % DefKey, % A_ScriptDir . "\" . IniFile, % Section, % Key
-						return DefKey
-					}
+						MsgBox, % c_MB_I_AsteriskInfo + c_MB_B_YesNo, % A_ScriptName
+							,  % "Problem with writing parameter" . A_Space . Key . A_Space . "to the file" . "`n"
+							. A_ScriptDir . "\" . IniFile . "`n`n"
+							. "Non-existing or corrupted file."
+							. "Do you want to continue or exit now?" . "`n`n"
+							. "If you answer ""Yes"", the default value" . A_Space . DefKey . A_Space . "will be applied only until you restart application." . "`n"
+							. "If you answer ""No"", application will exit with error code 4 (impossible to write .ini file)."
+						IfMsgBox, Yes
+							return DefKey
+						IfMsgBox, No
+						{
+							TrayTip, % A_ScriptName, % "exits with code" . A_Space . "4", 5, 1	
+							ExitApp, 4
+						}	
+					}	
+					return DefKey
+				}
 				IfMsgBox, No
 					return DefKey
 		}
@@ -992,7 +1021,7 @@ F_CheckIniParValidity(Temp, Key, Section, IniFile, DefKey, IfExit)	;IfExit = {"E
 		Switch IfExit
 		{
 			Case "Exit":
-				MsgBox, % c_MB_IconAsteriskInfo, % A_ScriptName
+				MsgBox, % c_MB_I_Exclamation, % A_ScriptName
 					, % "Problem with reading parameter" . A_Space . Key . A_Space . "from the file" . "`n"
 					. A_ScriptDir . "\" . IniFile . "`n`n"
 					. "Parameter was read empty." . "`n"
@@ -1001,7 +1030,7 @@ F_CheckIniParValidity(Temp, Key, Section, IniFile, DefKey, IfExit)	;IfExit = {"E
 				ExitApp, 3
 
 			Case "SaveDefault":
-				MsgBox, % c_MB_IconAsteriskInfo, % A_ScriptName
+				MsgBox, % c_MB_I_Exclamation, % A_ScriptName
 					, % "Problem with reading parameter" . A_Space . Key . A_Space . "from the file" . "`n"
 					. A_ScriptDir . "\" . IniFile . "`n`n"
 					. "Parameter was read empty." . "`n"
@@ -1010,11 +1039,21 @@ F_CheckIniParValidity(Temp, Key, Section, IniFile, DefKey, IfExit)	;IfExit = {"E
 					. "will be saved to" . A_Space
 					. IniFile . "."
 				IniWrite, % DefKey, % A_ScriptDir . "\" . IniFile, % Section, % Key
+				if (ErrorLevel)
+				{
+					MsgBox, % c_MB_I_Exclamation, % A_ScriptName
+						,  % "Problem with writing parameter" . A_Space . Key . A_Space . "to the file" . "`n"
+						. A_ScriptDir . "\" . IniFile . "`n`n"
+						. "Non-existing or corrupted file."
+						. "Exiting with error code 4 (impossible to write .ini file)."
+					TrayTip, % A_ScriptName, % "exits with code" . A_Space . "4", 5, 1	
+					ExitApp, 4
+				}	
 				return DefKey
 
 			Case "LetDecide":
 				Temp := DefKey
-				MsgBox, % c_MB_IconAsteriskInfo + c_MB_B_YesNo, % A_ScriptName
+				MsgBox, % c_MB_I_AsteriskInfo + c_MB_B_YesNo, % A_ScriptName
 					, % "Problem with reading parameter" . A_Space . Key . A_Space . "from the file" . "`n"
 					. A_ScriptDir . "\" . IniFile . "`n"
 					. "Parameter was read empty." . "`n"
@@ -1024,6 +1063,23 @@ F_CheckIniParValidity(Temp, Key, Section, IniFile, DefKey, IfExit)	;IfExit = {"E
 				IfMsgBox, Yes
 				{
 					IniWrite, % DefKey, % A_ScriptDir . "\" . IniFile, % Section, % Key
+					if (ErrorLevel)
+					{
+						MsgBox, % c_MB_I_AsteriskInfo + c_MB_B_YesNo, % A_ScriptName
+							,  % "Problem with writing parameter" . A_Space . Key . A_Space . "to the file" . "`n"
+							. A_ScriptDir . "\" . IniFile . "`n`n"
+							. "Non-existing or corrupted file."
+							. "Do you want to continue or exit now?" . "`n`n"
+							. "If you answer ""Yes"", the default value" . A_Space . DefKey . A_Space . "will be applied only until you restart application." . "`n"
+							. "If you answer ""No"", application will exit with error code 4 (impossible to write .ini file)."
+						IfMsgBox, Yes
+							return DefKey
+						IfMsgBox, No
+						{
+							TrayTip, % A_ScriptName, % "exits with code" . A_Space . "4", 5, 1	
+							ExitApp, 4
+						}	
+					}	
 					return DefKey
 				}	
 				IfMsgBox, No
@@ -1094,7 +1150,7 @@ F_ReadIni(IniFile)
 	
 	if (DiacriticSectionCounter = 0)
 	{
-		MsgBox, % c_MB_IconAsteriskInfo, % A_ScriptName, % "The" . A_Space . IniFile . A_Space . "do not contain any valid section. Exiting with error code 2 (no recognized .ini file section)."
+		MsgBox, % c_MB_I_AsteriskInfo, % A_ScriptName, % "The" . A_Space . IniFile . A_Space . "do not contain any valid section. Exiting with error code 2 (no recognized .ini file section)."
 		TrayTip, % A_ScriptName, % "exits with code" . A_Space . "2", 5, 1
 		ExitApp, 2
 	}
