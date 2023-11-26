@@ -25,7 +25,7 @@ StringCaseSense, 	On				;for Switch in F_OKU()
 ;Testing: Alt+Tab, , asdf Shift+Home, Ąsi
 
 ; - - - - - - - - - - - - - - - - Executable section, beginning - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-AppVersion				:= "1.3.15"
+AppVersion				:= "1.3.16"
 ;@Ahk2Exe-Let 				U_AppVersion=%A_PriorLine~U)^(.+"){1}(.+)".*$~$2% ; Keep these lines together
 ;Overrides the custom EXE icon used for compilation
 ;@Ahk2Exe-SetCopyright 		GNU GPL 3.x
