@@ -941,7 +941,54 @@ F_InputArguments()
 	}
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-F_CheckIniParValidity(Temp, Key, Section, IniFile, DefKey, IfExit)	;IfExit = {"Exit", "SaveDefault", "LetDecide"}
+F_SaveIniParValidity(Key, Section, IniFile, DefKey, IfExit)	;IfExit = {"Exit", "UseDefault", "LetDecide"}
+{
+	global	;assume-global mode of operation
+
+	IniWrite, % DefKey, % A_ScriptDir . "\" . IniFile, % Section, % Key
+	if (ErrorLevel)
+	{
+		Switch IfExit
+		{
+			Case "Exit":
+				MsgBox, % c_MB_I_Exclamation, % A_ScriptName
+					,  % "Problem with writing parameter" . A_Space . Key . A_Space . "to the file" . "`n"
+					. A_ScriptDir . "\" . IniFile . "`n`n"
+					. "Non-existing or corrupted file."
+					. "Exiting with error code 4 (impossible to write .ini file)."
+				TrayTip, % A_ScriptName, % "exits with code" . A_Space . "4", 5, 1
+				ExitApp, 4
+	
+			Case "UseDefault":
+				MsgBox, % c_MB_I_Exclamation, % A_ScriptName
+					,  % "Problem with writing parameter" . A_Space . Key . A_Space . "to the file" . "`n"
+					. A_ScriptDir . "\" . IniFile . "`n`n"
+					. "Non-existing or corrupted file."
+					. "The default value of parameter" . A_Space . 
+					. DefKey
+					. "will be used."
+				return DefKey
+
+			Case "LetDecide":
+				MsgBox, % c_MB_I_AsteriskInfo + c_MB_B_YesNo, % A_ScriptName
+					,  % "Problem with writing parameter" . A_Space . Key . A_Space . "to the file" . "`n"
+					. A_ScriptDir . "\" . IniFile . "`n`n"
+					. "Non-existing or corrupted file."
+					. "Do you want to continue or exit now?" . "`n`n"
+					. "If you answer ""Yes"", the default value" . A_Space . DefKey . A_Space . "will be applied only until you restart application." . "`n"
+					. "If you answer ""No"", application will exit with error code 4 (impossible to write .ini file)."
+				IfMsgBox, Yes
+					return DefKey
+				IfMsgBox, No
+				{
+					TrayTip, % A_ScriptName, % "exits with code" . A_Space . "4", 5, 1	
+					ExitApp, 4
+				}	
+		}
+	}
+}
+; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+F_ReadIniParValidity(Temp, Key, Section, IniFile, DefKey, IfExit)	;IfExit = {"Exit", "SaveDefault", "LetDecide"}
 {
 	global	;assume-global mode of operation
 	local	ErrorString			:= "ERROR"
@@ -969,18 +1016,7 @@ F_CheckIniParValidity(Temp, Key, Section, IniFile, DefKey, IfExit)	;IfExit = {"E
 					. "will be saved to" . A_Space
 					. IniFile . "."
 					. "and application will continue to run."
-				IniWrite, % DefKey, % A_ScriptDir . "\" . IniFile, % Section, % Key
-				if (ErrorLevel)
-				{
-					MsgBox, % c_MB_I_Exclamation, % A_ScriptName
-						,  % "Problem with writing parameter" . A_Space . Key . A_Space . "to the file" . "`n"
-						. A_ScriptDir . "\" . IniFile . "`n`n"
-						. "Non-existing or corrupted file."
-						. "Exiting with error code 4 (impossible to write .ini file)."
-					TrayTip, % A_ScriptName, % "exits with code" . A_Space . "4", 5, 1
-					ExitApp, 4
-				}	
-				return DefKey
+				return F_SaveIniParValidity(Key, Section, IniFile, DefKey, "UseDefault")	;IfExit = {"Exit", "UseDefault", "LetDecide"}	
 			
 			Case "LetDecide":
 				MsgBox, % c_MB_I_AsteriskInfo + c_MB_B_YesNo, % A_ScriptName
@@ -991,27 +1027,7 @@ F_CheckIniParValidity(Temp, Key, Section, IniFile, DefKey, IfExit)	;IfExit = {"E
 					. "If you answer ""No"", the default value" . A_Space . DefKey . A_Space . "will be applied only until you restart application." . "`n"
 					. "If you anwer ""Yes"", the default vaule will be saved to" . A_Space . IniFile . "."
 				IfMsgBox, Yes
-				{
-					IniWrite, % DefKey, % A_ScriptDir . "\" . IniFile, % Section, % Key
-					if (ErrorLevel)
-					{
-						MsgBox, % c_MB_I_AsteriskInfo + c_MB_B_YesNo, % A_ScriptName
-							,  % "Problem with writing parameter" . A_Space . Key . A_Space . "to the file" . "`n"
-							. A_ScriptDir . "\" . IniFile . "`n`n"
-							. "Non-existing or corrupted file."
-							. "Do you want to continue or exit now?" . "`n`n"
-							. "If you answer ""Yes"", the default value" . A_Space . DefKey . A_Space . "will be applied only until you restart application." . "`n"
-							. "If you answer ""No"", application will exit with error code 4 (impossible to write .ini file)."
-						IfMsgBox, Yes
-							return DefKey
-						IfMsgBox, No
-						{
-							TrayTip, % A_ScriptName, % "exits with code" . A_Space . "4", 5, 1	
-							ExitApp, 4
-						}	
-					}	
-					return DefKey
-				}
+					return F_SaveIniParValidity(Key, Section, IniFile, DefKey, "LetDecide")	;IfExit = {"Exit", "UseDefault", "LetDecide"}	
 				IfMsgBox, No
 					return DefKey
 		}
@@ -1038,18 +1054,7 @@ F_CheckIniParValidity(Temp, Key, Section, IniFile, DefKey, IfExit)	;IfExit = {"E
 					. DefKey . A_Space
 					. "will be saved to" . A_Space
 					. IniFile . "."
-				IniWrite, % DefKey, % A_ScriptDir . "\" . IniFile, % Section, % Key
-				if (ErrorLevel)
-				{
-					MsgBox, % c_MB_I_Exclamation, % A_ScriptName
-						,  % "Problem with writing parameter" . A_Space . Key . A_Space . "to the file" . "`n"
-						. A_ScriptDir . "\" . IniFile . "`n`n"
-						. "Non-existing or corrupted file."
-						. "Exiting with error code 4 (impossible to write .ini file)."
-					TrayTip, % A_ScriptName, % "exits with code" . A_Space . "4", 5, 1	
-					ExitApp, 4
-				}	
-				return DefKey
+				F_SaveIniParValidity(Key, Section, IniFile, DefKey, "UseDefault")	;IfExit = {"Exit", "UseDefault", "LetDecide"}		
 
 			Case "LetDecide":
 				Temp := DefKey
@@ -1061,27 +1066,7 @@ F_CheckIniParValidity(Temp, Key, Section, IniFile, DefKey, IfExit)	;IfExit = {"E
 					. "If you answer ""No"", the default value" . A_Space . DefKey . A_Space . "will be applied only until you restart application." . "`n"
 					. "If you anwer ""Yes"", the default vaule will be saved to" . A_Space . IniFile . "."
 				IfMsgBox, Yes
-				{
-					IniWrite, % DefKey, % A_ScriptDir . "\" . IniFile, % Section, % Key
-					if (ErrorLevel)
-					{
-						MsgBox, % c_MB_I_AsteriskInfo + c_MB_B_YesNo, % A_ScriptName
-							,  % "Problem with writing parameter" . A_Space . Key . A_Space . "to the file" . "`n"
-							. A_ScriptDir . "\" . IniFile . "`n`n"
-							. "Non-existing or corrupted file."
-							. "Do you want to continue or exit now?" . "`n`n"
-							. "If you answer ""Yes"", the default value" . A_Space . DefKey . A_Space . "will be applied only until you restart application." . "`n"
-							. "If you answer ""No"", application will exit with error code 4 (impossible to write .ini file)."
-						IfMsgBox, Yes
-							return DefKey
-						IfMsgBox, No
-						{
-							TrayTip, % A_ScriptName, % "exits with code" . A_Space . "4", 5, 1	
-							ExitApp, 4
-						}	
-					}	
-					return DefKey
-				}	
+					return F_SaveIniParValidity(Key, Section, IniFile, DefKey, "LetDecide")	;IfExit = {"Exit", "UseDefault", "LetDecide"}	
 				IfMsgBox, No
 					return DefKey
 		}
@@ -1097,7 +1082,7 @@ F_ReadIni(IniFile)
 		,	Temp 				:= ""
 		
 	IniRead, Temp, 	% IniFile, Global, OverallStatus, 	% ErrorString
-	f_ShiftFunctions := F_CheckIniParValidity(Temp	;IfExit = {"Exit", "SaveDefault", "LetDecide"}
+	f_ShiftFunctions := F_ReadIniParValidity(Temp	;IfExit = {"Exit", "SaveDefault", "LetDecide"}
 						,	Key := "OverallStatus"
 						,	Section := "Global"
 						, 	IniFile
@@ -1105,7 +1090,7 @@ F_ReadIni(IniFile)
 						, 	IfExit := "LetDecide")
 
 	IniRead, Temp,		% IniFile, Global, ShiftCapital,	% ErrorString
-	f_Capital := 		F_CheckIniParValidity(Temp	;IfExit = {"Exit", "SaveDefault", "LetDecide"}
+	f_Capital := 		F_ReadIniParValidity(Temp	;IfExit = {"Exit", "SaveDefault", "LetDecide"}
 						, 	Key := "ShiftCapital"
 						,	Section := "Global"
 						, 	IniFile
@@ -1113,7 +1098,7 @@ F_ReadIni(IniFile)
 						, 	IfExit := "LetDecide")
 
 	IniRead, Temp,		% IniFile, Global, ShiftDiacritics,	% ErrorString
-	f_Diacritics := 	F_CheckIniParValidity(Temp	;IfExit = {"Exit", "SaveDefault", "LetDecide"}
+	f_Diacritics := 	F_ReadIniParValidity(Temp	;IfExit = {"Exit", "SaveDefault", "LetDecide"}
 						, 	Key := "ShiftDiacritics"
 						,	Section := "Global"
 						, 	IniFile
@@ -1121,7 +1106,7 @@ F_ReadIni(IniFile)
 						, 	IfExit := "LetDecide")
 
 	IniRead, Temp,		% IniFile, Global, ShiftCapsLock,	% ErrorString
-	f_CapsLock := 		F_CheckIniParValidity(Temp	;IfExit = {"Exit", "SaveDefault", "LetDecide"}
+	f_CapsLock := 		F_ReadIniParValidity(Temp	;IfExit = {"Exit", "SaveDefault", "LetDecide"}
 						, 	Key := "ShiftCapsLock"
 						,	Section := "Global"
 						, 	IniFile
@@ -1129,7 +1114,7 @@ F_ReadIni(IniFile)
 						, 	IfExit := "LetDecide")
 
 	IniRead, Temp,		% IniFile, Global, SendLevel,			% ErrorString
-	c_OutputSL := 		F_CheckIniParValidity(Temp	;IfExit = {"Exit", "SaveDefault", "LetDecide"}
+	c_OutputSL := 		F_ReadIniParValidity(Temp	;IfExit = {"Exit", "SaveDefault", "LetDecide"}
 						, 	Key := "SendLevel"
 						,	Section := "Global"
 						, 	IniFile
@@ -1137,7 +1122,7 @@ F_ReadIni(IniFile)
 						, 	IfExit := "LetDecide")
 
 	IniRead, Temp,		% IniFile, Global, MinSendLevel,		% ErrorString
-	c_InputSL := 		F_CheckIniParValidity(Temp	;IfExit = {"Exit", "SaveDefault", "LetDecide"}
+	c_InputSL := 		F_ReadIniParValidity(Temp	;IfExit = {"Exit", "SaveDefault", "LetDecide"}
 						, 	Key := "MinSendLevel"
 						,	Section := "Global"
 						, 	IniFile
@@ -1158,7 +1143,7 @@ F_ReadIni(IniFile)
 	Loop, %DiacriticSectionCounter%
     	{
 		IniRead, Temp,		% IniFile, % "Diacritic"	. A_Index, BaseKey,		% ErrorString
-		Temp := 			F_CheckIniParValidity(Temp	;IfExit = {"Exit", "SaveDefault", "LetDecide"}
+		Temp := 			F_ReadIniParValidity(Temp	;IfExit = {"Exit", "SaveDefault", "LetDecide"}
 							,	Key := "BaseKey" . A_Index
 							,	Section := "Diacritic"
 							,	IniFile
@@ -1167,7 +1152,7 @@ F_ReadIni(IniFile)
 		a_BaseKey.Push(Temp)
  
 		IniRead, Temp,		% IniFile, % "Diacritic"	. A_Index, Diacritic,		% ErrorString
-		Temp := 			F_CheckIniParValidity(Temp	;IfExit = {"Exit", "SaveDefault", "LetDecide"}
+		Temp := 			F_ReadIniParValidity(Temp	;IfExit = {"Exit", "SaveDefault", "LetDecide"}
 							,	Key := "Diacritic" . A_Index
 							,	Section := "Diacritic"
 							,	IniFile
@@ -1176,7 +1161,7 @@ F_ReadIni(IniFile)
 		a_Diacritic.Push(Temp)
 
 		IniRead, Temp,		% IniFile, % "Diacritic"	. A_Index, ShiftBaseKey,		% ErrorString
-		Temp := 			F_CheckIniParValidity(Temp	;IfExit = {"Exit", "SaveDefault", "LetDecide"}
+		Temp := 			F_ReadIniParValidity(Temp	;IfExit = {"Exit", "SaveDefault", "LetDecide"}
 							,	Key := "ShiftBaseKey" . A_Index
 							,	Section := "Diacritic"
 							,	IniFile
@@ -1185,7 +1170,7 @@ F_ReadIni(IniFile)
 		a_BaseKey.Push(Temp)
 
 		IniRead, Temp,		% IniFile, % "Diacritic"	. A_Index, ShiftDiacritic,		% ErrorString
-		Temp := 			F_CheckIniParValidity(Temp	
+		Temp := 			F_ReadIniParValidity(Temp	
 							,	Key := "ShiftDiacritic" . A_Index
 							,	Section := "Diacritic"
 							,	IniFile
