@@ -6,7 +6,7 @@
 				Shift: Capital, when Shift is pressed and released before character, that character is replaced with capital character.
 				Shift: CapsLock, when Shift is pressed and release twice, CapsLock is toggled.
  	License:     	GNU GPL v.3
-	Notes:		Run this script as the last one (1. Hotstrings. 2. Hotstrings2. 3. ShiftFunctions). 
+	Notes:		Run this script as the first one, before any Hotstring definition (static or dynamic). Thanks to that the on InputHook stack the `ShiftFunction` will be the last one which processes any characters entered by user.
 				Save this file as UTF-8 with BOM.
 				To cancel Shift behaviour press either Control, Esc, Backspace or both Shift keys at once.
 */
@@ -25,7 +25,7 @@ StringCaseSense, 	On				;for Switch in F_OKU()
 ;Testing: Alt+Tab, , asdf Shift+Home, Ąsi
 
 ; - - - - - - - - - - - - - - - - Executable section, beginning - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-AppVersion				:= "1.3.16"
+AppVersion			:= "1.3.16"
 ;@Ahk2Exe-Let 				U_AppVersion=%A_PriorLine~U)^(.+"){1}(.+)".*$~$2% ; Keep these lines together
 ;Overrides the custom EXE icon used for compilation
 ;@Ahk2Exe-SetCopyright 		GNU GPL 3.x
@@ -36,7 +36,7 @@ AppVersion				:= "1.3.16"
 ;@Ahk2Exe-SetVersion 		%U_AppVersion%
 ;@Ahk2Exe-SetMainIcon		imageres_122.ico 		;c:\Windows\System32\imageres.dll 
 
-FileInstall, LICENSE, 			LICENSE, 			false	;false = not overwrite if already exists
+FileInstall, LICENSE, 			LICENSE, 			false	;false = not overwrite if already exists	
 FileInstall, ShiftFunctions.ahk, 	ShiftFunctions.ahk, false	;false = not overwrite if already exists
 FileInstall, Czech.ini, 			Czech.ini,		false	;false = not overwrite if already exists
 FileInstall, German1.ini, 		German1.ini,		false	;false = not overwrite if already exists
@@ -75,7 +75,7 @@ FileInstall, README.md, 			README.md,		false	;false = not overwrite if already e
 ,	c_NominalSL		:= 0		;global constant: nominal / default value for SendLevel
 ,	f_LShift			:= false	;global flag, set when Left Shift is pressed down
 ,	f_RShift			:= false	;global flag, set when Right Shift is pressed down
-,	c_InputSL			:= 1		;global constant: default value for InputHook (MinSendLevel)
+,	c_InputSL			:= 2		;global constant: default value for InputHook (MinSendLevel)
 ,	f_SDCD			:= false	;global flag: Shift (S) is down (D) and Character (C) is down (D)
 ,	v_WhatWasDown		:= ""	;global variable, name of key which was pressed down
 ,	f_WasReset		:= false	;global flag: Shift key memory reset (to reset v_CLCounter)
@@ -344,7 +344,6 @@ F_Capital(ByRef v_Char)
 	global	;assume-global mode of operation
 	; OutputDebug, % A_ThisFunc . A_Space . "B" . A_Space . "IC:" . A_IsCritical . "`n"
 	SendLevel, % c_OutputSL
-	Sleep, 1			;by try and error; if ShiftFunctions is run as the last one (after Hotstrings and Hotstrings2). 
 	Send, {BS}
 	Switch v_Char
 	{
@@ -398,7 +397,7 @@ F_Capital(ByRef v_Char)
 	SendLevel, % c_NominalSL
 	F_FlagReset()
 	v_CLCounter 	:= c_CLReset
-	; OutputDebug, % A_ThisFunc .  A_Space . "E" . "`n"
+	; OutputDebug, % A_ThisFunc . "`n"
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 F_MenuTray()
@@ -437,15 +436,6 @@ F_MenuTray()
     	Menu, Tray, Tip, % A_ScriptName ; Changes the tray icon's tooltip.
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-F_Reload()
-{
-	if A_IsCompiled
-	    Run "%A_ScriptFullPath%" /force
-	else
-	    Run "%A_AhkPath%" /force "%A_ScriptFullPath%"
-	ExitApp
-}
-; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 F_SetSendLevel()
 {
 	global	;assume-global mode of operation
@@ -461,7 +451,7 @@ F_SetSendLevel()
 			else
 				Menu, SendLevelSumbmenu, UnCheck, 	% A_Index - 1
 		}
-		; OutputDebug, % "c_OutputSL:" . c_OutputSL . "`n"
+		OutputDebug, % "c_OutputSL:" . c_OutputSL . "`n"
 	}
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 F_SetMinSendLevel()
@@ -649,6 +639,7 @@ F_OCD(ih, Char)	;On Character Down; this function can interrupt "On Key Down"
 
 	local 	f_IfShiftDownP		:= GetKeyState("Shift", "P")	;if <shift> is down physically; remember, it takes time to switch and read physical state
 			f_IfShiftDown		:= GetKeyState("Shift")		;if <shift> is down only logically
+		,    IsAlpha 			:= false
 
 	if (f_IfShiftDown) and (!f_IfShiftDownP)	;if <shift> is down logically but is not down physically, reset the flag. This condition is here to get rid of bug related to stuck <shift> in down position.
 	{
@@ -662,52 +653,69 @@ F_OCD(ih, Char)	;On Character Down; this function can interrupt "On Key Down"
 		FileAppend, % A_YYYY . "-" . A_MM . "-" . A_DD . A_Space . A_Hour . ":" . A_Min . ":" . A_Sec . A_Space . "Shift must be lifted up!" . A_Space . "v_Char:" . v_Char . "`n", ErrorLog.txt, UTF-8 ;Logging of errors
 	}		
 		
+	if v_Char is Alpha
+		IsAlpha := true
+	else
+		IsAlpha := false
+
 	SendLevel, 	% c_OutputSL
-	Sleep,		1		;added by try and error method if ShiftFunctions is run as the third script.
 	; OutputDebug, % A_ThisFunc . A_Space . "v_Char:" . v_Char . "|" . A_Space . "B" . "`n"
 
 	if (GetKeyState("CapsLock", "T"))	;if CapsLock is "on"
 	{
+		SetStoreCapslockMode, Off	;This is the only way which I know to get rid of blinking CapsLock. From now the v_Char value is ignored by Send and treated as small letters
 		if v_Char is Alpha	;alphabetic character
 		{
+			Send, {BS}					;this line is required only if there is no suppress (all parameters are visible)
+			if (!f_IfShiftDown) and (!f_SPA)	;SPA = Shift Pressed Alone
+				Switch Char				;This is the only way which I know to get rid of blinking CapsLock
+				{
+					Case "A":	Send, {U+0041}	;A
+					Case "B":	Send, {U+0042}	;B
+					Case "C":	Send, {U+0043}	;C
+					Case "D":	Send, {U+0044}	;D
+					Case "E":	Send, {U+0045}	;E
+					Case "F":	Send, {U+0046}	;F
+					Case "G":	Send, {U+0047}	;G
+					Case "H":	Send, {U+0048}	;H
+					Case "I":	Send, {U+0049}	;I
+					Case "J":	Send, {U+004a}	;J
+					Case "K":	Send, {U+004b}	;K
+					Case "L":	Send, {U+004c}	;L
+					Case "M":	Send, {U+004d}	;M
+					Case "N":	Send, {U+004e}	;N
+					Case "O":	Send, {U+004f}	;O
+					Case "P":	Send, {U+0050}	;P
+					Case "Q":	Send, {U+0051}	;Q
+					Case "R":	Send, {U+0052}	;R
+					Case "S":	Send, {U+0053}	;S
+					Case "T":	Send, {U+0054}	;T
+					Case "U":	Send, {U+0055}	;U
+					Case "V":	Send, {U+0056}	;V
+					Case "W":	Send, {U+0057}	;W
+					Case "X":	Send, {U+0058}	;X
+					Case "Y":	Send, {U+0059}	;Y
+					Case "Z":	Send, {U+005a}	;Z
+				}
+
 			; OutputDebug, % "CapsLock is on" . A_Space . "f_SPA:" . f_SPA . A_Space . "f_IfShiftDown:" . f_IfShiftDown . "`n"
 			if (f_IfShiftDown)	;logic must be reversed if Shift key is pressed.
-			{
-				Send, {BS}
 				Send, % "+" . v_Char
-			}	
 
 			if (f_Capital) 
 				and (f_SPA)	;SPA = Shift Pressed Alone
 			{
-				Send, {BS}
-				v_Char := Format("{:L}", v_Char)
 				Send, % v_Char
-				f_SPA 		:= false	
-			,	v_CLCounter 	:= c_CLReset
+				f_SPA := false	
 			}	
 		}
 		else	;not alphabetic character
-		{
-			if (v_Char = "`t") or (v_Char = "`n")
-			{
-				SendLevel, 	% c_NominalSL
-				v_Char := ""
-				Critical, Off
-				return
-			}	
 			F_SendNotAlphaChar(f_IfShiftDown, v_Char, f_SPA)
-		}	
+		
+		SetStoreCapslockMode, On	;for whatever reason 
 	}
 	else	;CapsLock is off
 	{
-		if (v_Char = "`t") or (v_Char = "`n")
-		{
-			SendLevel, 	% c_NominalSL
-			v_Char := ""
-			Critical, Off
-			return
-		}	
 		if (f_Capital) 
 			and (f_SPA)	;SPA = Shift Pressed Alone
 			F_Capital(v_Char)
@@ -725,16 +733,15 @@ F_SendNotAlphaChar(f_IfShiftDown, v_Char, ByRef f_SPA)
 
 	if (f_IfShiftDown)
 	{
-		Send, {BS}
 		if (v_Char = "{") or (v_Char = "}") or (v_Char = "^") or (v_Char = "!") or (v_Char = "+") or (v_Char = "#")
 			Send, % "{" . v_Char . "}"
 		else
 			Send, % "+" . v_Char
+		v_CLCounter 	:= c_CLReset
 	}
 
 	if (!f_IfShiftDown) and (f_SPA)
 	{
-		Send, {BS}
 		Send, % "+" . v_Char
 		f_SPA := false
 	,	v_CLCounter 	:= c_CLReset
@@ -746,8 +753,8 @@ F_OKU(ih, VK, SC)	;On Key Up
 
 	global	;assume-global mode of operation
 	Critical, On	;in order to protect against situation when after diacritic capital letter is entered from nowhere.
+	; OutputDebug, % A_ThisFunc . A_Space . "B" . "`n"
 	local	WhatWasUp := GetKeyName(Format("vk{:x}sc{:x}", VK, SC))
-	; OutputDebug, % A_ThisFunc . A_Space . "B" . A_Space . "WhatWasUp:" . WhatWasUp . "`n"
 	
 	if (f_WasReset)
 	{
@@ -776,7 +783,6 @@ F_OKU(ih, VK, SC)	;On Key Up
 		or (WhatWasUp = "Left") or (WhatWasUp = "Right") or (WhatWasUp = "Up") or (WhatWasUp = "Down")
 		or (WhatWasUp = "Delete") or (WhatWasUp = "Insert") or (WhatWasUp = "Home") or (WhatWasUp = "End") or (WhatWasUp = "PgUp") or (WhatWasUp = "PgDn")
 		or (WhatWasUp = "F1") or (WhatWasUp = "F2") or (WhatWasUp = "F3") or (WhatWasUp = "F4") or (WhatWasUp = "F5") or (WhatWasUp = "F6") or (WhatWasUp = "F7") or (WhatWasUp = "F8") or (WhatWasUp = "F9") or (WhatWasUp = "F10") or (WhatWasUp = "F11") or (WhatWasUp = "F12") or (WhatWasUp = "F13") or (WhatWasUp = "F14") or (WhatWasUp = "F15") or (WhatWasUp = "F16") or (WhatWasUp = "F17") or (WhatWasUp = "F18") or (WhatWasUp = "F19") or (WhatWasUp = "F20") or (WhatWasUp = "F21") or (WhatWasUp = "F22") or (WhatWasUp = "F23") or (WhatWasUp = "F24")
-		or (WhatWasUp = "Tab")
 	{
 		f_SPA 		:= false
 	,	v_Char		:= ""
@@ -786,7 +792,7 @@ F_OKU(ih, VK, SC)	;On Key Up
 
 	if (f_Diacritics)
 		and (f_SPA)
-		and (v_Char)
+		and ((WhatWasUp = "LShift") or (WhatWasUp = "RShift"))
 			F_Diacritics(v_Char)
 
 	if (f_CapsLock)
@@ -848,7 +854,7 @@ F_CapsLock(WhatWasUp, ByRef f_SPA)
 F_Diacritics(ByRef v_Char)
 {
 	global	;assume-global mode of operation
-	; OutputDebug, % A_ThisFunc . A_Space . "v_Char:" . v_Char . "|" . A_Space . "B" . "`n"
+	; OutputDebug, % A_ThisFunc . A_Space . "v_Char:" . v_Char . A_Space . "B" . "`n"
 	local	index := % c_NominalSL
 		,	value := ""
 
@@ -937,248 +943,152 @@ F_InputArguments()
 	else
 	{
 		v_ConfigIni := param
-		F_ReadIni(param)
+		F_ReadIni(v_ConfigIni)
 	}
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-F_SaveIniParValidity(Key, Section, IniFile, DefKey, IfExit)	;IfExit = {"Exit", "UseDefault", "LetDecide"}
-{
-	global	;assume-global mode of operation
-
-	IniWrite, % DefKey, % A_ScriptDir . "\" . IniFile, % Section, % Key
-	if (ErrorLevel)
-	{
-		Switch IfExit
-		{
-			Case "Exit":
-				MsgBox, % c_MB_I_Exclamation, % A_ScriptName
-					,  % "Problem with writing parameter" . A_Space . Key . A_Space . "to the file" . "`n"
-					. A_ScriptDir . "\" . IniFile . "`n`n"
-					. "Non-existing or corrupted file."
-					. "Exiting with error code 4 (impossible to write .ini file)."
-				TrayTip, % A_ScriptName, % "exits with code" . A_Space . "4", 5, 1
-				ExitApp, 4
-	
-			Case "UseDefault":
-				MsgBox, % c_MB_I_Exclamation, % A_ScriptName
-					,  % "Problem with writing parameter" . A_Space . Key . A_Space . "to the file" . "`n"
-					. A_ScriptDir . "\" . IniFile . "`n`n"
-					. "Non-existing or corrupted file."
-					. "The default value of parameter" . A_Space . 
-					. DefKey
-					. "will be used."
-				return DefKey
-
-			Case "LetDecide":
-				MsgBox, % c_MB_I_AsteriskInfo + c_MB_B_YesNo, % A_ScriptName
-					,  % "Problem with writing parameter" . A_Space . Key . A_Space . "to the file" . "`n"
-					. A_ScriptDir . "\" . IniFile . "`n`n"
-					. "Non-existing or corrupted file."
-					. "Do you want to continue or exit now?" . "`n`n"
-					. "If you answer ""Yes"", the default value" . A_Space . DefKey . A_Space . "will be applied only until you restart application." . "`n"
-					. "If you answer ""No"", application will exit with error code 4 (impossible to write .ini file)."
-				IfMsgBox, Yes
-					return DefKey
-				IfMsgBox, No
-				{
-					TrayTip, % A_ScriptName, % "exits with code" . A_Space . "4", 5, 1	
-					ExitApp, 4
-				}	
-		}
-	}
-}
-; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-F_ReadIniParValidity(Temp, Key, Section, IniFile, DefKey, IfExit)	;IfExit = {"Exit", "SaveDefault", "LetDecide"}
-{
-	global	;assume-global mode of operation
-	local	ErrorString			:= "ERROR"
-
-	if (Temp = ErrorString)
-	{
-		Switch IfExit
-		{
-			Case "Exit":
-				MsgBox, % c_MB_I_Exclamation, % A_ScriptName
-					, % "Problem with reading parameter" . A_Space . Key . A_Space . "from the file" . "`n"
-					. A_ScriptDir . "\" . IniFile . "`n`n"
-					. "Parameter is missing within the file or file is corrupted."
-					. "Exiting with error code 3 (impossible to read .ini file)."
-				TrayTip, % A_ScriptName, % "exits with code" . A_Space . "3", 5, 1
-				ExitApp, 3
-
-			Case "SaveDefault":
-				MsgBox, % c_MB_I_Exclamation, % A_ScriptName
-					, % "Problem with reading parameter" . A_Space . Key . A_Space . "from the file" . "`n"
-					. A_ScriptDir . "\" . IniFile . "`n`n"
-					. "Parameter is missing within the file or file is corrupted."
-					. "Default value:" . A_Space
-					. DefKey . A_Space
-					. "will be saved to" . A_Space
-					. IniFile . "."
-					. "and application will continue to run."
-				return F_SaveIniParValidity(Key, Section, IniFile, DefKey, "UseDefault")	;IfExit = {"Exit", "UseDefault", "LetDecide"}	
-			
-			Case "LetDecide":
-				MsgBox, % c_MB_I_AsteriskInfo + c_MB_B_YesNo, % A_ScriptName
-					, % "Problem with reading parameter" . A_Space . Key . A_Space . "from the file" . "`n"
-					. A_ScriptDir . "\" . IniFile . "`n"
-					. "Parameter is missing within the file or file is corrupted." . "`n`n"
-					. "Do you want to save default parameter to" . A_Space . IniFile . A_Space . "?" . "`n`n"
-					. "If you answer ""No"", the default value" . A_Space . DefKey . A_Space . "will be applied only until you restart application." . "`n"
-					. "If you anwer ""Yes"", the default vaule will be saved to" . A_Space . IniFile . "."
-				IfMsgBox, Yes
-					return F_SaveIniParValidity(Key, Section, IniFile, DefKey, "LetDecide")	;IfExit = {"Exit", "UseDefault", "LetDecide"}	
-				IfMsgBox, No
-					return DefKey
-		}
-	}
-	if (Temp = "")
-	{
-		Switch IfExit
-		{
-			Case "Exit":
-				MsgBox, % c_MB_I_Exclamation, % A_ScriptName
-					, % "Problem with reading parameter" . A_Space . Key . A_Space . "from the file" . "`n"
-					. A_ScriptDir . "\" . IniFile . "`n`n"
-					. "Parameter was read empty." . "`n"
-					. "Exiting with error code 3 (no recognized parameter)."
-				TrayTip, % A_ScriptName, % "exits with code" . A_Space . "3", 5, 1
-				ExitApp, 3
-
-			Case "SaveDefault":
-				MsgBox, % c_MB_I_Exclamation, % A_ScriptName
-					, % "Problem with reading parameter" . A_Space . Key . A_Space . "from the file" . "`n"
-					. A_ScriptDir . "\" . IniFile . "`n`n"
-					. "Parameter was read empty." . "`n"
-					. "Default value:" . A_Space
-					. DefKey . A_Space
-					. "will be saved to" . A_Space
-					. IniFile . "."
-				F_SaveIniParValidity(Key, Section, IniFile, DefKey, "UseDefault")	;IfExit = {"Exit", "UseDefault", "LetDecide"}		
-
-			Case "LetDecide":
-				Temp := DefKey
-				MsgBox, % c_MB_I_AsteriskInfo + c_MB_B_YesNo, % A_ScriptName
-					, % "Problem with reading parameter" . A_Space . Key . A_Space . "from the file" . "`n"
-					. A_ScriptDir . "\" . IniFile . "`n"
-					. "Parameter was read empty." . "`n"
-					. "Do you want to save default parameter to" . A_Space . IniFile . A_Space . "?" . "`n`n"
-					. "If you answer ""No"", the default value" . A_Space . DefKey . A_Space . "will be applied only until you restart application." . "`n"
-					. "If you anwer ""Yes"", the default vaule will be saved to" . A_Space . IniFile . "."
-				IfMsgBox, Yes
-					return F_SaveIniParValidity(Key, Section, IniFile, DefKey, "LetDecide")	;IfExit = {"Exit", "UseDefault", "LetDecide"}	
-				IfMsgBox, No
-					return DefKey
-		}
-	}
-	return Temp
-}
-; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-F_ReadIni(IniFile)
+F_ReadIni(param)
 {
 	global	;assume-global mode of operation
 	local 	DiacriticSectionCounter 	:= 0
-		,	ErrorString			:= "ERROR"
 		,	Temp 				:= ""
-		
-	IniRead, Temp, 	% IniFile, Global, OverallStatus, 	% ErrorString
-	f_ShiftFunctions := F_ReadIniParValidity(Temp	;IfExit = {"Exit", "SaveDefault", "LetDecide"}
-						,	Key := "OverallStatus"
-						,	Section := "Global"
-						, 	IniFile
-						, 	DefKey := f_ShiftFunctions
-						, 	IfExit := "LetDecide")
+		,	ErrorString			:= "Error"
 
-	IniRead, Temp,		% IniFile, Global, ShiftCapital,	% ErrorString
-	f_Capital := 		F_ReadIniParValidity(Temp	;IfExit = {"Exit", "SaveDefault", "LetDecide"}
-						, 	Key := "ShiftCapital"
-						,	Section := "Global"
-						, 	IniFile
-						, 	DefKey := f_Capital
-						, 	IfExit := "LetDecide")
+	IniRead, c_OutputSL,			% v_ConfigIni, Global, SendLevel,		% ErrorString
+	if (c_OutputSL = ErrorString)
+	{
+		c_OutputSL := 1	;default value
+		MsgBox, % c_MB_I_AsteriskInfo, % A_ScriptName, % "Problem with reading parameter" . A_Space . "SendLevel" . A_Space . "from the file" . "`n"
+			. A_ScriptDir . "\" . v_ConfigIni . "`n`n"
+			. "Default value will be applied now:" . "`n"
+			. c_OutputSL . "."
+	}
 
-	IniRead, Temp,		% IniFile, Global, ShiftDiacritics,	% ErrorString
-	f_Diacritics := 	F_ReadIniParValidity(Temp	;IfExit = {"Exit", "SaveDefault", "LetDecide"}
-						, 	Key := "ShiftDiacritics"
-						,	Section := "Global"
-						, 	IniFile
-						, 	DefKey := f_Diacritics
-						, 	IfExit := "LetDecide")
+	IniRead, c_InputSL,			% v_ConfigIni, Global, MinSendLevel,		% ErrorString
+	if (c_InputSL = ErrorString)
+	{
+		c_InputSL := 2		;default value
+		MsgBox, % c_MB_I_AsteriskInfo, % A_ScriptName, % "Problem with reading parameter" . A_Space . "MinSendLevel" . A_Space . "from the file" . "`n"
+			. A_ScriptDir . "\" . v_ConfigIni . "`n`n"
+			. "Default value will be applied now:" . "`n"
+			. c_InputSL . "."
+	}
 
-	IniRead, Temp,		% IniFile, Global, ShiftCapsLock,	% ErrorString
-	f_CapsLock := 		F_ReadIniParValidity(Temp	;IfExit = {"Exit", "SaveDefault", "LetDecide"}
-						, 	Key := "ShiftCapsLock"
-						,	Section := "Global"
-						, 	IniFile
-						, 	DefKey := f_CapsLock
-						, 	IfExit := "LetDecide")
+	IniRead, f_ShiftFunctions, 	% v_ConfigIni, Global, OverallStatus, 	% ErrorString
+	if (f_ShiftFunctions = ErrorString)
+	{
+		f_ShiftFunctions := true	;default value
+		MsgBox, % c_MB_I_AsteriskInfo, % A_ScriptName, % "Problem with reading parameter" . A_Space . "overall status" . A_Space . "from the file" . "`n"
+			. A_ScriptDir . "\" . v_ConfigIni . "`n`n"
+			. "Default value will be applied now:" . "`n"
+			. "ENABLE" . "."
+	}
 
-	IniRead, Temp,		% IniFile, Global, SendLevel,			% ErrorString
-	c_OutputSL := 		F_ReadIniParValidity(Temp	;IfExit = {"Exit", "SaveDefault", "LetDecide"}
-						, 	Key := "SendLevel"
-						,	Section := "Global"
-						, 	IniFile
-						, 	DefKey := c_OutputSL
-						, 	IfExit := "LetDecide")
+	IniRead, f_Capital, 		% v_ConfigIni, Global, ShiftCapital,	% ErrorString
+	if (f_Capital = ErrorString)
+	{
+		f_Capital := true	;default value
+		MsgBox, % c_MB_I_AsteriskInfo, % A_ScriptName, % "Problem with reading parameter" . A_Space . "Shift capital" . A_Space . "from the file" . "`n"
+			. A_ScriptDir . "\" . v_ConfigIni . "`n`n"
+			. "Default value will be applied now:" . "`n"
+			. "ENABLE" . "."
+	}
 
-	IniRead, Temp,		% IniFile, Global, MinSendLevel,		% ErrorString
-	c_InputSL := 		F_ReadIniParValidity(Temp	;IfExit = {"Exit", "SaveDefault", "LetDecide"}
-						, 	Key := "MinSendLevel"
-						,	Section := "Global"
-						, 	IniFile
-						, 	DefKey := c_InputSL
-						, 	IfExit := "LetDecide")
+	IniRead, f_Diacritics, 		% v_ConfigIni, Global, ShiftDiacritics,	% ErrorString
+	if (f_Diacritics = ErrorString)
+	{
+		f_Diacritics := true	;default value
+		MsgBox, % c_MB_I_AsteriskInfo, % A_ScriptName, % "Problem with reading parameter" . A_Space . "Shift diacritics" . A_Space . "from the file" . "`n"
+			. A_ScriptDir . "\" . v_ConfigIni . "`n`n"
+			. "Default value will be applied now:" . "`n"
+			. "ENABLE" . "."
+	}
+	
+	IniRead, f_CapsLock, 		% v_ConfigIni, Global, ShiftCapsLock,	% ErrorString
+	if (f_CapsLock = ErrorString)
+	{
+		f_CapsLock := true	;default value
+		MsgBox, % c_MB_I_AsteriskInfo, % A_ScriptName, % "Problem with reading parameter" . A_Space . "Shift capslock" . A_Space . "from the file" . "`n"
+			. A_ScriptDir . "\" . v_ConfigIni . "`n`n"
+			. "Default value will be applied now:" . "`n"
+			. "ENABLE" . "."
+	}
 
-	Loop, Read, % IniFile
+	Loop, Read, % param
 	    if (InStr(A_LoopReadLine, "[Diacritic"))
 	        DiacriticSectionCounter++
 	
 	if (DiacriticSectionCounter = 0)
 	{
-		MsgBox, % c_MB_I_AsteriskInfo, % A_ScriptName, % "The" . A_Space . IniFile . A_Space . "do not contain any valid section. Exiting with error code 2 (no recognized .ini file section)."
+		MsgBox, % c_MB_I_AsteriskInfo, % A_ScriptName, % "The" . A_Space . param . A_Space . "do not contain any valid section. Exiting with error code 2 (no recognized .ini file section)."
 		TrayTip, % A_ScriptName, % "exits with code" . A_Space . "2", 5, 1
 		ExitApp, 2
 	}
 	
 	Loop, %DiacriticSectionCounter%
     	{
-		IniRead, Temp,		% IniFile, % "Diacritic"	. A_Index, BaseKey,		% ErrorString
-		Temp := 			F_ReadIniParValidity(Temp	;IfExit = {"Exit", "SaveDefault", "LetDecide"}
-							,	Key := "BaseKey" . A_Index
-							,	Section := "Diacritic"
-							,	IniFile
-							, 	DefKey := ""
-							,	IfExit := "Exit")
-		a_BaseKey.Push(Temp)
+		IniRead,  Temp,          	% param, % "Diacritic"	. A_Index, BaseKey,			Error
+		if (Temp != "Error")
+			a_BaseKey.Push(Temp)
+		else
+		{
+			MsgBox, % c_MB_I_AsteriskInfo, % A_ScriptName, % "The" . A_Space . param . A_Space . "section:" . A_Space . "`n`n"
+			. "[Diacritic" . A_Index . "]" . A_Space . "do not contain valid parameter" . "`n"
+			. "BaseKey" . "`n`n"
+			. "Exiting with error code 3 (no recognized parameter)."
+			TrayTip, % A_ScriptName, % "exits with code" . A_Space . "3", 5, 1
+			ExitApp, 3
+		}
  
-		IniRead, Temp,		% IniFile, % "Diacritic"	. A_Index, Diacritic,		% ErrorString
-		Temp := 			F_ReadIniParValidity(Temp	;IfExit = {"Exit", "SaveDefault", "LetDecide"}
-							,	Key := "Diacritic" . A_Index
-							,	Section := "Diacritic"
-							,	IniFile
-							,	DefKey := ""
-							, 	IfExit := "Exit")
-		a_Diacritic.Push(Temp)
+    		IniRead,  Temp,     		% param, % "Diacritic"	. A_Index, Diacritic,		Error
+		if (Temp != "Error")
+			a_Diacritic.Push(Temp)
+		else
+		{
+			MsgBox, % c_MB_I_AsteriskInfo, % A_ScriptName, % "The" . A_Space . param . A_Space . "section:" . A_Space . "`n`n"
+			. "[Diacritic" . A_Index . "]" . A_Space . "do not contain valid parameter" . "`n"
+			. "Diacritic" . "`n`n"
+			. "Exiting with error code 3 (no recognized parameter)."
+			TrayTip, % A_ScriptName, % "exits with code" . A_Space . "3", 5, 1
+			ExitApp, 3
+		}
 
-		IniRead, Temp,		% IniFile, % "Diacritic"	. A_Index, ShiftBaseKey,		% ErrorString
-		Temp := 			F_ReadIniParValidity(Temp	;IfExit = {"Exit", "SaveDefault", "LetDecide"}
-							,	Key := "ShiftBaseKey" . A_Index
-							,	Section := "Diacritic"
-							,	IniFile
-							,	DefKey := ""
-							,	IfExit := "Exit")
-		a_BaseKey.Push(Temp)
+		IniRead, Temp, 			% param, % "Diacritic"	. A_Index, ShiftBaseKey, 	Error
+		if (Temp != "Error")
+			a_BaseKey.Push(Temp)
+		else
+		{
+			MsgBox, % c_MB_I_AsteriskInfo, % A_ScriptName, % "The" . A_Space . param . A_Space . "section:" . A_Space . "`n`n"
+			. "[Diacritic" . A_Index . "]" . A_Space . "do not contain valid parameter" . "`n"
+			. "ShiftBaseKey" . "`n`n"
+			. "Exiting with error code 3 (no recognized parameter)."
+			TrayTip, % A_ScriptName, % "exits with code" . A_Space . "3", 5, 1
+			ExitApp, 3
+		}
 
-		IniRead, Temp,		% IniFile, % "Diacritic"	. A_Index, ShiftDiacritic,		% ErrorString
-		Temp := 			F_ReadIniParValidity(Temp	
-							,	Key := "ShiftDiacritic" . A_Index
-							,	Section := "Diacritic"
-							,	IniFile
-							,	DefKey := ""
-							, IfExit := "Exit")
-		a_Diacritic.Push(Temp)
+		IniRead, Temp, 			% param, % "Diacritic"	. A_Index, ShiftDiacritic, 	Error
+		if (Temp != "Error")
+			a_Diacritic.Push(Temp)
+		else
+		{
+			MsgBox, % c_MB_I_AsteriskInfo, % A_ScriptName, % "The" . A_Space . param . A_Space . "section:" . A_Space . "`n`n"
+			. "[Diacritic" . A_Index . "]" . A_Space . "do not contain valid parameter" . "`n"
+			. "ShiftDiacritic" . "`n`n"
+			. "Exiting with error code 3 (no recognized parameter)."
+			TrayTip, % A_ScriptName, % "exits with code" . A_Space . "3", 5, 1
+			ExitApp, 3
+		}
 	}
 	F_FlagReset()
-	SplitPath, IniFile, Temp
+	SplitPath, v_ConfigIni, Temp
 	TrayTip, % A_ScriptName, % "is starting with" . A_Space . Temp, 5, 1
+}
+
+F_Reload()
+{
+	if A_IsCompiled
+	    Run "%A_ScriptFullPath%" /force
+	else
+	    Run "%A_AhkPath%" /force "%A_ScriptFullPath%"
+	ExitApp
 }
