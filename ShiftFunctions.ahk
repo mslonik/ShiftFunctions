@@ -344,6 +344,7 @@ F_Capital(ByRef v_Char)
 	global	;assume-global mode of operation
 	; OutputDebug, % A_ThisFunc . A_Space . "B" . A_Space . "IC:" . A_IsCritical . "`n"
 	SendLevel, % c_OutputSL
+	Sleep, 1		;by trial and error method. I don't understand, why it is required at all. Without this line if I press (q) it is processed as (Q). 
 	Send, {BS}
 	Switch v_Char
 	{
@@ -390,7 +391,7 @@ F_Capital(ByRef v_Char)
 		Case "/":
 			Send, ?
 		Default:
-			; OutputDebug, % "v_Char:" . v_Char . "|" . "`n"
+			OutputDebug, % "v_Char:" . v_Char . "|" . "`n"
 			v_Char := Format("{:U}", v_Char)
 			Send, % v_Char
 	}
@@ -470,7 +471,7 @@ F_SetMinSendLevel()
 		else
 			Menu, MinSendLevelSubm, UnCheck, 	% A_Index - 1
 	}
-	; OutputDebug, % "c_InputSL:" . c_InputSL . "`n"
+	OutputDebug, % "c_InputSL:" . c_InputSL . "`n"
 
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -574,7 +575,7 @@ F_OKD(ih, VK, SC)	;On Key Down
 	; OutputDebug, % A_ThisFunc . A_Space . "B" . "`n"
 	
 	v_WhatWasDown 	:= GetKeyName(Format("vk{:x}sc{:x}", VK, SC)) 
-	; OutputDebug, % A_ThisFunc . A_Space . "v_WhatWasDown:" . v_WhatWasDown . "|" . A_Space . "B" . "`n"
+	OutputDebug, % A_ThisFunc . A_Space . "v_WhatWasDown:" . v_WhatWasDown . "|" . A_Space . "B" . "`n"
 
 	if (f_WinPressed) and (A_PriorKey = "l")	;This condition is valid only after unlocking of Windows (# + L to lock). There is phenomena that after unlocking F_OCD is inactive untill mouse is clicked or Windows key is pressed. Don't know why it is so, but this conditions solves the issue.
 	{
@@ -641,18 +642,6 @@ F_OCD(ih, Char)	;On Character Down; this function can interrupt "On Key Down"
 			f_IfShiftDown		:= GetKeyState("Shift")		;if <shift> is down only logically
 		,    IsAlpha 			:= false
 
-	if (f_IfShiftDown) and (!f_IfShiftDownP)	;if <shift> is down logically but is not down physically, reset the flag. This condition is here to get rid of bug related to stuck <shift> in down position.
-	{
-		f_IfShiftDown := false
-	,	v_Char := ""
-		SendLevel, 	% c_OutputSL
-		Send, {LShift Down}{LShift Up}{RShift Down}{RShift Up}	; This line is here to get rid of bug related to stuck <shift> in down position.
-		SendLevel, 	% c_NominalSL
-		Send,		% A_Space . "Capitalization error!" . A_Space
-		OutputDebug, % "Shift must be lifted up!" . A_Space . "v_Char:" . v_Char . "`n"
-		FileAppend, % A_YYYY . "-" . A_MM . "-" . A_DD . A_Space . A_Hour . ":" . A_Min . ":" . A_Sec . A_Space . "Shift must be lifted up!" . A_Space . "v_Char:" . v_Char . "`n", ErrorLog.txt, UTF-8 ;Logging of errors
-	}		
-		
 	if v_Char is Alpha
 		IsAlpha := true
 	else
