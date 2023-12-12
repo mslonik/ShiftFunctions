@@ -344,10 +344,7 @@ F_Capital()
 ; F_Capital(ByRef v_Char)
 {
 	global	;assume-global mode of operation
-	OutputDebug, % A_ThisFunc . A_Space . "B" . A_Space . "v_Char:" . v_Char . "`n"
-	; SendLevel, % c_OutputSL
-	; Sleep, 1		;by trial and error method. I don't understand, why it is required at all. Without this line if I press (q) it is processed as (Q). 
-	; Send, {BS}
+	; OutputDebug, % A_ThisFunc . A_Space . "B" . A_Space . "v_Char:" . v_Char . "`n"
 	Switch v_Char
 	{
 		Case "``":
@@ -397,10 +394,9 @@ F_Capital()
 			v_Char := Format("{:U}", v_Char)
 			Send, % "{BS}" . v_Char
 	}
-	; SendLevel, % c_NominalSL
 	F_FlagReset()
 	v_CLCounter 	:= c_CLReset
-	OutputDebug, % A_ThisFunc . A_Space . "v_Char:" . v_Char .  "E" . "`n"
+	; OutputDebug, % A_ThisFunc . A_Space . "v_Char:" . v_Char .  "E" . "`n"
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 F_MenuTray()
@@ -729,18 +725,12 @@ F_OKU(ih, VK, SC)	;On Key Up
 			f_RShift := false
 		; OutputDebug, % "f_SPA:" . f_SPA . "`n"
 	}
-
-	if (WhatWasUp = "Backspace") or (WhatWasUp = "Esc")
-		or  (WhatWasUp = "Space") or (WhatWasUp = "Enter")
-		or (WhatWasUp = "Left") or (WhatWasUp = "Right") or (WhatWasUp = "Up") or (WhatWasUp = "Down")
-		or (WhatWasUp = "Delete") or (WhatWasUp = "Insert") or (WhatWasUp = "Home") or (WhatWasUp = "End") or (WhatWasUp = "PgUp") or (WhatWasUp = "PgDn")
-		or (WhatWasUp = "F1") or (WhatWasUp = "F2") or (WhatWasUp = "F3") or (WhatWasUp = "F4") or (WhatWasUp = "F5") or (WhatWasUp = "F6") or (WhatWasUp = "F7") or (WhatWasUp = "F8") or (WhatWasUp = "F9") or (WhatWasUp = "F10") or (WhatWasUp = "F11") or (WhatWasUp = "F12") or (WhatWasUp = "F13") or (WhatWasUp = "F14") or (WhatWasUp = "F15") or (WhatWasUp = "F16") or (WhatWasUp = "F17") or (WhatWasUp = "F18") or (WhatWasUp = "F19") or (WhatWasUp = "F20") or (WhatWasUp = "F21") or (WhatWasUp = "F22") or (WhatWasUp = "F23") or (WhatWasUp = "F24")
+	else
 	{
 		f_SPA 		:= false
-	,	v_Char		:= ""
 	,	v_CLCounter 	:= c_CLReset
-		return
-	}		
+		return		
+	}	
 
 	if (f_Diacritics)
 		and (f_SPA)
