@@ -21,11 +21,10 @@ FileEncoding, 		UTF-8			; Sets the default encoding for FileRead, FileReadLine, 
 SetBatchLines, 	-1				; -1 = never sleep (i.e. have the script run at maximum speed).
 SendMode,			Input			; Recommended for new scripts due to its superior speed and reliability.
 SetWorkingDir, 	%A_ScriptDir%		; Ensures a consistent starting directory.
-StringCaseSense, 	On				;for Switch in F_OKU()
 ;Testing: Alt+Tab, , asdf Shift+Home, Ąsi
 
 ; - - - - - - - - - - - - - - - - Executable section, beginning - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-AppVersion			:= "1.3.16"
+AppVersion			:= "1.3.17"
 ;@Ahk2Exe-Let 				U_AppVersion=%A_PriorLine~U)^(.+"){1}(.+)".*$~$2% ; Keep these lines together
 ;Overrides the custom EXE icon used for compilation
 ;@Ahk2Exe-SetCopyright 		GNU GPL 3.x
@@ -81,6 +80,8 @@ FileInstall, README.md, 			README.md,		false	;false = not overwrite if already e
 ,	f_WasReset		:= false	;global flag: Shift key memory reset (to reset v_CLCounter)
 ,	f_ShiftTimeout		:= false	;global flag: timer is running
 ,	c_Buffer			:= {}	;global character object buffer
+
+SendLevel, % c_OutputSL
 
 F_InputArguments()
 F_InitiateInputHook()
@@ -339,66 +340,67 @@ F_Toggle()
 	}
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-F_Capital(ByRef v_Char)
+F_Capital()
+; F_Capital(ByRef v_Char)
 {
 	global	;assume-global mode of operation
-	; OutputDebug, % A_ThisFunc . A_Space . "B" . A_Space . "IC:" . A_IsCritical . "`n"
-	SendLevel, % c_OutputSL
-	Sleep, 1		;by trial and error method. I don't understand, why it is required at all. Without this line if I press (q) it is processed as (Q). 
-	Send, {BS}
+	OutputDebug, % A_ThisFunc . A_Space . "B" . A_Space . "v_Char:" . v_Char . "`n"
+	; SendLevel, % c_OutputSL
+	; Sleep, 1		;by trial and error method. I don't understand, why it is required at all. Without this line if I press (q) it is processed as (Q). 
+	; Send, {BS}
 	Switch v_Char
 	{
 		Case "``":
-			Send, ~
+			Send, {BS}~
 		Case "1":
-			Send, {!}
+			Send, {BS}{!}
 		Case "2":
-			Send, @
+			Send, {BS}@
 		Case "3":
-			Send, {#}
+			Send, {BS}{#}
 		Case "4":
-			Send, $
+			Send, {BS}$
 		Case "5":
-			Send, `%
+			Send, {BS}`%
 		Case "6":
-			Send, {^}
+			Send, {BS}{^}
 		Case "7":
-			Send, &
+			Send, {BS}&
 		Case "8":
-			Send, *
+			Send, {BS}*
 		Case "9":
-			Send, (
+			Send, {BS}(
 		Case "0":
-			Send, )
+			Send, {BS})
 		Case "-":
-			Send, _
+			Send, {BS}_
 		Case "=":
-			Send, {+}
+			Send, {BS}{+}
 		Case "[":
-			Send, {{}	;alternative: SendRaw, `b{
+			Send, {BS}{{}	;alternative: SendRaw, `b{
 		Case "]":
-			Send, {}}	;alternative: SendRaw, `b}
+			Send, {BS}{}}	;alternative: SendRaw, `b}
 		Case "\":
-			Send, |
+			Send, {BS}|
 		Case ";":
-			Send, :
+			Send, {BS}:
 		Case "'":
-			Send, "
+			Send, {BS}"
 		Case ",":
-			Send, <
+			Send, {BS}<
 		Case ".":
-			Send, >
+			Send, {BS}>
 		Case "/":
-			Send, ?
+			Send, {BS}?
 		Default:
 			OutputDebug, % "v_Char:" . v_Char . "|" . "`n"
 			v_Char := Format("{:U}", v_Char)
-			Send, % v_Char
+			Send, % "{BS}" . v_Char
 	}
-	SendLevel, % c_NominalSL
+	; SendLevel, % c_NominalSL
 	F_FlagReset()
 	v_CLCounter 	:= c_CLReset
-	; OutputDebug, % A_ThisFunc . "`n"
+	OutputDebug, % A_ThisFunc . A_Space . "v_Char:" . v_Char .  "E" . "`n"
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 F_MenuTray()
@@ -572,11 +574,10 @@ F_OKD(ih, VK, SC)	;On Key Down
 {
 	global		;assume-global mode of operation
 	Critical, On	;This function starts as the first one (prior to "On Character Down"), but unfortunately can be interrupted by it. To prevent it Critical command is applied.
-	; OutputDebug, % A_ThisFunc . A_Space . "B" . "`n"
-	
-	v_WhatWasDown 	:= GetKeyName(Format("vk{:x}sc{:x}", VK, SC)) 
-	OutputDebug, % A_ThisFunc . A_Space . "v_WhatWasDown:" . v_WhatWasDown . "|" . A_Space . "B" . "`n"
 
+	v_WhatWasDown 	:= GetKeyName(Format("vk{:x}sc{:x}", VK, SC)) 
+	; OutputDebug, % A_ThisFunc . A_Space . "v_WhatWasDown:" . v_WhatWasDown . A_Space . "B" . "`n"
+	
 	if (f_WinPressed) and (A_PriorKey = "l")	;This condition is valid only after unlocking of Windows (# + L to lock). There is phenomena that after unlocking F_OCD is inactive untill mouse is clicked or Windows key is pressed. Don't know why it is so, but this conditions solves the issue.
 	{
 		v_Char 		:= v_WhatWasDown		;OutputDebug, % "Exception!" . "`n"
@@ -625,7 +626,7 @@ F_OKD(ih, VK, SC)	;On Key Down
 		,	f_ShiftDown 	:= false
 		,	f_ShiftUp		:= false	
 	}
-	; OutputDebug, % A_ThisFunc . A_Space . "E" . "`n"
+	; OutputDebug, % A_ThisFunc . A_Space . v_WhatWasDown . A_Space . "E" . "`n"
 	Critical, Off
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -633,13 +634,11 @@ F_OCD(ih, Char)	;On Character Down; this function can interrupt "On Key Down"
 {	;This function detects only "characters" according to AutoHotkey rules, no: modifiers (Shifts, Controls, Alts, Windows), function keys, Backspace, PgUp, PgDn, Ins, Home, Del, End ; yes: Esc, Space, Enter, Tab and all aphanumeric keys. How keyboard works: some keys have two layer meaning, where Shift is used to call another character from another layer. Example: basic layer 3, shift layer #. Another example: Ins and Shift+Ins do not produce character, but act differently; Shift + Ins must be preserved.
 	global	;assume-global mode of operation
 	Critical, On
-	; OutputDebug, % A_ThisFunc . A_Space . "B" . "`n"
-	; OutputDebug, % A_ThisFunc . A_Space . "Char:" . Char . "|" . A_Space . "B" . "`n"
 	v_Char 	:= Char
+	; OutputDebug, % A_ThisFunc . A_Space . "v_Char:" . v_Char . A_Space . "B" . "`n"
 ,	f_DUndo 	:= false
 
-	local 	f_IfShiftDownP		:= GetKeyState("Shift", "P")	;if <shift> is down physically; remember, it takes time to switch and read physical state
-			f_IfShiftDown		:= GetKeyState("Shift")		;if <shift> is down only logically
+	local 	f_IfShiftDown		:= GetKeyState("Shift")		;if <shift> is down only logically
 		,    IsAlpha 			:= false
 
 	if v_Char is Alpha
@@ -647,59 +646,26 @@ F_OCD(ih, Char)	;On Character Down; this function can interrupt "On Key Down"
 	else
 		IsAlpha := false
 
-	SendLevel, 	% c_OutputSL
-	; OutputDebug, % A_ThisFunc . A_Space . "v_Char:" . v_Char . "|" . A_Space . "B" . "`n"
-
 	if (GetKeyState("CapsLock", "T"))	;if CapsLock is "on"
 	{
 		SetStoreCapslockMode, Off	;This is the only way which I know to get rid of blinking CapsLock. From now the v_Char value is ignored by Send and treated as small letters
+		Sleep, 1
 		if v_Char is Alpha	;alphabetic character
 		{
-			Send, {BS}					;this line is required only if there is no suppress (all parameters are visible)
-			if (!f_IfShiftDown) and (!f_SPA)	;SPA = Shift Pressed Alone
-				Switch Char				;This is the only way which I know to get rid of blinking CapsLock
-				{
-					Case "A":	Send, {U+0041}	;A
-					Case "B":	Send, {U+0042}	;B
-					Case "C":	Send, {U+0043}	;C
-					Case "D":	Send, {U+0044}	;D
-					Case "E":	Send, {U+0045}	;E
-					Case "F":	Send, {U+0046}	;F
-					Case "G":	Send, {U+0047}	;G
-					Case "H":	Send, {U+0048}	;H
-					Case "I":	Send, {U+0049}	;I
-					Case "J":	Send, {U+004a}	;J
-					Case "K":	Send, {U+004b}	;K
-					Case "L":	Send, {U+004c}	;L
-					Case "M":	Send, {U+004d}	;M
-					Case "N":	Send, {U+004e}	;N
-					Case "O":	Send, {U+004f}	;O
-					Case "P":	Send, {U+0050}	;P
-					Case "Q":	Send, {U+0051}	;Q
-					Case "R":	Send, {U+0052}	;R
-					Case "S":	Send, {U+0053}	;S
-					Case "T":	Send, {U+0054}	;T
-					Case "U":	Send, {U+0055}	;U
-					Case "V":	Send, {U+0056}	;V
-					Case "W":	Send, {U+0057}	;W
-					Case "X":	Send, {U+0058}	;X
-					Case "Y":	Send, {U+0059}	;Y
-					Case "Z":	Send, {U+005a}	;Z
-				}
-
-			; OutputDebug, % "CapsLock is on" . A_Space . "f_SPA:" . f_SPA . A_Space . "f_IfShiftDown:" . f_IfShiftDown . "`n"
 			if (f_IfShiftDown)	;logic must be reversed if Shift key is pressed.
-				Send, % "+" . v_Char
+				Send, % "{BS}" . "+" . v_Char
 
 			if (f_Capital) 
 				and (f_SPA)	;SPA = Shift Pressed Alone
 			{
-				Send, % v_Char
-				f_SPA := false	
+				Send, % "{BS}" . "+" . v_Char
+				; OutputDebug, % "Branch:" . v_Char . "`n"
+				f_SPA := false
+			,	v_Char := Format("{:l}", v_Char)
 			}	
 		}
 		else	;not alphabetic character
-			F_SendNotAlphaChar(f_IfShiftDown, v_Char, f_SPA)
+			F_SendNotAlphaChar(f_IfShiftDown)
 		
 		SetStoreCapslockMode, On	;for whatever reason 
 	}
@@ -707,34 +673,31 @@ F_OCD(ih, Char)	;On Character Down; this function can interrupt "On Key Down"
 	{
 		if (f_Capital) 
 			and (f_SPA)	;SPA = Shift Pressed Alone
-			F_Capital(v_Char)
+			F_Capital()
 	}
 
-	; OutputDebug, % "A_StoreCapsLockMode:" . A_StoreCapsLockMode . "`n"
-	SendLevel, 	% c_NominalSL
-	; OutputDebug, % A_ThisFunc . A_Space . "E" . "`n"
+	; OutputDebug, % A_ThisFunc . A_Space . v_Char . A_Space . "E" . "`n"
 	Critical, Off
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-F_SendNotAlphaChar(f_IfShiftDown, v_Char, ByRef f_SPA)
+F_SendNotAlphaChar(f_IfShiftDown)
 { 
 	global	;assume-global mode of operation
 
 	if (f_IfShiftDown)
 	{
 		if (v_Char = "{") or (v_Char = "}") or (v_Char = "^") or (v_Char = "!") or (v_Char = "+") or (v_Char = "#")
-			Send, % "{" . v_Char . "}"
+			Send, % "{BS}" .  "{" . v_Char . "}"
 		else
-			Send, % "+" . v_Char
-		v_CLCounter 	:= c_CLReset
+			Send, % "{BS}" . "+" . v_Char
 	}
 
 	if (!f_IfShiftDown) and (f_SPA)
 	{
-		Send, % "+" . v_Char
-		f_SPA := false
-	,	v_CLCounter 	:= c_CLReset
+		Send, % "{BS}" .  "+" . v_Char
+		f_SPA 		:= false
 	}	
+	v_CLCounter 	:= c_CLReset
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 F_OKU(ih, VK, SC)	;On Key Up
@@ -781,19 +744,19 @@ F_OKU(ih, VK, SC)	;On Key Up
 
 	if (f_Diacritics)
 		and (f_SPA)
-		and ((WhatWasUp = "LShift") or (WhatWasUp = "RShift"))
-			F_Diacritics(v_Char)
+		and (v_Char)
+			F_Diacritics()
 
 	if (f_CapsLock)
 		and (f_SPA)	;Shift key (left or right) was Pressed Alone.
-			F_CapsLock(WhatWasUp, f_SPA)
+			F_CapsLock(WhatWasUp)
 
 	if (WhatWasUp = "LControl") or (WhatWasUp =  "RControl")
 		or (WhatWasUp = "LAlt") or (WhatWasUp = "RAlt")
 		or (WhatWasUp = "LWin") or (WhatWasUp = "RWin")
 			f_AOK_Down		:= false	;Any Other Key
 
-	; OutputDebug, % A_ThisFunc . A_Space . "E" . "`n"
+	; OutputDebug, % A_ThisFunc . A_Space . WhatWasUp .  A_Space . "E" . "`n"
 	Critical, Off		
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -810,7 +773,8 @@ F_FlagReset()
 ,	f_AOK_Down		:= false
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-F_CapsLock(WhatWasUp, ByRef f_SPA)
+F_CapsLock(WhatWasUp)
+; F_CapsLock(WhatWasUp, ByRef f_SPA)
 {
 	global	;assume-global mode of operation
 	local	CLLimit 	:= 3
@@ -840,34 +804,26 @@ F_CapsLock(WhatWasUp, ByRef f_SPA)
 	}
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-F_Diacritics(ByRef v_Char)
+F_Diacritics()
+; F_Diacritics(ByRef v_Char)
 {
 	global	;assume-global mode of operation
 	; OutputDebug, % A_ThisFunc . A_Space . "v_Char:" . v_Char . A_Space . "B" . "`n"
-	local	index := % c_NominalSL
+	local	index := 0
 		,	value := ""
 
 	for index, value in a_BaseKey
 		if (value == v_Char)	;Case sensitive comparison
 		{
-			F_DiacriticOutput(a_Diacritic[index])
-			v_Undo := v_Char
-		,	f_DUndo := true
-		,	f_SPA := false	;Shift Pressed Alone
-		,	v_Char := ""
-			; OutputDebug, % "f_DUndo:" . A_Space . f_DUndo . A_Space . "v_Undo:" . v_Undo . "`n"
+			Send,	% "{BS}" . a_Diacritic[index]
+			; F_DiacriticOutput(a_Diacritic[index])
+			v_Undo 	:= v_Char
+		,	f_DUndo 	:= true
+		,	f_SPA 	:= false	;Shift Pressed Alone
+		,	v_Char 	:= ""
+			; OutputDebug, % A_ThisFunc . A_Space . "a_Diacritic[index]:" . a_Diacritic[index] . A_Space . "E" . "`n"
+			break
 		}
-}
-; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-F_DiacriticOutput(Diacritic)
-{
-	global	;assume-global mode of operation
-
-	; OutputDebug, % A_ThisFunc . A_Space . "B" . "`n"
-	SendLevel, 	% c_OutputSL
-	Send,		% "{BS}" . Diacritic
-	SendLevel, 	% c_NominalSL
-	; OutputDebug, % A_ThisFunc . A_Space . "E" . "`n"
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 F_InputArguments()
