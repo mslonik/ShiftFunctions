@@ -713,7 +713,7 @@ F_OKU(ih, VK, SC)	;On Key Up
 		}
 	}
 
-	; OutputDebug, % A_ThisFunc . A_Space . "WhatWasUp:" . WhatWasUp . A_Space . "v_WhatWasDown:" . v_WhatWasDown .  "`n"
+	OutputDebug, % A_ThisFunc . A_Space . "f_AOK_Down:" . f_AOK_Down . "`n"
 	if ((WhatWasUp = "LShift") or (WhatWasUp = "RShift"))
 		and (WhatWasUp = v_WhatWasDown)
 		and (!f_AOK_Down)	;Any Other Key
@@ -729,7 +729,15 @@ F_OKU(ih, VK, SC)	;On Key Up
 	{
 		f_SPA 		:= false
 	,	v_CLCounter 	:= c_CLReset
-		return		
+		; return		
+	}	
+
+	if (WhatWasUp = "LControl") or (WhatWasUp =  "RControl")
+		or (WhatWasUp = "LAlt") or (WhatWasUp = "RAlt")
+		or (WhatWasUp = "LWin") or (WhatWasUp = "RWin")
+	{
+		f_AOK_Down		:= false	;Any Other Key
+		return
 	}	
 
 	if (f_Diacritics)
@@ -740,11 +748,6 @@ F_OKU(ih, VK, SC)	;On Key Up
 	if (f_CapsLock)
 		and (f_SPA)	;Shift key (left or right) was Pressed Alone.
 			F_CapsLock(WhatWasUp)
-
-	if (WhatWasUp = "LControl") or (WhatWasUp =  "RControl")
-		or (WhatWasUp = "LAlt") or (WhatWasUp = "RAlt")
-		or (WhatWasUp = "LWin") or (WhatWasUp = "RWin")
-			f_AOK_Down		:= false	;Any Other Key
 
 	; OutputDebug, % A_ThisFunc . A_Space . WhatWasUp .  A_Space . "E" . "`n"
 	Critical, Off		
