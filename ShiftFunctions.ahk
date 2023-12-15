@@ -683,7 +683,6 @@ F_OCD(ih, Char)	;On Character Down; this function can interrupt "On Key Down"
 	else	;CapsLock is off
 	{
 		Sleep, 1	;always required after GetKeyState if there is more than one script running which touches keyboard hooks.
-		v_Char := v_WhatWasDown
 		if (f_Capital) 
 			and (f_SPA)	;SPA = Shift Pressed Alone
 			F_Capital()
@@ -755,7 +754,12 @@ F_OKU(ih, VK, SC)	;On Key Up
 	if (f_CapsLock)
 		and (f_SPA)	;Shift key (left or right) was Pressed Alone.
 			F_CapsLock(WhatWasUp)
-
+	
+	if (WhatWasUp = "LControl") or (WhatWasUp =  "RControl")
+		or (WhatWasUp = "LAlt") or (WhatWasUp = "RAlt")
+		or (WhatWasUp = "LWin") or (WhatWasUp = "RWin")
+			f_AOK_Down		:= false	;Any Other Key
+		
 	; OutputDebug, % A_ThisFunc . A_Space . WhatWasUp .  A_Space . "E" . "`n"
 	Critical, Off		
 }
