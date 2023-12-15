@@ -413,7 +413,7 @@ F_Capital()
 		Case "/":
 			Send, {BS}?
 		Default:
-			OutputDebug, % "v_Char:" . v_Char . "|" . "`n"
+			; OutputDebug, % "v_Char:" . v_Char . "|" . "`n"
 			v_Char := Format("{:U}", v_Char)
 			Send, % "{BS}" . v_Char
 	}
@@ -645,6 +645,15 @@ F_OKD(ih, VK, SC)	;On Key Down
 		,	f_ShiftDown 	:= false
 		,	f_ShiftUp		:= false	
 	}
+	; OutputDebug, % A_ThisFunc . A_Space . v_WhatWasDown . A_Space . "E" . "`n"
+	Critical, Off
+}
+; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+F_OCD(ih, Char)	;On Character Down; this function can interrupt "On Key Down"
+{	;This function detects only "characters" according to AutoHotkey rules, no: modifiers (Shifts, Controls, Alts, Windows), function keys, Backspace, PgUp, PgDn, Ins, Home, Del, End ; yes: Esc, Space, Enter, Tab and all aphanumeric keys. How keyboard works: some keys have two layer meaning, where Shift is used to call another character from another layer. Example: basic layer 3, shift layer #. Another example: Ins and Shift+Ins do not produce character, but act differently; Shift + Ins must be preserved.
+	global	;assume-global mode of operation
+	Critical, On
+	v_Char := Char
 	local 	f_IfShiftDown		:= GetKeyState("Shift")		;if <shift> is down only logically
 	; OutputDebug, % A_ThisFunc . A_Space . "v_WhatWasDown:" . v_WhatWasDown . "`n"
 	if (GetKeyState("CapsLock", "T"))	;if CapsLock is "on"
@@ -672,23 +681,14 @@ F_OKD(ih, VK, SC)	;On Key Down
 	}
 	else	;CapsLock is off
 	{
-		Sleep, 1	;always required after GetKeyState
+		Sleep, 1	;always required after GetKeyState if there is more than one script running which touches keyboard hooks.
 		v_Char := v_WhatWasDown
 		if (f_Capital) 
 			and (f_SPA)	;SPA = Shift Pressed Alone
 			F_Capital()
 	}
-	; OutputDebug, % A_ThisFunc . A_Space . v_WhatWasDown . A_Space . "E" . "`n"
-	Critical, Off
-}
-; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-F_OCD(ih, Char)	;On Character Down; this function can interrupt "On Key Down"
-{	;This function detects only "characters" according to AutoHotkey rules, no: modifiers (Shifts, Controls, Alts, Windows), function keys, Backspace, PgUp, PgDn, Ins, Home, Del, End ; yes: Esc, Space, Enter, Tab and all aphanumeric keys. How keyboard works: some keys have two layer meaning, where Shift is used to call another character from another layer. Example: basic layer 3, shift layer #. Another example: Ins and Shift+Ins do not produce character, but act differently; Shift + Ins must be preserved.
-	; global	;assume-global mode of operation
-	; Critical, On
-	; OutputDebug, % A_ThisFunc . A_Space . "v_Char:" . v_Char . A_Space . "B" . "`n"
 	; OutputDebug, % A_ThisFunc . A_Space . v_Char . A_Space . "E" . "`n"
-	; Critical, Off
+	Critical, Off
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 F_SendNotAlphaChar(f_IfShiftDown)
@@ -890,72 +890,20 @@ F_InputArguments()
 	}
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-F_ReadIni(param)
+F_ReadIni(param)		;process Config.ini parameters
 {
 	global	;assume-global mode of operation
 	local 	DiacriticSectionCounter 	:= 0
 		,	Temp 				:= ""
 		,	ErrorString			:= "Error"
+		,	Temp2				:= ""
 
-	IniRead, c_OutputSL,			% v_ConfigIni, Global, SendLevel,		% ErrorString
-	if (c_OutputSL = ErrorString)
-	{
-		c_OutputSL := 1	;default value
-		MsgBox, % c_MB_I_AsteriskInfo, % A_ScriptName, % "Problem with reading parameter" . A_Space . "SendLevel" . A_Space . "from the file" . "`n"
-			. A_ScriptDir . "\" . v_ConfigIni . "`n`n"
-			. "Default value will be applied now:" . "`n"
-			. c_OutputSL . "."
-	}
-
-	IniRead, c_InputSL,			% v_ConfigIni, Global, MinSendLevel,		% ErrorString
-	if (c_InputSL = ErrorString)
-	{
-		c_InputSL := 2		;default value
-		MsgBox, % c_MB_I_AsteriskInfo, % A_ScriptName, % "Problem with reading parameter" . A_Space . "MinSendLevel" . A_Space . "from the file" . "`n"
-			. A_ScriptDir . "\" . v_ConfigIni . "`n`n"
-			. "Default value will be applied now:" . "`n"
-			. c_InputSL . "."
-	}
-
-	IniRead, f_ShiftFunctions, 	% v_ConfigIni, Global, OverallStatus, 	% ErrorString
-	if (f_ShiftFunctions = ErrorString)
-	{
-		f_ShiftFunctions := true	;default value
-		MsgBox, % c_MB_I_AsteriskInfo, % A_ScriptName, % "Problem with reading parameter" . A_Space . "overall status" . A_Space . "from the file" . "`n"
-			. A_ScriptDir . "\" . v_ConfigIni . "`n`n"
-			. "Default value will be applied now:" . "`n"
-			. "ENABLE" . "."
-	}
-
-	IniRead, f_Capital, 		% v_ConfigIni, Global, ShiftCapital,	% ErrorString
-	if (f_Capital = ErrorString)
-	{
-		f_Capital := true	;default value
-		MsgBox, % c_MB_I_AsteriskInfo, % A_ScriptName, % "Problem with reading parameter" . A_Space . "Shift capital" . A_Space . "from the file" . "`n"
-			. A_ScriptDir . "\" . v_ConfigIni . "`n`n"
-			. "Default value will be applied now:" . "`n"
-			. "ENABLE" . "."
-	}
-
-	IniRead, f_Diacritics, 		% v_ConfigIni, Global, ShiftDiacritics,	% ErrorString
-	if (f_Diacritics = ErrorString)
-	{
-		f_Diacritics := true	;default value
-		MsgBox, % c_MB_I_AsteriskInfo, % A_ScriptName, % "Problem with reading parameter" . A_Space . "Shift diacritics" . A_Space . "from the file" . "`n"
-			. A_ScriptDir . "\" . v_ConfigIni . "`n`n"
-			. "Default value will be applied now:" . "`n"
-			. "ENABLE" . "."
-	}
-	
-	IniRead, f_CapsLock, 		% v_ConfigIni, Global, ShiftCapsLock,	% ErrorString
-	if (f_CapsLock = ErrorString)
-	{
-		f_CapsLock := true	;default value
-		MsgBox, % c_MB_I_AsteriskInfo, % A_ScriptName, % "Problem with reading parameter" . A_Space . "Shift capslock" . A_Space . "from the file" . "`n"
-			. A_ScriptDir . "\" . v_ConfigIni . "`n`n"
-			. "Default value will be applied now:" . "`n"
-			. "ENABLE" . "."
-	}
+	F_Validate_IniParam(c_OutputSL, 		param, "Global", "SendLevel")
+	F_Validate_IniParam(c_InputSL, 		param, "Global", "MinSendLevel")
+	F_Validate_IniParam(f_ShiftFunctions, 	param, "Global", "OverallStatus")
+	F_Validate_IniParam(f_Capital, 		param, "Global", "ShiftCapital")
+	F_Validate_IniParam(f_Diacritics, 		param, "Global", "ShiftDiacritics")
+	F_Validate_IniParam(f_CapsLock, 		param, "Global", "ShiftCapsLock")
 
 	Loop, Read, % param
 	    if (InStr(A_LoopReadLine, "[Diacritic"))
@@ -970,63 +918,20 @@ F_ReadIni(param)
 	
 	Loop, %DiacriticSectionCounter%
     	{
-		IniRead,  Temp,          	% param, % "Diacritic"	. A_Index, BaseKey,			Error
-		if (Temp != "Error")
-			a_BaseKey.Push(Temp)
-		else
-		{
-			MsgBox, % c_MB_I_AsteriskInfo, % A_ScriptName, % "The" . A_Space . param . A_Space . "section:" . A_Space . "`n`n"
-			. "[Diacritic" . A_Index . "]" . A_Space . "do not contain valid parameter" . "`n"
-			. "BaseKey" . "`n`n"
-			. "Exiting with error code 3 (no recognized parameter)."
-			TrayTip, % A_ScriptName, % "exits with code" . A_Space . "3", 5, 1
-			ExitApp, 3
-		}
- 
-    		IniRead,  Temp,     		% param, % "Diacritic"	. A_Index, Diacritic,		Error
-		if (Temp != "Error")
-			a_Diacritic.Push(Temp)
-		else
-		{
-			MsgBox, % c_MB_I_AsteriskInfo, % A_ScriptName, % "The" . A_Space . param . A_Space . "section:" . A_Space . "`n`n"
-			. "[Diacritic" . A_Index . "]" . A_Space . "do not contain valid parameter" . "`n"
-			. "Diacritic" . "`n`n"
-			. "Exiting with error code 3 (no recognized parameter)."
-			TrayTip, % A_ScriptName, % "exits with code" . A_Space . "3", 5, 1
-			ExitApp, 3
-		}
-
-		IniRead, Temp, 			% param, % "Diacritic"	. A_Index, ShiftBaseKey, 	Error
-		if (Temp != "Error")
-			a_BaseKey.Push(Temp)
-		else
-		{
-			MsgBox, % c_MB_I_AsteriskInfo, % A_ScriptName, % "The" . A_Space . param . A_Space . "section:" . A_Space . "`n`n"
-			. "[Diacritic" . A_Index . "]" . A_Space . "do not contain valid parameter" . "`n"
-			. "ShiftBaseKey" . "`n`n"
-			. "Exiting with error code 3 (no recognized parameter)."
-			TrayTip, % A_ScriptName, % "exits with code" . A_Space . "3", 5, 1
-			ExitApp, 3
-		}
-
-		IniRead, Temp, 			% param, % "Diacritic"	. A_Index, ShiftDiacritic, 	Error
-		if (Temp != "Error")
-			a_Diacritic.Push(Temp)
-		else
-		{
-			MsgBox, % c_MB_I_AsteriskInfo, % A_ScriptName, % "The" . A_Space . param . A_Space . "section:" . A_Space . "`n`n"
-			. "[Diacritic" . A_Index . "]" . A_Space . "do not contain valid parameter" . "`n"
-			. "ShiftDiacritic" . "`n`n"
-			. "Exiting with error code 3 (no recognized parameter)."
-			TrayTip, % A_ScriptName, % "exits with code" . A_Space . "3", 5, 1
-			ExitApp, 3
-		}
+		F_Validate_IniParam(Temp, param, "Diacritic" . A_Index, "BaseKey")
+		a_BaseKey.Push(Temp)
+		F_Validate_IniParam(Temp, param, "Diacritic" . A_Index, "Diacritic")
+		a_Diacritic.Push(Temp)
+    		F_Validate_IniParam(Temp, param, "Diacritic" . A_Index, "ShiftBaseKey")
+		a_BaseKey.Push(Temp)
+		F_Validate_IniParam(Temp, param, "Diacritic" . A_Index, "ShiftDiacritic")
+		a_Diacritic.Push(Temp)
 	}
 	F_FlagReset()
 	SplitPath, v_ConfigIni, Temp
 	TrayTip, % A_ScriptName, % "is starting with" . A_Space . Temp, 5, 1
 }
-
+; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 F_Reload()
 {
 	if A_IsCompiled
@@ -1035,3 +940,64 @@ F_Reload()
 	    Run "%A_AhkPath%" /force "%A_ScriptFullPath%"
 	ExitApp
 }
+; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+F_Read_IniParam(ByRef IniParam, IniFilename, Section, Parameter)
+{
+	global	;assume-global mode
+	local	temp := ""
+
+	IniRead, temp, % IniFilename, % Section, % Parameter
+	if (temp != "ERROR") and (temp != "")
+	{
+		IniParam := temp
+		return "correct"
+	}	
+
+	if (temp = "ERROR")
+	{
+		MsgBox, % c_MB_I_Exclamation, % SubStr(A_ScriptName, 1, -4) . ":" . A_Space . TransA["information"]
+			, % TransA["Problem with reading parameter"] . A_Space . Parameter . A_Space . TransA["from the file"] . "`n"
+			. IniFilename . "`n`n"
+			. TransA["ERROR was read"] . "`n"
+			. TransA["Parameter is missing within Config.ini or file is corrupted."]
+		return "ERROR"
+	}
+	if (temp = "")
+	{
+		MsgBox, % c_MB_I_Exclamation, % SubStr(A_ScriptName, 1, -4) . ":" . A_Space . TransA["information"]
+			, % TransA["Problem with reading parameter"] . A_Space . Parameter . A_Space . TransA["from the file"] . "`n"
+			. IniFilename . "`n`n"
+			. TransA["Parameter has no value."]
+		return ""
+	}	
+}
+; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+F_Validate_IniParam(ByRef IniParam, IniFilename, Section, Parameter)
+{
+	global	;assume-global mode of operation
+	local	temp := ""
+
+	temp := F_Read_IniParam(IniParam, IniFilename, Section, Parameter)
+	if (temp = "ERROR") or (temp = "")
+	{
+		IniWrite, % IniParam, % IniFilename, % Section, % Parameter
+		if (ErrorLevel)
+		{
+			MsgBox, % c_MB_I_Exclamation, % SubStr(A_ScriptName, 1, -4) . ":" . A_Space . TransA["error"]
+				, % TransA["Problem with writing parameter"] . A_Space . Parameter . A_Space . TransA["to the file"] . "`n"
+				. IniFilename . "`n`n"
+				. TransA["Non-existing or corrupted file."]
+				. TransA["The following default value"] . "`n`n"
+				. IniParam . "`n"
+				. TransA["will be used."]
+		}
+		else
+			MsgBox, % c_MB_I_Info, % SubStr(A_ScriptName, 1, -4) . ":" . A_Space . TransA["information"]
+				, % TransA["Default value of"] . A_Space . Parameter . A_Space . TransA["was written to the file"] . "`n"
+				. IniFilename . "`n`n"
+				. TransA["The following default value"] . "`n`n"
+				. IniParam . "`n"
+				. TransA["will be used."]
+	}
+}	
+; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
