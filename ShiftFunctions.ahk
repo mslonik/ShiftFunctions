@@ -179,18 +179,19 @@ return
 ; - - - - - - - - - - - - - - GLOBAL HOTKEYS: END- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 ; - - - - - - - - - - - - - - DEFINITIONS OF FUNCTIONS: BEGINNING- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-F_CheckDuplicates()
+F_CheckDuplicates()	;Checks if second instance of script or executable isn't running
 {
 	global	;assume-global mode of operation
 	local	IfExistSF_exe 	:= false
 		,	IfExistSF_ahk 	:= false
 		,	ScriptNoExt	:= SubStr(A_ScriptName, 1, -4)
+		,	PID			:= DllCall("GetCurrentProcessId")
 
 	Process, Exist, ShiftFunctions.exe	
-	if (ErrorLevel)	;name of the process is returned in ErrorLevel variable if it is different than 0
+	if (ErrorLevel != 0) and (ErrorLevel != PID)	;name of the process is returned in ErrorLevel variable if it is different than 0
 		IfExistSF_exe := true
 	Process, Exist, ShiftFunctions.ahk
-	if (ErrorLevel)	;name of the process is returned in ErrorLevel variable if it is different than 0
+	if (ErrorLevel != 0) and (ErrorLevel != PID)	;name of the process is returned in ErrorLevel variable if it is different than 0
 		IfExistSF_ahk := true
 
 	if (IfExistSF_exe) or (IfExistSF_ahk)
