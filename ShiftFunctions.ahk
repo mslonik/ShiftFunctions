@@ -67,7 +67,6 @@ FileInstall, README.md, 			README.md,		false	;false = not overwrite if already e
 ,	a_Diacritic		:= []	;global array: diacritic letters and capital diacritic letters
 ,	v_ConfigIni		:= ""	;global variable, stores filename of current Config.ini, e.g. Polish.ini.
 ,	v_Undo			:= ""	;global variable, stores last character pressed by user before F_Diacritic or F_Capital were in action
-,	f_DUndo			:= false	;global variable, set if F_Diacritics or F_Capital were in action
 ,	v_CLCounter 		:= 0		;global variable, CapsLock counter
 ,	c_CLReset			:= 0		;global constant: CapsLock counter reset 
 ,	c_OutputSL		:= 1		;global constant: value for SendLevel, which is feedback for other scripts
@@ -622,30 +621,12 @@ F_OKD(ih, VK, SC)	;On Key Down
 		,	f_ShiftDown 	:= false
 		,	f_ShiftUp		:= false	
 	}
-	; OutputDebug, % A_ThisFunc . A_Space . v_WhatWasDown . A_Space . "E" . "`n"
-	Critical, Off
-}
-; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-F_OCD(ih, Char)	;On Character Down; this function can interrupt "On Key Down"
-{	;This function detects only "characters" according to AutoHotkey rules, no: modifiers (Shifts, Controls, Alts, Windows), function keys, Backspace, PgUp, PgDn, Ins, Home, Del, End ; yes: Esc, Space, Enter, Tab and all aphanumeric keys. How keyboard works: some keys have two layer meaning, where Shift is used to call another character from another layer. Example: basic layer 3, shift layer #. Another example: Ins and Shift+Ins do not produce character, but act differently; Shift + Ins must be preserved.
-	global	;assume-global mode of operation
-	Critical, On
-	v_Char 	:= Char
-	; OutputDebug, % A_ThisFunc . A_Space . "v_Char:" . v_Char . A_Space . "B" . "`n"
-,	f_DUndo 	:= false
-
 	local 	f_IfShiftDown		:= GetKeyState("Shift")		;if <shift> is down only logically
-		,    IsAlpha 			:= false
-
-	if v_Char is Alpha
-		IsAlpha := true
-	else
-		IsAlpha := false
-
+	; OutputDebug, % A_ThisFunc . A_Space . "v_WhatWasDown:" . v_WhatWasDown . "`n"
 	if (GetKeyState("CapsLock", "T"))	;if CapsLock is "on"
 	{
 		SetStoreCapslockMode, Off	;This is the only way which I know to get rid of blinking CapsLock. From now the v_Char value is ignored by Send and treated as small letters
-		Sleep, 1
+		Sleep, 1	;always required after GetKeyState if there is more than one script running which touches keyboard hooks.
 		if v_Char is Alpha	;alphabetic character
 		{
 			if (f_IfShiftDown)	;logic must be reversed if Shift key is pressed.
@@ -667,13 +648,23 @@ F_OCD(ih, Char)	;On Character Down; this function can interrupt "On Key Down"
 	}
 	else	;CapsLock is off
 	{
+		Sleep, 1	;always required after GetKeyState
+		v_Char := v_WhatWasDown
 		if (f_Capital) 
 			and (f_SPA)	;SPA = Shift Pressed Alone
 			F_Capital()
 	}
-
-	; OutputDebug, % A_ThisFunc . A_Space . v_Char . A_Space . "E" . "`n"
+	; OutputDebug, % A_ThisFunc . A_Space . v_WhatWasDown . A_Space . "E" . "`n"
 	Critical, Off
+}
+; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+F_OCD(ih, Char)	;On Character Down; this function can interrupt "On Key Down"
+{	;This function detects only "characters" according to AutoHotkey rules, no: modifiers (Shifts, Controls, Alts, Windows), function keys, Backspace, PgUp, PgDn, Ins, Home, Del, End ; yes: Esc, Space, Enter, Tab and all aphanumeric keys. How keyboard works: some keys have two layer meaning, where Shift is used to call another character from another layer. Example: basic layer 3, shift layer #. Another example: Ins and Shift+Ins do not produce character, but act differently; Shift + Ins must be preserved.
+	; global	;assume-global mode of operation
+	; Critical, On
+	; OutputDebug, % A_ThisFunc . A_Space . "v_Char:" . v_Char . A_Space . "B" . "`n"
+	; OutputDebug, % A_ThisFunc . A_Space . v_Char . A_Space . "E" . "`n"
+	; Critical, Off
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 F_SendNotAlphaChar(f_IfShiftDown)
@@ -713,7 +704,7 @@ F_OKU(ih, VK, SC)	;On Key Up
 		}
 	}
 
-	OutputDebug, % A_ThisFunc . A_Space . "f_AOK_Down:" . f_AOK_Down . "`n"
+	; OutputDebug, % A_ThisFunc . A_Space . "f_AOK_Down:" . f_AOK_Down . "`n"
 	if ((WhatWasUp = "LShift") or (WhatWasUp = "RShift"))
 		and (WhatWasUp = v_WhatWasDown)
 		and (!f_AOK_Down)	;Any Other Key
@@ -729,15 +720,6 @@ F_OKU(ih, VK, SC)	;On Key Up
 	{
 		f_SPA 		:= false
 	,	v_CLCounter 	:= c_CLReset
-		; return		
-	}	
-
-	if (WhatWasUp = "LControl") or (WhatWasUp =  "RControl")
-		or (WhatWasUp = "LAlt") or (WhatWasUp = "RAlt")
-		or (WhatWasUp = "LWin") or (WhatWasUp = "RWin")
-	{
-		f_AOK_Down		:= false	;Any Other Key
-		return
 	}	
 
 	if (f_Diacritics)
@@ -811,7 +793,6 @@ F_Diacritics()
 			Send,	% "{BS}" . a_Diacritic[index]
 			; F_DiacriticOutput(a_Diacritic[index])
 			v_Undo 	:= v_Char
-		,	f_DUndo 	:= true
 		,	f_SPA 	:= false	;Shift Pressed Alone
 		,	v_Char 	:= ""
 			; OutputDebug, % A_ThisFunc . A_Space . "a_Diacritic[index]:" . a_Diacritic[index] . A_Space . "E" . "`n"
