@@ -82,7 +82,8 @@ FileInstall, README.md, 			README.md,		false	;false = not overwrite if already e
 
 SendLevel, % c_OutputSL
 
-F_InputArguments()
+F_CheckDuplicates()		;check if there are running .ahk or .exe copies of this script in paraller
+F_InputArguments()		;process global variables of Config.ini
 F_InitiateInputHook()
 F_MenuTray()
 ;end of initialization section
@@ -178,6 +179,29 @@ return
 ; - - - - - - - - - - - - - - GLOBAL HOTKEYS: END- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 ; - - - - - - - - - - - - - - DEFINITIONS OF FUNCTIONS: BEGINNING- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+F_CheckDuplicates()
+{
+	global	;assume-global mode of operation
+	local	IfExistSF_exe 	:= false
+		,	IfExistSF_ahk 	:= false
+		,	ScriptNoExt	:= SubStr(A_ScriptName, 1, -4)
+
+	Process, Exist, ShiftFunctions.exe	
+	if (ErrorLevel)	;name of the process is returned in ErrorLevel variable if it is different than 0
+		IfExistSF_exe := true
+	Process, Exist, ShiftFunctions.ahk
+	if (ErrorLevel)	;name of the process is returned in ErrorLevel variable if it is different than 0
+		IfExistSF_ahk := true
+
+	if (IfExistSF_exe) or (IfExistSF_ahk)
+	{
+		MsgBox, % c_MB_I_Exclamation, % A_ScriptName
+			, % "Second running instance of " . A_Space . ScriptNoExt . " detected:" . "`n"
+			. (IfExistSF_exe ? ScriptNoExt . ".exe" : ScriptNoExt . ".ahk") 
+	}	
+	; OutputDebug, % "IfExistSF_exe:" . IfExistSF_exe . A_Space . "IfExistSF_ahk:" . IfExistSF_ahk . "`n"
+}
+; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 F_Save()
 {
 	global	;assume-globa mode of operation
