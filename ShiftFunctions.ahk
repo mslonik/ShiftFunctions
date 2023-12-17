@@ -631,7 +631,7 @@ F_OKD(ih, VK, SC)	;On Key Down
 				f_RShift		:= true
 				F_CheckIfTimeElapsed(100)	;100 ms
 				; OutputDebug, % "f_RShift:" . f_RShift . "`n"
-			}	
+			}
 		Case "LControl", "RControl":
 			f_ControlPressed 	:= true
 		,	f_AOK_Down		:= true	;Any Other Key	
@@ -641,6 +641,10 @@ F_OKD(ih, VK, SC)	;On Key Down
 		Case "LWin", "RWin":
 			f_WinPressed 		:= true
 		,	f_AOK_Down		:= true	;Any Other Key
+		Case "F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10", "F11", "F12":	;This line is necessary to prohibit the following scenario: <shell><BS><BS><shift d><shift u> -> shł
+			v_Char := ""
+		Case "Backspace", "PgUp", "PgDn", "Ins", "Home", "Del", "End":	;This line is necessary to prohibit the following scenario: <shell><BS><BS><shift d><shift u> -> shł
+			v_Char := ""
 		Default:
 			f_Char 		:= true
 		,	f_ShiftDown 	:= false
@@ -656,7 +660,7 @@ F_OCD(ih, Char)	;On Character Down; this function can interrupt "On Key Down"
 	Critical, On
 	v_Char := Char
 	local 	f_IfShiftDown		:= GetKeyState("Shift")		;if <shift> is down only logically
-	; OutputDebug, % A_ThisFunc . A_Space . "v_WhatWasDown:" . v_WhatWasDown . "`n"
+	; OutputDebug, % A_ThisFunc . A_Space . "v_Char:" . v_Char . "`n"
 	if (GetKeyState("CapsLock", "T"))	;if CapsLock is "on"
 	{
 		SetStoreCapslockMode, Off	;This is the only way which I know to get rid of blinking CapsLock. From now the v_Char value is ignored by Send and treated as small letters
