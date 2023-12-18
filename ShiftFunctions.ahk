@@ -80,11 +80,9 @@ FileInstall, README.md, 			README.md,		false	;false = not overwrite if already e
 ,	f_ShiftTimeout		:= false	;global flag: timer is running
 ,	c_Buffer			:= {}	;global character object buffer
 
-SendLevel, % c_OutputSL
-
 F_CheckDuplicates()		;check if there are running .ahk or .exe copies of this script in paraller
-F_InputArguments()		;process global variables of Config.ini
-F_InitiateInputHook()
+F_InitiateInputHook()	;at first initialize InputHook with the default values
+F_InputArguments()		;process and apply global variables of Config.ini
 F_MenuTray()
 ;end of initialization section
 
@@ -466,16 +464,17 @@ F_SetSendLevel()
 	Loop, 4
 	{
 		if (A_Index - 1 = A_ThisMenuItem)
-			{
-				Menu, SendLevelSumbmenu, Check, 	% A_Index - 1
-				c_OutputSL := A_Index - 1
-				IniWrite, % c_OutputSL, 	% A_ScriptDir . "\" . v_ConfigIni, Global, SendLevel
-			}
-			else
-				Menu, SendLevelSumbmenu, UnCheck, 	% A_Index - 1
+		{
+			Menu, SendLevelSumbmenu, Check, 	% A_Index - 1
+			c_OutputSL := A_Index - 1
+			IniWrite, % c_OutputSL, 	% A_ScriptDir . "\" . v_ConfigIni, Global, SendLevel
 		}
-		OutputDebug, % "c_OutputSL:" . c_OutputSL . "`n"
+		else
+			Menu, SendLevelSumbmenu, UnCheck, 	% A_Index - 1
+		}
 	}
+	SendLevel, % c_OutputSL
+	OutputDebug, % "c_OutputSL:" . c_OutputSL . "`n"
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 F_SetMinSendLevel()
 {
@@ -493,8 +492,8 @@ F_SetMinSendLevel()
 		else
 			Menu, MinSendLevelSubm, UnCheck, 	% A_Index - 1
 	}
+	v_InputH.MinSendLevel 	:= c_InputSL	
 	OutputDebug, % "c_InputSL:" . c_InputSL . "`n"
-
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 F_SelectConfig()
@@ -641,9 +640,8 @@ F_OKD(ih, VK, SC)	;On Key Down
 		Case "LWin", "RWin":
 			f_WinPressed 		:= true
 		,	f_AOK_Down		:= true	;Any Other Key
+		Case "Enter", "Backspace", "PgUp", "PgDn", "Ins", "Home", "Del", "End":	;This line is necessary to prohibit the following scenario: <shell><BS><BS><shift d><shift u> -> shł
 		Case "F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10", "F11", "F12":	;This line is necessary to prohibit the following scenario: <shell><BS><BS><shift d><shift u> -> shł
-			v_Char := ""
-		Case "Backspace", "PgUp", "PgDn", "Ins", "Home", "Del", "End":	;This line is necessary to prohibit the following scenario: <shell><BS><BS><shift d><shift u> -> shł
 			v_Char := ""
 		Default:
 			f_Char 		:= true
@@ -908,7 +906,9 @@ F_ReadIni(param)		;process Config.ini parameters
 		,	Temp2				:= ""
 
 	F_Validate_IniParam(c_OutputSL, 		param, "Global", "SendLevel")
+	SendLevel, % c_OutputSL
 	F_Validate_IniParam(c_InputSL, 		param, "Global", "MinSendLevel")
+	v_InputH.MinSendLevel := c_InputSL
 	F_Validate_IniParam(f_ShiftFunctions, 	param, "Global", "OverallStatus")
 	F_Validate_IniParam(f_Capital, 		param, "Global", "ShiftCapital")
 	F_Validate_IniParam(f_Diacritics, 		param, "Global", "ShiftDiacritics")
