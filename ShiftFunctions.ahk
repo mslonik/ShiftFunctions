@@ -82,8 +82,8 @@ FileInstall, README.md, 			README.md,		false	;false = not overwrite if already e
 
 F_CheckDuplicates()		;check if there are running .ahk or .exe copies of this script in paraller
 F_InitiateInputHook()	;at first initialize InputHook with the default values
-F_InputArguments()		;process and apply global variables of Config.ini
 F_MenuTray()
+F_InputArguments()		;process and apply global variables of Config.ini
 ;end of initialization section
 
 ; - - - - - - - - - - - - - - GLOBAL HOTSTRINGS: BEGINNING- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -370,51 +370,51 @@ F_Capital()
 	Switch v_Char
 	{
 		Case "``":
-			Send, {BS}~
+			Send, ~
 		Case "1":
-			Send, {BS}{!}
+			Send, {!}
 		Case "2":
-			Send, {BS}@
+			Send, @
 		Case "3":
-			Send, {BS}{#}
+			Send, {#}
 		Case "4":
-			Send, {BS}$
+			Send, $
 		Case "5":
-			Send, {BS}`%
+			Send, `%
 		Case "6":
-			Send, {BS}{^}
+			Send, {^}
 		Case "7":
-			Send, {BS}&
+			Send, &
 		Case "8":
-			Send, {BS}*
+			Send, *
 		Case "9":
-			Send, {BS}(
+			Send, (
 		Case "0":
-			Send, {BS})
+			Send, )
 		Case "-":
-			Send, {BS}_
+			Send, _
 		Case "=":
-			Send, {BS}{+}
+			Send, {+}
 		Case "[":
-			Send, {BS}{{}	;alternative: SendRaw, `b{
+			Send, {{}	;alternative: SendRaw, `b{
 		Case "]":
-			Send, {BS}{}}	;alternative: SendRaw, `b}
+			Send, {}}	;alternative: SendRaw, `b}
 		Case "\":
-			Send, {BS}|
+			Send, |
 		Case ";":
-			Send, {BS}:
+			Send, :
 		Case "'":
-			Send, {BS}"
+			Send, "
 		Case ",":
-			Send, {BS}<
+			Send, <
 		Case ".":
-			Send, {BS}>
+			Send, >
 		Case "/":
-			Send, {BS}?
+			Send, ?
 		Default:
 			; OutputDebug, % "v_Char:" . v_Char . "|" . "`n"
 			v_Char := Format("{:U}", v_Char)
-			Send, % "{BS}" . v_Char
+			Send, % v_Char
 	}
 	F_FlagReset()
 	v_CLCounter 	:= c_CLReset
@@ -549,9 +549,9 @@ F_InitiateInputHook()	;why InputHook: to process triggerstring tips.
 ,	v_InputH.OnChar 		:= Func("F_OCD")
 ,	v_InputH.OnKeyDown		:= Func("F_OKD")
 ,	v_InputH.OnKeyUp 		:= Func("F_OKU")
-,	v_InputH.VisibleText 	:= true				;all 3x parameters: VisibleText (true), VisibleNonText (true), BackspaceIsUndo(true) are equal to InputHook("V"); it means there is no suppression at all
-,	v_InputH.VisibleNonText	:= true				;VisibleNonText is passed on to the active window
-,	v_InputH.BackspaceIsUndo	:= true				;by default it is true
+,	v_InputH.VisibleText 	:= false				;all 3x parameters: VisibleText (true), VisibleNonText (true), BackspaceIsUndo(true) are equal to InputHook("V"); it means there is no suppression at all
+,	v_InputH.VisibleNonText	:= false				;VisibleNonText is passed on to the active window
+,	v_InputH.BackspaceIsUndo	:= false				;by default it is true
 	v_InputH.KeyOpt("{All}", "N")
 	if (f_ShiftFunctions)
 		v_InputH.Start()
@@ -657,8 +657,14 @@ F_OCD(ih, Char)	;On Character Down; this function can interrupt "On Key Down"
 	global	;assume-global mode of operation
 	Critical, On
 	v_Char := Char
-	local 	f_IfShiftDown		:= GetKeyState("Shift")		;if <shift> is down only logically
-	; OutputDebug, % A_ThisFunc . A_Space . "v_Char:" . v_Char . "`n"
+	local 	f_IfShiftDown	:= GetKeyState("Shift")		;if <shift> is down only logically
+		,	IsAlpha 		:= true
+	OutputDebug, % A_ThisFunc . A_Space . "v_Char:" . v_Char . "`n"
+	if v_Char is Alpha
+		IsAlpha := true
+	else
+		IsAlpha := false
+
 	if (GetKeyState("CapsLock", "T"))	;if CapsLock is "on"
 	{
 		SetStoreCapslockMode, Off	;This is the only way which I know to get rid of blinking CapsLock. From now the v_Char value is ignored by Send and treated as small letters
@@ -666,12 +672,12 @@ F_OCD(ih, Char)	;On Character Down; this function can interrupt "On Key Down"
 		if v_Char is Alpha	;alphabetic character
 		{
 			if (f_IfShiftDown)	;logic must be reversed if Shift key is pressed.
-				Send, % "{BS}" . "+" . v_Char
+				Send, % "+" . v_Char
 
 			if (f_Capital) 
 				and (f_SPA)	;SPA = Shift Pressed Alone
 			{
-				Send, % "{BS}" . "+" . v_Char
+				Send, % "+" . v_Char
 				; OutputDebug, % "Branch:" . v_Char . "`n"
 				f_SPA := false
 			,	v_Char := Format("{:l}", v_Char)
@@ -685,9 +691,20 @@ F_OCD(ih, Char)	;On Character Down; this function can interrupt "On Key Down"
 	else	;CapsLock is off
 	{
 		Sleep, 1	;always required after GetKeyState if there is more than one script running which touches keyboard hooks.
-		if (f_Capital) 
-			and (f_SPA)	;SPA = Shift Pressed Alone
-			F_Capital()
+		; OutputDebug, % "CapsLock is off" . "`n"
+		if (!f_IfShiftDown) and (IsAlpha)
+		{
+			if (f_Capital) 
+				and (f_SPA)	;SPA = Shift Pressed Alone
+				F_Capital()
+			else
+			{
+				OutputDebug, % "Tu jestem" . "`n"
+				Send, % v_Char
+			}	
+		}
+		else    ;not alphabetic character
+			F_SendNotAlphaChar(f_IfShiftDown)
 	}
 	; OutputDebug, % A_ThisFunc . A_Space . v_Char . A_Space . "E" . "`n"
 	Critical, Off
@@ -700,17 +717,20 @@ F_SendNotAlphaChar(f_IfShiftDown)
 	if (f_IfShiftDown)
 	{
 		if (v_Char = "{") or (v_Char = "}") or (v_Char = "^") or (v_Char = "!") or (v_Char = "+") or (v_Char = "#")
-			Send, % "{BS}" .  "{" . v_Char . "}"
+			Send, % "{" . v_Char . "}"
 		else
-			Send, % "{BS}" . "+" . v_Char
+			Send, % "+" . v_Char
 	}
+
+	if (!f_IfShiftDown) and (!f_SPA)
+		Send, % v_Char
 
 	if (!f_IfShiftDown) and (f_SPA)
 	{
-		Send, % "{BS}" .  "+" . v_Char
-		f_SPA 		:= false
-	}	
-	v_CLCounter 	:= c_CLReset
+		Send, % "+" . v_Char
+		f_SPA := false
+	,	v_CLCounter 	:= c_CLReset
+	}
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 F_OKU(ih, VK, SC)	;On Key Up
@@ -907,8 +927,23 @@ F_ReadIni(param)		;process Config.ini parameters
 
 	F_Validate_IniParam(c_OutputSL, 		param, "Global", "SendLevel")
 	SendLevel, % c_OutputSL
+	Loop, 4
+	{
+		if (A_Index - 1 = c_OutputSL)
+			Menu, SendLevelSumbmenu, Check, 	% A_Index - 1
+		else
+			Menu, SendLevelSumbmenu, UnCheck, 	% A_Index - 1
+	}
+
 	F_Validate_IniParam(c_InputSL, 		param, "Global", "MinSendLevel")
 	v_InputH.MinSendLevel := c_InputSL
+	Loop, 4
+	{
+		if (A_Index - 1 = c_InputSL)
+			Menu, MinSendLevelSubm, Check, 	% A_Index - 1
+		else
+			Menu, MinSendLevelSubm, UnCheck, 	% A_Index - 1
+	}
 	F_Validate_IniParam(f_ShiftFunctions, 	param, "Global", "OverallStatus")
 	F_Validate_IniParam(f_Capital, 		param, "Global", "ShiftCapital")
 	F_Validate_IniParam(f_Diacritics, 		param, "Global", "ShiftDiacritics")
