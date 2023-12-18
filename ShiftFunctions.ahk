@@ -471,10 +471,10 @@ F_SetSendLevel()
 		}
 		else
 			Menu, SendLevelSumbmenu, UnCheck, 	% A_Index - 1
-		}
 	}
 	SendLevel, % c_OutputSL
-	OutputDebug, % "c_OutputSL:" . c_OutputSL . "`n"
+	OutputDebug, % "c_OutputSL:" . c_OutputSL . A_Space . "SendLevel:" . A_SendLevel . "`n"
+}	
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 F_SetMinSendLevel()
 {
@@ -493,7 +493,7 @@ F_SetMinSendLevel()
 			Menu, MinSendLevelSubm, UnCheck, 	% A_Index - 1
 	}
 	v_InputH.MinSendLevel 	:= c_InputSL	
-	OutputDebug, % "c_InputSL:" . c_InputSL . "`n"
+	OutputDebug, % "c_InputSL:" . c_InputSL . A_Space . "MinSendLevel:" . v_InputH.MinSendLevel . "`n"
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 F_SelectConfig()
