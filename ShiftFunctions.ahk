@@ -550,7 +550,7 @@ F_InitiateInputHook()	;why InputHook: to process triggerstring tips.
 ,	v_InputH.OnKeyDown		:= Func("F_OKD")
 ,	v_InputH.OnKeyUp 		:= Func("F_OKU")
 ,	v_InputH.VisibleText 	:= false				;all 3x parameters: VisibleText (true), VisibleNonText (true), BackspaceIsUndo(true) are equal to InputHook("V"); it means there is no suppression at all
-,	v_InputH.VisibleNonText	:= false				;VisibleNonText is passed on to the active window
+,	v_InputH.VisibleNonText	:= true				;VisibleNonText is passed on to the active window. For example: ->, <-, end, home etc.
 ,	v_InputH.BackspaceIsUndo	:= false				;by default it is true
 	v_InputH.KeyOpt("{All}", "N")
 	if (f_ShiftFunctions)
@@ -659,7 +659,7 @@ F_OCD(ih, Char)	;On Character Down; this function can interrupt "On Key Down"
 	v_Char := Char
 	local 	f_IfShiftDown	:= GetKeyState("Shift")		;if <shift> is down only logically
 		,	IsAlpha 		:= true
-	OutputDebug, % A_ThisFunc . A_Space . "v_Char:" . v_Char . "`n"
+	; OutputDebug, % A_ThisFunc . A_Space . "v_Char:" . v_Char . "`n"
 	if v_Char is Alpha
 		IsAlpha := true
 	else
@@ -699,7 +699,7 @@ F_OCD(ih, Char)	;On Character Down; this function can interrupt "On Key Down"
 				F_Capital()
 			else
 			{
-				OutputDebug, % "Tu jestem" . "`n"
+				; OutputDebug, % "Tu jestem" . "`n"
 				Send, % v_Char
 			}	
 		}
