@@ -647,6 +647,7 @@ F_OKD(ih, VK, SC)	;On Key Down
 			f_WinPressed 		:= true
 		,	f_AOK_Down		:= true	;Any Other Key
 		Case "Enter", "Backspace", "PgUp", "PgDn", "Ins", "Home", "Del", "End":	;This line is necessary to prohibit the following scenario: <shell><BS><BS><shift d><shift u> -> shł
+			v_Char := ""
 		Case "F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10", "F11", "F12":	;This line is necessary to prohibit the following scenario: <shell><BS><BS><shift d><shift u> -> shł
 			v_Char := ""
 		Default:
@@ -777,7 +778,10 @@ F_OKU(ih, VK, SC)	;On Key Up
 	if (f_Diacritics)
 		and (f_SPA)
 		and (v_Char)
+		{
+			OutputDebug, % "v_Char:" . v_Char . "`n"
 			F_Diacritics()
+		}
 
 	if (f_CapsLock)
 		and (f_SPA)	;Shift key (left or right) was Pressed Alone.
