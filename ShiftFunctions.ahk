@@ -82,8 +82,9 @@ FileInstall, README.md, 			README.md,		false	;false = not overwrite if already e
 
 F_CheckDuplicates()		;check if there are running .ahk or .exe copies of this script in paraller
 F_InitiateInputHook()	;at first initialize InputHook with the default values
-F_MenuTray()
+F_MenuTray()			;initialize Tray menu
 F_InputArguments()		;process and apply global variables of Config.ini
+F_ReadIni()			;read config.ini
 ;end of initialization section
 
 ; - - - - - - - - - - - - - - GLOBAL HOTSTRINGS: BEGINNING- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -461,7 +462,7 @@ F_SetSendLevel()
 {
 	global	;assume-global mode of operation
 	
-	Loop, 4
+	Loop, 4		;number of positions within the SendLevelSumbmenu
 	{
 		if (A_Index - 1 = A_ThisMenuItem)
 		{
@@ -473,14 +474,17 @@ F_SetSendLevel()
 			Menu, SendLevelSumbmenu, UnCheck, 	% A_Index - 1
 	}
 	SendLevel, % c_OutputSL
-	OutputDebug, % "c_OutputSL:" . c_OutputSL . A_Space . "SendLevel:" . A_SendLevel . "`n"
+	; OutputDebug, % "c_OutputSL:" . c_OutputSL . A_Space . "SendLevel:" . A_SendLevel . "`n"
+
+	if (c_OutputSL >= c_InputSL)
+		F_OutputEqualInputWarn()
 }	
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 F_SetMinSendLevel()
 {
 	global	;assume-global mode of operation
 
-	Loop, 4
+	Loop, 4		;number of positions within the SendLevelSumbmenu
 	{
 		if (A_Index - 1 = A_ThisMenuItem)
 		{
@@ -493,7 +497,10 @@ F_SetMinSendLevel()
 			Menu, MinSendLevelSubm, UnCheck, 	% A_Index - 1
 	}
 	v_InputH.MinSendLevel 	:= c_InputSL	
-	OutputDebug, % "c_InputSL:" . c_InputSL . A_Space . "MinSendLevel:" . v_InputH.MinSendLevel . "`n"
+	; OutputDebug, % "c_InputSL:" . c_InputSL . A_Space . "MinSendLevel:" . v_InputH.MinSendLevel . "`n"
+	
+	if (c_OutputSL >= c_InputSL)
+		F_OutputEqualInputWarn()
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 F_SelectConfig()
@@ -507,7 +514,6 @@ F_SelectConfig()
 			TrayTip, % A_ScriptName, % "exits with code" . A_Space . "1", 5, 1
 			ExitApp, 1
 		}
-	F_ReadIni(v_ConfigIni)
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 F_About()
@@ -890,7 +896,6 @@ F_InputArguments()
 			MsgBox, % c_MB_I_AsteriskInfo, % A_ScriptName, % "Only one .ini file was found and application will read in configuration from that file:"
 			. "`n`n"
 			. v_ConfigIni
-			F_ReadIni(v_ConfigIni)
 			return
 		}
 		if (Counter > 1)
@@ -913,11 +918,24 @@ F_InputArguments()
 	else
 	{
 		v_ConfigIni := param
-		F_ReadIni(v_ConfigIni)
 	}
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-F_ReadIni(param)		;process Config.ini parameters
+F_OutputEqualInputWarn()
+{
+	global	;assume-global mode of operation
+
+	MsgBox, % c_MB_I_Exclamation, % A_ScriptName, % "The output level (SendLevel) is equal or higher than input level (MinSendLevel)." . "`n"
+	. "As a consequence this script will process characters in never ending self-loop." . "`n"
+	. "No characters will be displayed on screen." . "`n"
+	. "The input level (MinSendlevel) should be at least 1 level higher than output level (SendLevel)" . "`n"
+	. "Change configuration settings from Tray menu." . "`n`n"
+	. "You have been warned." . "`n`n"
+	. "Output level (SendLevel)" . ":" . A_Space . c_OutputSL . "`n"
+	. "Input level (MinSendLevel)" . ":" . A_Space . c_InputSL 
+}
+; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+F_ReadIni()		;process Config.ini parameters
 {
 	global	;assume-global mode of operation
 	local 	DiacriticSectionCounter 	:= 0
@@ -925,9 +943,9 @@ F_ReadIni(param)		;process Config.ini parameters
 		,	ErrorString			:= "Error"
 		,	Temp2				:= ""
 
-	F_Validate_IniParam(c_OutputSL, 		param, "Global", "SendLevel")
+	F_Validate_IniParam(c_OutputSL, 		v_ConfigIni, "Global", "SendLevel")
 	SendLevel, % c_OutputSL
-	Loop, 4
+	Loop, 4		;number of positions within the SendLevelSumbmenu
 	{
 		if (A_Index - 1 = c_OutputSL)
 			Menu, SendLevelSumbmenu, Check, 	% A_Index - 1
@@ -935,40 +953,44 @@ F_ReadIni(param)		;process Config.ini parameters
 			Menu, SendLevelSumbmenu, UnCheck, 	% A_Index - 1
 	}
 
-	F_Validate_IniParam(c_InputSL, 		param, "Global", "MinSendLevel")
+	F_Validate_IniParam(c_InputSL, 		v_ConfigIni, "Global", "MinSendLevel")
 	v_InputH.MinSendLevel := c_InputSL
-	Loop, 4
+	Loop, 4		;number of positions within the MinSendLevelSubm
 	{
 		if (A_Index - 1 = c_InputSL)
 			Menu, MinSendLevelSubm, Check, 	% A_Index - 1
 		else
 			Menu, MinSendLevelSubm, UnCheck, 	% A_Index - 1
 	}
-	F_Validate_IniParam(f_ShiftFunctions, 	param, "Global", "OverallStatus")
-	F_Validate_IniParam(f_Capital, 		param, "Global", "ShiftCapital")
-	F_Validate_IniParam(f_Diacritics, 		param, "Global", "ShiftDiacritics")
-	F_Validate_IniParam(f_CapsLock, 		param, "Global", "ShiftCapsLock")
+	
+	if (c_OutputSL >= c_InputSL)
+		F_OutputEqualInputWarn()
 
-	Loop, Read, % param
+	F_Validate_IniParam(f_ShiftFunctions, 	v_ConfigIni, "Global", "OverallStatus")
+	F_Validate_IniParam(f_Capital, 		v_ConfigIni, "Global", "ShiftCapital")
+	F_Validate_IniParam(f_Diacritics, 		v_ConfigIni, "Global", "ShiftDiacritics")
+	F_Validate_IniParam(f_CapsLock, 		v_ConfigIni, "Global", "ShiftCapsLock")
+
+	Loop, Read, % v_ConfigIni
 	    if (InStr(A_LoopReadLine, "[Diacritic"))
 	        DiacriticSectionCounter++
 	
 	if (DiacriticSectionCounter = 0)
 	{
-		MsgBox, % c_MB_I_AsteriskInfo, % A_ScriptName, % "The" . A_Space . param . A_Space . "do not contain any valid section. Exiting with error code 2 (no recognized .ini file section)."
+		MsgBox, % c_MB_I_AsteriskInfo, % A_ScriptName, % "The" . A_Space . v_ConfigIni . A_Space . "do not contain any valid section. Exiting with error code 2 (no recognized .ini file section)."
 		TrayTip, % A_ScriptName, % "exits with code" . A_Space . "2", 5, 1
 		ExitApp, 2
 	}
 	
 	Loop, %DiacriticSectionCounter%
     	{
-		F_Validate_IniParam(Temp, param, "Diacritic" . A_Index, "BaseKey")
+		F_Validate_IniParam(Temp, v_ConfigIni, "Diacritic" . A_Index, "BaseKey")
 		a_BaseKey.Push(Temp)
-		F_Validate_IniParam(Temp, param, "Diacritic" . A_Index, "Diacritic")
+		F_Validate_IniParam(Temp, v_ConfigIni, "Diacritic" . A_Index, "Diacritic")
 		a_Diacritic.Push(Temp)
-    		F_Validate_IniParam(Temp, param, "Diacritic" . A_Index, "ShiftBaseKey")
+    		F_Validate_IniParam(Temp, v_ConfigIni, "Diacritic" . A_Index, "ShiftBaseKey")
 		a_BaseKey.Push(Temp)
-		F_Validate_IniParam(Temp, param, "Diacritic" . A_Index, "ShiftDiacritic")
+		F_Validate_IniParam(Temp, v_ConfigIni, "Diacritic" . A_Index, "ShiftDiacritic")
 		a_Diacritic.Push(Temp)
 	}
 	F_FlagReset()
