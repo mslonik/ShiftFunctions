@@ -678,43 +678,114 @@ F_OCD(ih, Char)	;On Character Down; this function can interrupt "On Key Down"
 		Sleep, 1	;always required after GetKeyState if there is more than one script running which touches keyboard hooks.
 		if v_Char is Alpha	;alphabetic character
 		{
+			if (!f_IfShiftDown) and (!f_SPA)	;SPA = Shift Pressed Alone
+			{
+				F_CapitalUnicode()
+				SetStoreCapslockMode, On	;for whatever reason 
+				Critical, Off
+				return
+			}	
+
 			if (f_IfShiftDown)	;logic must be reversed if Shift key is pressed.
+			{
 				Send, % "+" . v_Char
+				SetStoreCapslockMode, On	;for whatever reason 
+				Critical, Off
+				return
+			}	
 
 			if (f_Capital) 
 				and (f_SPA)	;SPA = Shift Pressed Alone
 			{
 				Send, % "+" . v_Char
-				; OutputDebug, % "Branch:" . v_Char . "`n"
 				f_SPA := false
-			,	v_Char := Format("{:l}", v_Char)
-			}	
+			,	v_Char := Format("{:l}", v_Char)	;convert v_Char to small letter
+				SetStoreCapslockMode, On	;for whatever reason 
+				Critical, Off
+				return
+			}
 		}
 		else	;not alphabetic character
+		{
 			F_SendNotAlphaChar(f_IfShiftDown)
+			SetStoreCapslockMode, On	;for whatever reason 
+			Critical, Off
+			return
+		}	
 		
-		SetStoreCapslockMode, On	;for whatever reason 
 	}
 	else	;CapsLock is off
 	{
 		Sleep, 1	;always required after GetKeyState if there is more than one script running which touches keyboard hooks.
 		; OutputDebug, % "CapsLock is off" . "`n"
-		if (!f_IfShiftDown) and (IsAlpha)
+		if v_Char is Alpha
 		{
+			if (!f_IfShiftDown) and (!f_SPA)	;SPA = Shift Pressed Alone
+			{
+				Send, % v_Char
+				Critical, Off
+				return
+			}	
+			if (f_IfShiftDown)	;logic must be reversed if Shift key is pressed.
+			{
+				Send, % "+" . v_Char
+				Critical, Off
+				return
+			}	
 			if (f_Capital) 
 				and (f_SPA)	;SPA = Shift Pressed Alone
-				F_Capital()
-			else
 			{
-				; OutputDebug, % "Tu jestem" . "`n"
-				Send, % v_Char
-			}	
-		}
-		else    ;not alphabetic character
+				Send, % "+" . v_Char
+				f_SPA := false
+			,	v_Char := Format("{:U}", v_Char)	;convert v_Char to capital letter
+				Critical, Off
+				return
+			}
+		}	
+		else	;not alphabetic character
+		{
 			F_SendNotAlphaChar(f_IfShiftDown)
+			Critical, Off
+			return
+		}	  
 	}
 	; OutputDebug, % A_ThisFunc . A_Space . v_Char . A_Space . "E" . "`n"
 	Critical, Off
+}
+; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+F_CapitalUnicode()
+{
+	global	;assume-global mode of operation
+
+	Switch v_Char				;This is the only way which I know to get rid of blinking CapsLock
+	{
+		Case "A":	Send, {U+0041}	;A
+		Case "B":	Send, {U+0042}	;B
+		Case "C":	Send, {U+0043}	;C
+		Case "D":	Send, {U+0044}	;D
+		Case "E":	Send, {U+0045}	;E
+		Case "F":	Send, {U+0046}	;F
+		Case "G":	Send, {U+0047}	;G
+		Case "H":	Send, {U+0048}	;H
+		Case "I":	Send, {U+0049}	;I
+		Case "J":	Send, {U+004a}	;J
+		Case "K":	Send, {U+004b}	;K
+		Case "L":	Send, {U+004c}	;L
+		Case "M":	Send, {U+004d}	;M
+		Case "N":	Send, {U+004e}	;N
+		Case "O":	Send, {U+004f}	;O
+		Case "P":	Send, {U+0050}	;P
+		Case "Q":	Send, {U+0051}	;Q
+		Case "R":	Send, {U+0052}	;R
+		Case "S":	Send, {U+0053}	;S
+		Case "T":	Send, {U+0054}	;T
+		Case "U":	Send, {U+0055}	;U
+		Case "V":	Send, {U+0056}	;V
+		Case "W":	Send, {U+0057}	;W
+		Case "X":	Send, {U+0058}	;X
+		Case "Y":	Send, {U+0059}	;Y
+		Case "Z":	Send, {U+005a}	;Z
+	}
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 F_SendNotAlphaChar(f_IfShiftDown)
