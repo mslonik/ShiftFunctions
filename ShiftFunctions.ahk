@@ -646,9 +646,9 @@ F_OKD(ih, VK, SC)	;On Key Down
 		Case "LWin", "RWin":
 			f_WinPressed 		:= true
 		,	f_AOK_Down		:= true	;Any Other Key
-		Case "Enter", "Backspace", "PgUp", "PgDn", "Ins", "Home", "Del", "End":	;This line is necessary to prohibit the following scenario: <shell><BS><BS><shift d><shift u> -> shł
+		Case "Esc", "Up", "Down", "Left", "Right", "Enter", "Backspace", "PgUp", "PgDn", "Ins", "Home", "Del", "End":	;13x , max. 20. This line is necessary to prohibit the following scenario: <shell><BS><BS><shift d><shift u> -> shł
 			v_Char := ""
-		Case "F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10", "F11", "F12":	;This line is necessary to prohibit the following scenario: <shell><BS><BS><shift d><shift u> -> shł
+		Case "F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10", "F11", "F12":	;12x, max. 20. This line is necessary to prohibit the following scenario: <shell><BS><BS><shift d><shift u> -> shł
 			v_Char := ""
 		Default:
 			f_Char 		:= true
@@ -674,8 +674,8 @@ F_OCD(ih, Char)	;On Character Down; this function can interrupt "On Key Down"
 
 	if (GetKeyState("CapsLock", "T"))	;if CapsLock is "on"
 	{
-		SetStoreCapslockMode, Off	;This is the only way which I know to get rid of blinking CapsLock. From now the v_Char value is ignored by Send and treated as small letters
 		Sleep, 1	;always required after GetKeyState if there is more than one script running which touches keyboard hooks.
+		SetStoreCapslockMode, Off	;This is the only way which I know to get rid of blinking CapsLock. From now the v_Char value is ignored by Send and treated as small letters
 		if v_Char is Alpha	;alphabetic character
 		{
 			if (!f_IfShiftDown) and (!f_SPA)	;SPA = Shift Pressed Alone
@@ -850,7 +850,7 @@ F_OKU(ih, VK, SC)	;On Key Up
 		and (f_SPA)
 		and (v_Char)
 		{
-			OutputDebug, % "v_Char:" . v_Char . "`n"
+			; OutputDebug, % "v_Char:" . v_Char . "`n"
 			F_Diacritics()
 		}
 
