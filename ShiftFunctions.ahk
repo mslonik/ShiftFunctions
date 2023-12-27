@@ -605,7 +605,7 @@ F_OKD(ih, VK, SC)	;On Key Down
 	
 	if (f_WinPressed) and (A_PriorKey = "l")	;This condition is valid only after unlocking of Windows (# + L to lock). There is phenomena that after unlocking F_OCD is inactive untill mouse is clicked or Windows key is pressed. Don't know why it is so, but this conditions solves the issue.
 	{
-		v_Char 		:= v_WhatWasDown		;OutputDebug, % "Exception!" . "`n"
+		v_Char 		:= A_PriorKey		;OutputDebug, % "Exception!" . "`n"
 		F_FlagReset()
 	}	
 
@@ -723,12 +723,14 @@ F_OCD(ih, Char)	;On Character Down; this function can interrupt "On Key Down"
 			if (!f_IfShiftDown) and (!f_SPA)	;SPA = Shift Pressed Alone
 			{
 				Send, % v_Char
+				; OutputDebug, % "(!f_IfShiftDown) and (!f_SPA):" . v_Char . "`n"
 				Critical, Off
 				return
 			}	
 			if (f_IfShiftDown)	;logic must be reversed if Shift key is pressed.
 			{
 				Send, % "+" . v_Char
+				; OutputDebug, % "f_IfShiftDown:" . v_Char . "`n"
 				Critical, Off
 				return
 			}	
@@ -738,6 +740,7 @@ F_OCD(ih, Char)	;On Character Down; this function can interrupt "On Key Down"
 				Send, % "+" . v_Char
 				f_SPA := false
 			,	v_Char := Format("{:U}", v_Char)	;convert v_Char to capital letter
+				; OutputDebug, % "f_Capital:" . v_Char . "`n"
 				Critical, Off
 				return
 			}
@@ -838,7 +841,7 @@ F_OKU(ih, VK, SC)	;On Key Up
 			f_LShift := false
 		if (WhatWasUp = "RShift")
 			f_RShift := false
-		; OutputDebug, % "f_SPA:" . f_SPA . "`n"
+		; OutputDebug, % "f_SPA:" . f_SPA . A_Space . "v_Char:" . v_Char . "`n"
 	}
 	else
 	{
