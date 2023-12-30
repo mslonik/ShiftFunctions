@@ -663,18 +663,20 @@ F_OCD(ih, Char)	;On Character Down; this function can interrupt "On Key Down"
 {	;This function detects only "characters" according to AutoHotkey rules, no: modifiers (Shifts, Controls, Alts, Windows), function keys, Backspace, PgUp, PgDn, Ins, Home, Del, End ; yes: Esc, Space, Enter, Tab and all aphanumeric keys. How keyboard works: some keys have two layer meaning, where Shift is used to call another character from another layer. Example: basic layer 3, shift layer #. Another example: Ins and Shift+Ins do not produce character, but act differently; Shift + Ins must be preserved.
 	global	;assume-global mode of operation
 	Critical, On
-	v_Char := Char
-	local 	f_IfShiftDown	:= GetKeyState("Shift")		;if <shift> is down only logically
+	local 	f_IfShiftDown	:= GetKeyState("Shift")			;if <shift> is down only logically
+		,	f_IfCapsLock	:= GetKeyState("CapsLock", "T")	;if CapsLock is "on"
 		,	IsAlpha 		:= true
+
+	Sleep, 1	;always required after GetKeyState if there is more than one script running which touches keyboard hooks.
+	v_Char := Char	;local variable to global variable
 	; OutputDebug, % A_ThisFunc . A_Space . "v_Char:" . v_Char . "`n"
 	if v_Char is Alpha
 		IsAlpha := true
 	else
 		IsAlpha := false
 
-	if (GetKeyState("CapsLock", "T"))	;if CapsLock is "on"
+	if (f_IfCapsLock)	;if CapsLock is "on"
 	{
-		Sleep, 1	;always required after GetKeyState if there is more than one script running which touches keyboard hooks.
 		SetStoreCapslockMode, Off	;This is the only way which I know to get rid of blinking CapsLock. From now the v_Char value is ignored by Send and treated as small letters
 		if v_Char is Alpha	;alphabetic character
 		{
@@ -716,7 +718,6 @@ F_OCD(ih, Char)	;On Character Down; this function can interrupt "On Key Down"
 	}
 	else	;CapsLock is off
 	{
-		Sleep, 1	;always required after GetKeyState if there is more than one script running which touches keyboard hooks.
 		; OutputDebug, % "CapsLock is off" . "`n"
 		if v_Char is Alpha
 		{
