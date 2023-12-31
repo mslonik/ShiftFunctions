@@ -79,6 +79,7 @@ FileInstall, README.md, 			README.md,		false	;false = not overwrite if already e
 ,	f_WasReset		:= false	;global flag: Shift key memory reset (to reset v_CLCounter)
 ,	f_ShiftTimeout		:= false	;global flag: timer is running
 ,	c_Buffer			:= {}	;global character object buffer
+,	v_SleepValue		:= 25	;global value for sleep in F_OCD
 
 F_CheckDuplicates()		;check if there are running .ahk or .exe copies of this script in paraller
 F_InitiateInputHook()	;at first initialize InputHook with the default values
@@ -667,7 +668,7 @@ F_OCD(ih, Char)	;On Character Down; this function can interrupt "On Key Down"
 		,	f_IfCapsLock	:= GetKeyState("CapsLock", "T")	;if CapsLock is "on"
 		,	IsAlpha 		:= true
 
-	Sleep, 1	;always required after GetKeyState if there is more than one script running which touches keyboard hooks.
+	Sleep, % v_SleepValue	; sleep is always required after GetKeyState if there is more than one script running which touches keyboard hooks.
 	v_Char := Char	;local variable to global variable
 	; OutputDebug, % A_ThisFunc . A_Space . "v_Char:" . v_Char . "`n"
 	if v_Char is Alpha
@@ -908,7 +909,7 @@ F_CapsLock(WhatWasUp)
 	if (v_CLCounter = CLLimit)
 	{
 		SetCapsLockState, % !GetKeyState("CapsLock", "T") 
-		Sleep, 1		;sleep is required by function GetKeyState to correctly update: "Systems with unusual keyboard drivers might be slow to update the state of their keys". Surprisingly 1 ms seems to be ok.
+		Sleep, % v_SleepValue		;sleep is required by function GetKeyState to correctly update: "Systems with unusual keyboard drivers might be slow to update the state of their keys". Surprisingly 1 ms seems to be ok.
 		SoundPlay, *48		;standard system sound, exclamation
 		v_CLCounter	:= c_CLReset
 	,	f_SPA 		:= false	;Shift Pressed Alone
