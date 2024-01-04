@@ -79,7 +79,7 @@ FileInstall, README.md, 			README.md,		false	;false = not overwrite if already e
 ,	f_WasReset		:= false	;global flag: Shift key memory reset (to reset v_CLCounter)
 ,	f_ShiftTimeout		:= false	;global flag: timer is running
 ,	c_Buffer			:= {}	;global character object buffer
-,	v_SleepValue		:= 25	;global value for sleep in F_OCD
+,	v_SleepValue		:= 0		;global value for sleep in F_OCD
 
 F_CheckDuplicates()		;check if there are running .ahk or .exe copies of this script in paraller
 F_InitiateInputHook()	;at first initialize InputHook with the default values
@@ -678,13 +678,11 @@ F_OCD(ih, Char)	;On Character Down; this function can interrupt "On Key Down"
 
 	if (f_IfCapsLock)	;if CapsLock is "on"
 	{
-		SetStoreCapslockMode, Off	;This is the only way which I know to get rid of blinking CapsLock. From now the v_Char value is ignored by Send and treated as small letters
 		if v_Char is Alpha	;alphabetic character
 		{
 			if (!f_IfShiftDown) and (!f_SPA)	;SPA = Shift Pressed Alone
 			{
 				F_CapitalUnicode()
-				SetStoreCapslockMode, On	;for whatever reason 
 				Critical, Off
 				return
 			}	
@@ -692,7 +690,6 @@ F_OCD(ih, Char)	;On Character Down; this function can interrupt "On Key Down"
 			if (f_IfShiftDown)	;logic must be reversed if Shift key is pressed.
 			{
 				Send, % "+" . v_Char
-				SetStoreCapslockMode, On	;for whatever reason 
 				Critical, Off
 				return
 			}	
@@ -703,7 +700,6 @@ F_OCD(ih, Char)	;On Character Down; this function can interrupt "On Key Down"
 				Send, % "+" . v_Char
 				f_SPA := false
 			,	v_Char := Format("{:l}", v_Char)	;convert v_Char to small letter
-				SetStoreCapslockMode, On	;for whatever reason 
 				Critical, Off
 				return
 			}
@@ -711,7 +707,6 @@ F_OCD(ih, Char)	;On Character Down; this function can interrupt "On Key Down"
 		else	;not alphabetic character
 		{
 			F_SendNotAlphaChar(f_IfShiftDown)
-			SetStoreCapslockMode, On	;for whatever reason 
 			Critical, Off
 			return
 		}	
@@ -764,32 +759,32 @@ F_CapitalUnicode()
 
 	Switch v_Char				;This is the only way which I know to get rid of blinking CapsLock
 	{
-		Case "A":	Send, {U+0041}	;A
-		Case "B":	Send, {U+0042}	;B
-		Case "C":	Send, {U+0043}	;C
-		Case "D":	Send, {U+0044}	;D
-		Case "E":	Send, {U+0045}	;E
-		Case "F":	Send, {U+0046}	;F
-		Case "G":	Send, {U+0047}	;G
-		Case "H":	Send, {U+0048}	;H
-		Case "I":	Send, {U+0049}	;I
-		Case "J":	Send, {U+004a}	;J
-		Case "K":	Send, {U+004b}	;K
-		Case "L":	Send, {U+004c}	;L
-		Case "M":	Send, {U+004d}	;M
-		Case "N":	Send, {U+004e}	;N
-		Case "O":	Send, {U+004f}	;O
-		Case "P":	Send, {U+0050}	;P
-		Case "Q":	Send, {U+0051}	;Q
-		Case "R":	Send, {U+0052}	;R
-		Case "S":	Send, {U+0053}	;S
-		Case "T":	Send, {U+0054}	;T
-		Case "U":	Send, {U+0055}	;U
-		Case "V":	Send, {U+0056}	;V
-		Case "W":	Send, {U+0057}	;W
-		Case "X":	Send, {U+0058}	;X
-		Case "Y":	Send, {U+0059}	;Y
-		Case "Z":	Send, {U+005a}	;Z
+		Case "A":	Send, {Blind}{U+0041}	;A
+		Case "B":	Send, {Blind}{U+0042}	;B
+		Case "C":	Send, {Blind}{U+0043}	;C
+		Case "D":	Send, {Blind}{U+0044}	;D
+		Case "E":	Send, {Blind}{U+0045}	;E
+		Case "F":	Send, {Blind}{U+0046}	;F
+		Case "G":	Send, {Blind}{U+0047}	;G
+		Case "H":	Send, {Blind}{U+0048}	;H
+		Case "I":	Send, {Blind}{U+0049}	;I
+		Case "J":	Send, {Blind}{U+004a}	;J
+		Case "K":	Send, {Blind}{U+004b}	;K
+		Case "L":	Send, {Blind}{U+004c}	;L
+		Case "M":	Send, {Blind}{U+004d}	;M
+		Case "N":	Send, {Blind}{U+004e}	;N
+		Case "O":	Send, {Blind}{U+004f}	;O
+		Case "P":	Send, {Blind}{U+0050}	;P
+		Case "Q":	Send, {Blind}{U+0051}	;Q
+		Case "R":	Send, {Blind}{U+0052}	;R
+		Case "S":	Send, {Blind}{U+0053}	;S
+		Case "T":	Send, {Blind}{U+0054}	;T
+		Case "U":	Send, {Blind}{U+0055}	;U
+		Case "V":	Send, {Blind}{U+0056}	;V
+		Case "W":	Send, {Blind}{U+0057}	;W
+		Case "X":	Send, {Blind}{U+0058}	;X
+		Case "Y":	Send, {Blind}{U+0059}	;Y
+		Case "Z":	Send, {Blind}{U+005a}	;Z
 	}
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
