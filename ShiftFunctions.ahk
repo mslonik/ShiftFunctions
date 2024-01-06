@@ -664,7 +664,7 @@ F_OCD(ih, Char)	;On Character Down; this function can interrupt "On Key Down"
 {	;This function detects only "characters" according to AutoHotkey rules, no: modifiers (Shifts, Controls, Alts, Windows), function keys, Backspace, PgUp, PgDn, Ins, Home, Del, End ; yes: Esc, Space, Enter, Tab and all aphanumeric keys. How keyboard works: some keys have two layer meaning, where Shift is used to call another character from another layer. Example: basic layer 3, shift layer #. Another example: Ins and Shift+Ins do not produce character, but act differently; Shift + Ins must be preserved.
 	global	;assume-global mode of operation
 	Critical, On
-	local 	f_IfShiftDown	:= GetKeyState("Shift")			;if <shift> is down only logically
+	local 	f_IfShiftDown	:= GetKeyState("Shift","P")			;if <shift> is down only logically
 		,	f_IfCapsLock	:= GetKeyState("CapsLock", "T")	;if CapsLock is "on"
 		,	IsAlpha 		:= true
 
