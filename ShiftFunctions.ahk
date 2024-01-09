@@ -758,7 +758,7 @@ F_CapitalUnicode()
 	global	;assume-global mode of operation
 
 	Switch v_Char				;This is the only way which I know to get rid of blinking CapsLock
-	{
+	{	;Blind: •SetStoreCapsLockMode is ignored; that is, the state of CapsLock is not changed.
 		Case "A":	Send, {Blind}{U+0041}	;A
 		Case "B":	Send, {Blind}{U+0042}	;B
 		Case "C":	Send, {Blind}{U+0043}	;C
@@ -795,17 +795,17 @@ F_SendNotAlphaChar(f_IfShiftDown)
 	if (f_IfShiftDown)
 	{
 		if (v_Char = "{") or (v_Char = "}") or (v_Char = "^") or (v_Char = "!") or (v_Char = "+") or (v_Char = "#")
-			Send, % "{" . v_Char . "}"
+			Send, % "{Blind}" . "{" . v_Char . "}"	;Blind: •SetStoreCapsLockMode is ignored; that is, the state of CapsLock is not changed.
 		else
-			Send, % "+" . v_Char
+			Send, % "{Blind}" . "+" . v_Char		;Blind: •SetStoreCapsLockMode is ignored; that is, the state of CapsLock is not changed.
 	}
 
 	if (!f_IfShiftDown) and (!f_SPA)
-		Send, % v_Char
+		Send, % "{Blind}" . v_Char				;Blind: •SetStoreCapsLockMode is ignored; that is, the state of CapsLock is not changed.
 
 	if (!f_IfShiftDown) and (f_SPA)
 	{
-		Send, % "+" . v_Char
+		Send, % "{Blind}" . "+" . v_Char			;Blind: •SetStoreCapsLockMode is ignored; that is, the state of CapsLock is not changed.
 		f_SPA := false
 	,	v_CLCounter 	:= c_CLReset
 	}
