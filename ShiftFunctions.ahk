@@ -80,6 +80,7 @@ FileInstall, README.md, 			README.md,		false	;false = not overwrite if already e
 ,	f_ShiftTimeout		:= false	;global flag: timer is running
 ,	c_Buffer			:= {}	;global character object buffer
 ,	v_SleepValue		:= 0		;global value for sleep in F_OCD
+,	c_TimeDS			:= 100	;global time to elapse before double shift in miliseconds
 
 F_CheckDuplicates()		;check if there are running .ahk or .exe copies of this script in paraller
 F_InitiateInputHook()	;at first initialize InputHook with the default values
@@ -577,7 +578,7 @@ F_CheckIfTimeElapsed(TtElapse)	;argument in miliseconds
 {
 	global		;assume-global mode of operation
 
-	if (f_ShiftTimeout)
+	if (f_ShiftTimeout)	and (f_RShift) and (f_LShift) ;if timer is running and both shifts are down
 	{
 		F_FlagReset()
 		SetTimer, F_ShiftTimeout, Off
@@ -585,13 +586,13 @@ F_CheckIfTimeElapsed(TtElapse)	;argument in miliseconds
 	,	f_WasReset	:= true
 	,	v_Char		:= ""
 		SoundPlay, *16	;future: add option to choose behavior (play sound or not, how long to play sound, what sound) and to define time to wait for reset scenario
-		; OutputDebug, % "concurrent" . "`n"
+		OutputDebug, % "concurrent" . "`n"
 	}
 	else
 	{
 		; OutputDebug, % "Before SetTimer" . "`n"
-		SetTimer, F_ShiftTimeout, % "-" . TtElapse	;one time only
-		f_ShiftTimeout 	:= true
+		SetTimer, F_ShiftTimeout, % "-" . TtElapse	;start timer, one time only
+		f_ShiftTimeout := true					;timer is running
 		; OutputDebug, % "After SetTimer" . A_Space . "f_ShiftTimeout:" . f_ShiftTimeout . "`n"
 	}
 }
@@ -613,31 +614,15 @@ F_OKD(ih, VK, SC)	;On Key Down
 	Switch v_WhatWasDown
 	{
 		Case "LShift":
-			; OutputDebug, % "f_LShift:" . f_LShift . "`n"
-			if (f_LShift)	;protection against "auto-repeat", function of operating system
-			{
-				Critical, Off
-				return
-			}
-			else
-			{
-				f_LShift		:= true
-				F_CheckIfTimeElapsed(100)	;100 ms
-				; OutputDebug, % "f_LShift:" . f_LShift . "`n"
-			}	
+			OutputDebug, % "f_LShift:" . f_LShift . "`n"
+			f_LShift		:= true
+			F_CheckIfTimeElapsed(c_TimeDS)	;by default: 100 ms
+			OutputDebug, % "f_LShift:" . f_LShift . "`n"
 		Case "RShift":
-			; OutputDebug, % "f_RShift:" . f_RShift . "`n"
-			if (f_RShift)
-			{
-				Critical, Off
-				return
-			}
-			else
-			{
-				f_RShift		:= true
-				F_CheckIfTimeElapsed(100)	;100 ms
-				; OutputDebug, % "f_RShift:" . f_RShift . "`n"
-			}
+			OutputDebug, % "f_RShift:" . f_RShift . "`n"
+			f_RShift		:= true
+			F_CheckIfTimeElapsed(c_TimeDS)	;by default: 100 ms
+			OutputDebug, % "f_RShift:" . f_RShift . "`n"
 		Case "LControl", "RControl":
 			f_ControlPressed 	:= true
 		,	f_AOK_Down		:= true	;Any Other Key	
