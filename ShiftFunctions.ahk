@@ -586,7 +586,7 @@ F_CheckIfTimeElapsed(TtElapse)	;argument in miliseconds
 	,	f_WasReset	:= true
 	,	v_Char		:= ""
 		SoundPlay, *16	;future: add option to choose behavior (play sound or not, how long to play sound, what sound) and to define time to wait for reset scenario
-		OutputDebug, % "concurrent" . "`n"
+		; OutputDebug, % "concurrent" . "`n"
 	}
 	else
 	{
@@ -614,15 +614,15 @@ F_OKD(ih, VK, SC)	;On Key Down
 	Switch v_WhatWasDown
 	{
 		Case "LShift":
-			OutputDebug, % "f_LShift:" . f_LShift . "`n"
+			; OutputDebug, % "f_LShift:" . f_LShift . "`n"
 			f_LShift		:= true
 			F_CheckIfTimeElapsed(c_TimeDS)	;by default: 100 ms
-			OutputDebug, % "f_LShift:" . f_LShift . "`n"
+			; OutputDebug, % "f_LShift:" . f_LShift . "`n"
 		Case "RShift":
-			OutputDebug, % "f_RShift:" . f_RShift . "`n"
+			; OutputDebug, % "f_RShift:" . f_RShift . "`n"
 			f_RShift		:= true
 			F_CheckIfTimeElapsed(c_TimeDS)	;by default: 100 ms
-			OutputDebug, % "f_RShift:" . f_RShift . "`n"
+			; OutputDebug, % "f_RShift:" . f_RShift . "`n"
 		Case "LControl", "RControl":
 			f_ControlPressed 	:= true
 		,	f_AOK_Down		:= true	;Any Other Key	
