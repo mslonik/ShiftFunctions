@@ -24,7 +24,7 @@ SetWorkingDir, 	%A_ScriptDir%		; Ensures a consistent starting directory.
 ;Testing: Alt+Tab, , asdf Shift+Home, Ąsi
 
 ; - - - - - - - - - - - - - - - - Executable section, beginning - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-AppVersion			:= "1.3.17"
+AppVersion			:= "1.3.18"
 ;@Ahk2Exe-Let 				U_AppVersion=%A_PriorLine~U)^(.+"){1}(.+)".*$~$2% ; Keep these lines together
 ;Overrides the custom EXE icon used for compilation
 ;@Ahk2Exe-SetCopyright 		GNU GPL 3.x
@@ -81,6 +81,7 @@ FileInstall, README.md, 			README.md,		false	;false = not overwrite if already e
 ,	c_Buffer			:= {}	;global character object buffer
 ,	v_SleepValue		:= 0		;global value for sleep in F_OCD
 ,	c_TimeDS			:= 100	;global time to elapse before double shift in miliseconds
+,	f_IfCapsLock		:= false	;global toggle state of CapsLock 
 
 F_CheckDuplicates()		;check if there are running .ahk or .exe copies of this script in paraller
 F_InitiateInputHook()	;at first initialize InputHook with the default values
@@ -597,7 +598,7 @@ F_CheckIfTimeElapsed(TtElapse)	;argument in miliseconds
 	}
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-F_OKD(ih, VK, SC)	;On Key Down
+F_OKD(ih, VK, SC)	;On Key Down. This function is run as the first one. If character is pressed, then the order is: F_OKD → F_OCD → F_OKU.
 {
 	global		;assume-global mode of operation
 	Critical, On	;This function starts as the first one (prior to "On Character Down"), but unfortunately can be interrupted by it. To prevent it Critical command is applied.
@@ -636,6 +637,9 @@ F_OKD(ih, VK, SC)	;On Key Down
 			v_Char := ""
 		Case "F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10", "F11", "F12":	;12x, max. 20. This line is necessary to prohibit the following scenario: <shell><BS><BS><shift d><shift u> -> shł
 			v_Char := ""
+		Case "CapsLock":
+			; OutputDebug, % "CapsLock" . "`n" 
+			f_IfCapsLock	:= GetKeyState("CapsLock", "T")	;if CapsLock is "on"
 		Default:
 			f_Char 		:= true
 		,	f_ShiftDown 	:= false
@@ -649,10 +653,13 @@ F_OCD(ih, Char)	;On Character Down; this function can interrupt "On Key Down"
 {	;This function detects only "characters" according to AutoHotkey rules, no: modifiers (Shifts, Controls, Alts, Windows), function keys, Backspace, PgUp, PgDn, Ins, Home, Del, End ; yes: Esc, Space, Enter, Tab and all aphanumeric keys. How keyboard works: some keys have two layer meaning, where Shift is used to call another character from another layer. Example: basic layer 3, shift layer #. Another example: Ins and Shift+Ins do not produce character, but act differently; Shift + Ins must be preserved.
 	global	;assume-global mode of operation
 	Critical, On
-	local 	f_IfShiftDown	:= GetKeyState("Shift","P")			;if <shift> is down only logically
-		,	f_IfCapsLock	:= GetKeyState("CapsLock", "T")	;if CapsLock is "on"
+	local 	f_IfShiftDown	:= false
+	; local 	f_IfShiftDown	:= GetKeyState("Shift","P")		;if <shift> is down physically
+		; ,	f_IfCapsLock	:= GetKeyState("CapsLock", "T")	;if CapsLock is "on"
 		,	IsAlpha 		:= true
 
+	if (f_RShift) or (f_LShift) ;if previous function (F_OKD) detected pressed shift (left or right)  
+		f_IfShiftDown	:= true
 	Sleep, % v_SleepValue	; sleep is always required after GetKeyState if there is more than one script running which touches keyboard hooks.
 	v_Char := Char	;local variable to global variable
 	; OutputDebug, % A_ThisFunc . A_Space . "v_Char:" . v_Char . "`n"
@@ -819,10 +826,6 @@ F_OKU(ih, VK, SC)	;On Key Up
 		and (!f_AOK_Down)	;Any Other Key
 	{
 		f_SPA 	:= true	;Shift key (left or right) was Pressed Alone. When set, can be used together with next key press. Therefore it cannot be cleared before next key is pressed.
-		if (WhatWasUp = "LShift")
-			f_LShift := false
-		if (WhatWasUp = "RShift")
-			f_RShift := false
 		; OutputDebug, % "f_SPA:" . f_SPA . A_Space . "v_Char:" . v_Char . "`n"
 	}
 	else
@@ -830,6 +833,10 @@ F_OKU(ih, VK, SC)	;On Key Up
 		f_SPA 		:= false
 	,	v_CLCounter 	:= c_CLReset
 	}	
+	if (WhatWasUp = "LShift")
+		f_LShift := false
+	if (WhatWasUp = "RShift")
+		f_RShift := false
 
 	if (f_Diacritics)
 		and (f_SPA)
