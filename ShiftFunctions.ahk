@@ -873,7 +873,6 @@ F_FlagReset()
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 F_CapsLock(WhatWasUp)
-; F_CapsLock(WhatWasUp, ByRef f_SPA)
 {
 	global	;assume-global mode of operation
 	local	CLLimit 	:= 3
@@ -895,8 +894,18 @@ F_CapsLock(WhatWasUp)
 	; OutputDebug, % "CLCounter:" . A_Space . v_CLCounter . "`n"
 	if (v_CLCounter = CLLimit)
 	{
-		SetCapsLockState, % !GetKeyState("CapsLock", "T") 
-		Sleep, % v_SleepValue		;sleep is required by function GetKeyState to correctly update: "Systems with unusual keyboard drivers might be slow to update the state of their keys". Surprisingly 1 ms seems to be ok.
+		if (f_IfCapsLock)
+		{
+			SetCapsLockState, % false
+			f_IfCapsLock := false
+		}
+		else
+		{
+			SetCapsLockState, % true
+			f_IfCapsLock := true
+		}	
+		; SetCapsLockState, % !GetKeyState("CapsLock", "T") 
+		; Sleep, % v_SleepValue		;sleep is required by function GetKeyState to correctly update: "Systems with unusual keyboard drivers might be slow to update the state of their keys". Surprisingly 1 ms seems to be ok.
 		SoundPlay, *48		;standard system sound, exclamation
 		v_CLCounter	:= c_CLReset
 	,	f_SPA 		:= false	;Shift Pressed Alone
