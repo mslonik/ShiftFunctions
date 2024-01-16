@@ -638,8 +638,8 @@ F_OKD(ih, VK, SC)	;On Key Down. This function is run as the first one. If charac
 		Case "F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10", "F11", "F12":	;12x, max. 20. This line is necessary to prohibit the following scenario: <shell><BS><BS><shift d><shift u> -> shł
 			v_Char := ""
 		Case "CapsLock":
-			; OutputDebug, % "CapsLock" . "`n" 
-			f_IfCapsLock	:= GetKeyState("CapsLock", "T")	;if CapsLock is "on"
+			f_IfCapsLock	:= !GetKeyState("CapsLock", "T")	;if CapsLock toggle state is changed. It's unclear to me why I must logically inverse it, opposite to what I've found in documentation.
+			; OutputDebug, % "f_IfCapsLock:" . f_IfCapsLock . "`n" 
 		Default:
 			f_Char 		:= true
 		,	f_ShiftDown 	:= false
