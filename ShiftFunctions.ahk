@@ -834,9 +834,15 @@ F_OKU(ih, VK, SC)	;On Key Up
 	,	v_CLCounter 	:= c_CLReset
 	}	
 	if (WhatWasUp = "LShift")
+	{
 		f_LShift := false
+		Send, {Blind}{LShift Up}	;additional safety feature to prevent "auto-capitalization" 
+	}	
 	if (WhatWasUp = "RShift")
+	{
 		f_RShift := false
+		Send, {Blind}{RShift Up} ;additional safety feature to prevent "auto-capitalization" 
+	}	
 
 	if (f_Diacritics)
 		and (f_SPA)
