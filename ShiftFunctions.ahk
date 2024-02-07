@@ -441,13 +441,13 @@ F_MenuTray()
 	Menu, MinSendLevelSubm,	Add, 1,																		F_SetMinSendLevel
 	Menu, MinSendLevelSubm,	Add, 2,																		F_SetMinSendLevel
 	Menu, MinSendLevelSubm,	Add, 3,																		F_SetMinSendLevel
-	Menu, Tray, Add,		% "MinSendLevel value",															:MinSendLevelSubm
+	Menu, Tray, 			Add,	% "Input (MinSendLevel) value",												:MinSendLevelSubm
 	Menu, MinSendLevelSubm, 	Check, 	% c_InputSL
 	Menu, SendLevelSumbmenu,	Add, 0,																		F_SetSendLevel
 	Menu, SendLevelSumbmenu,	Add, 1,																		F_SetSendLevel
 	Menu, SendLevelSumbmenu,	Add, 2,																		F_SetSendLevel
 	Menu, SendLevelSumbmenu,	Add, 3,																		F_SetSendLevel
-	Menu, Tray,		 	Add, % "SendLevel value",														:SendLevelSumbmenu
+	Menu, Tray,		 	Add, % "Output (SendLevel) value",													:SendLevelSumbmenu
 	Menu, SendLevelSumbmenu, Check, 	% c_OutputSL
 	Menu, Tray, Add
 	Menu, Tray, Add,		% "loaded .ini file" . A_Tab .				v_ConfigIni,							F_SelectConfig
