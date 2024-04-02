@@ -653,9 +653,8 @@ F_OCD(ih, Char)	;On Character Down; this function can interrupt "On Key Down"
 {	;This function detects only "characters" according to AutoHotkey rules, no: modifiers (Shifts, Controls, Alts, Windows), function keys, Backspace, PgUp, PgDn, Ins, Home, Del, End ; yes: Esc, Space, Enter, Tab and all aphanumeric keys. How keyboard works: some keys have two layer meaning, where Shift is used to call another character from another layer. Example: basic layer 3, shift layer #. Another example: Ins and Shift+Ins do not produce character, but act differently; Shift + Ins must be preserved.
 	global	;assume-global mode of operation
 	Critical, On
-	local 	f_IfShiftDown	:= false
-	; local 	f_IfShiftDown	:= GetKeyState("Shift","P")		;if <shift> is down physically
-		; ,	f_IfCapsLock	:= GetKeyState("CapsLock", "T")	;if CapsLock is "on"
+	local 	f_IfShiftDown	:= GetKeyState("Shift","P")		;if <shift> is down physically
+		,	f_IfCapsLock	:= GetKeyState("CapsLock", "T")	;if CapsLock is "on"
 		,	IsAlpha 		:= true
 
 	if (f_RShift) or (f_LShift) ;if previous function (F_OKD) detected pressed shift (left or right)  
@@ -670,18 +669,19 @@ F_OCD(ih, Char)	;On Character Down; this function can interrupt "On Key Down"
 
 	if (f_IfCapsLock)	;if CapsLock is "on"
 	{
+		SetStoreCapsLockMode, Off	;This is the only way which I know to stop CapsLock LED stop flashing on time of writing capital letters. 
 		if v_Char is Alpha	;alphabetic character
 		{
-			if (!f_IfShiftDown) and (!f_SPA)	;SPA = Shift Pressed Alone
+			if (!f_IfShiftDown) and (!f_SPA)	;SPA = Shift Pressed Alone; if CapsLock is on and shift is not pressed before or is not pressed currently.
 			{
-				F_CapitalUnicode()
+				F_CapitalUnicode()	;trick: because "SetStoreCapsLockMode" influences Send (small letters are inverted), the Unicode characters are sended out. 
 				Critical, Off
 				return
 			}	
 
-			if (f_IfShiftDown)	;logic must be reversed if Shift key is pressed.
+			if (f_IfShiftDown)	;if Shift is pressed down 
 			{
-				Send, % "+" . v_Char
+				F_SmallUnicode()	;trick: because "SetStoreCapsLockMode" influences Send (small letters are inverted), the Unicode characters are sended out. 
 				Critical, Off
 				return
 			}	
@@ -689,9 +689,8 @@ F_OCD(ih, Char)	;On Character Down; this function can interrupt "On Key Down"
 			if (f_Capital) 
 				and (f_SPA)	;SPA = Shift Pressed Alone
 			{
-				Send, % "+" . v_Char
+				F_SmallUnicode()	;trick: because "SetStoreCapsLockMode" influences Send (small letters are inverted), the Unicode characters are sended out. 
 				f_SPA := false
-			,	v_Char := Format("{:l}", v_Char)	;convert v_Char to small letter
 				Critical, Off
 				return
 			}
@@ -745,38 +744,73 @@ F_OCD(ih, Char)	;On Character Down; this function can interrupt "On Key Down"
 	Critical, Off
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+F_SmallUnicode()
+{
+	global	;assume-global mode of operation
+
+	Switch v_Char				;This is the only way which I know to get rid of blinking CapsLock
+	{	;Blind: •SetStoreCapsLockMode is ignored; that is, the state of CapsLock is not changed.
+		Case "A":	Send, {U+0061}	;a
+		Case "B":	Send, {U+0062}	;b
+		Case "C":	Send, {U+0063}	;c
+		Case "D":	Send, {U+0064}	;d
+		Case "E":	Send, {U+0065}	;e
+		Case "F":	Send, {U+0066}	;f
+		Case "G":	Send, {U+0067}	;g
+		Case "H":	Send, {U+0068}	;h
+		Case "I":	Send, {U+0069}	;i
+		Case "J":	Send, {U+006a}	;j
+		Case "K":	Send, {U+006b}	;k
+		Case "L":	Send, {U+006c}	;l
+		Case "M":	Send, {U+006d}	;m
+		Case "N":	Send, {U+006e}	;n
+		Case "O":	Send, {U+006f}	;o
+		Case "P":	Send, {U+0070}	;p
+		Case "Q":	Send, {U+0071}	;q
+		Case "R":	Send, {U+0072}	;r
+		Case "S":	Send, {U+0073}	;s
+		Case "T":	Send, {U+0074}	;t
+		Case "U":	Send, {U+0075}	;u
+		Case "V":	Send, {U+0076}	;v
+		Case "W":	Send, {U+0077}	;w
+		Case "X":	Send, {U+0078}	;x
+		Case "Y":	Send, {U+0079}	;y
+		Case "Z":	Send, {U+007a}	;z
+	}
+}
+; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 F_CapitalUnicode()
 {
 	global	;assume-global mode of operation
 
 	Switch v_Char				;This is the only way which I know to get rid of blinking CapsLock
 	{	;Blind: •SetStoreCapsLockMode is ignored; that is, the state of CapsLock is not changed.
-		Case "A":	Send, {Blind}{U+0041}	;A
-		Case "B":	Send, {Blind}{U+0042}	;B
-		Case "C":	Send, {Blind}{U+0043}	;C
-		Case "D":	Send, {Blind}{U+0044}	;D
-		Case "E":	Send, {Blind}{U+0045}	;E
-		Case "F":	Send, {Blind}{U+0046}	;F
-		Case "G":	Send, {Blind}{U+0047}	;G
-		Case "H":	Send, {Blind}{U+0048}	;H
-		Case "I":	Send, {Blind}{U+0049}	;I
-		Case "J":	Send, {Blind}{U+004a}	;J
-		Case "K":	Send, {Blind}{U+004b}	;K
-		Case "L":	Send, {Blind}{U+004c}	;L
-		Case "M":	Send, {Blind}{U+004d}	;M
-		Case "N":	Send, {Blind}{U+004e}	;N
-		Case "O":	Send, {Blind}{U+004f}	;O
-		Case "P":	Send, {Blind}{U+0050}	;P
-		Case "Q":	Send, {Blind}{U+0051}	;Q
-		Case "R":	Send, {Blind}{U+0052}	;R
-		Case "S":	Send, {Blind}{U+0053}	;S
-		Case "T":	Send, {Blind}{U+0054}	;T
-		Case "U":	Send, {Blind}{U+0055}	;U
-		Case "V":	Send, {Blind}{U+0056}	;V
-		Case "W":	Send, {Blind}{U+0057}	;W
-		Case "X":	Send, {Blind}{U+0058}	;X
-		Case "Y":	Send, {Blind}{U+0059}	;Y
-		Case "Z":	Send, {Blind}{U+005a}	;Z
+		Case "A":	Send, {U+0041}	;A
+		Case "B":	Send, {U+0042}	;B
+		Case "C":	Send, {U+0043}	;C
+		Case "D":	Send, {U+0044}	;D
+		Case "E":	Send, {U+0045}	;E
+		Case "F":	Send, {U+0046}	;F
+		Case "G":	Send, {U+0047}	;G
+		Case "H":	Send, {U+0048}	;H
+		Case "I":	Send, {U+0049}	;I
+		Case "J":	Send, {U+004a}	;J
+		Case "K":	Send, {U+004b}	;K
+		Case "L":	Send, {U+004c}	;L
+		Case "M":	Send, {U+004d}	;M
+		Case "N":	Send, {U+004e}	;N
+		Case "O":	Send, {U+004f}	;O
+		Case "P":	Send, {U+0050}	;P
+		Case "Q":	Send, {U+0051}	;Q
+		Case "R":	Send, {U+0052}	;R
+		Case "S":	Send, {U+0053}	;S
+		Case "T":	Send, {U+0054}	;T
+		Case "U":	Send, {U+0055}	;U
+		Case "V":	Send, {U+0056}	;V
+		Case "W":	Send, {U+0057}	;W
+		Case "X":	Send, {U+0058}	;X
+		Case "Y":	Send, {U+0059}	;Y
+		Case "Z":	Send, {U+005a}	;Z
 	}
 }
 ; - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
